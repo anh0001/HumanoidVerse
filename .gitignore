@@ -1,3 +1,6 @@
+IsaacLab/
+*_env/
+
 # Compiled Python bytecode
 *.py[cod]
 # Log files
