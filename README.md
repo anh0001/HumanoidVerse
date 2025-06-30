@@ -172,13 +172,13 @@ python humanoidverse/train_agent.py \
 +simulator=isaacsim \
 +exp=locomotion \
 +domain_rand=NO_domain_rand \
-+rewards=loco/reward_h1_locomotion \
-+robot=h1/h1_10dof \
++rewards=loco/reward_pdd_locomotion \
++robot=pdd/pdd \
 +terrain=terrain_locomotion_plane \
 +obs=loco/leggedloco_obs_singlestep_withlinvel \
 num_envs=1 \
 project_name=TESTInstallation \
-experiment_name=H110dof_loco_IsaacSim \
+experiment_name=PDD_loco_IsaacSim \
 headless=False
 ```
 
