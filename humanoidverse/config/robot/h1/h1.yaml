@@ -19,7 +19,7 @@ robot:
   knee_name: "knee_link"
   has_upper_body_dof: True
   has_torso: True
-  torso_name: "torso_link"
+  torso_name: "pelvis"
   # DFS order (isaacgym order)
   dof_names: ['left_hip_yaw_joint', 
               'left_hip_roll_joint', 
@@ -119,7 +119,7 @@ robot:
 
   randomize_link_body_names : [
     'pelvis', 'left_hip_yaw_link', 'left_hip_roll_link', 'left_hip_pitch_link', 
-    'right_hip_yaw_link', 'right_hip_roll_link', 'right_hip_pitch_link',  'torso_link',
+    'right_hip_yaw_link', 'right_hip_roll_link', 'right_hip_pitch_link',
   ]
 
   control:
