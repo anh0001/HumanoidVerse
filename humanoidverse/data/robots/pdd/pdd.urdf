@@ -43,7 +43,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/base_link.STL" />
+        <mesh filename="meshes/base_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1" />
@@ -107,7 +107,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/leg_l1_link.STL" />
+        <mesh filename="meshes/leg_l1_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1" />
@@ -139,7 +139,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/leg_l2_link.STL" />
+        <mesh filename="meshes/leg_l2_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1" />
@@ -171,7 +171,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/leg_l3_link.STL" />
+        <mesh filename="meshes/leg_l3_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1" />
@@ -203,7 +203,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/leg_l4_link.STL" />
+        <mesh filename="meshes/leg_l4_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1" />
@@ -241,7 +241,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/leg_l5_link.STL" />
+        <mesh filename="meshes/leg_l5_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1" />
@@ -254,7 +254,7 @@
       </geometry>
       <!-- <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/leg_l5_link.STL" />
+        <mesh filename="meshes/leg_l5_link.STL" />
       </geometry> -->
       <!-- <origin xyz="0.01503 0 -0.02" rpy="0 1.57 0" />
       <geometry>
@@ -400,7 +400,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/leg_r1_link.STL" />
+        <mesh filename="meshes/leg_r1_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1" />
@@ -432,7 +432,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/leg_r2_link.STL" />
+        <mesh filename="meshes/leg_r2_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1" />
@@ -464,7 +464,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/leg_r3_link.STL" />
+        <mesh filename="meshes/leg_r3_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1" />
@@ -496,7 +496,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/leg_r4_link.STL" />
+        <mesh filename="meshes/leg_r4_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1" />
@@ -534,7 +534,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/leg_r5_link.STL" />
+        <mesh filename="meshes/leg_r5_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1" />
@@ -547,7 +547,7 @@
       </geometry>
       <!-- <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/leg_r5_link.STL" />
+        <mesh filename="meshes/leg_r5_link.STL" />
       </geometry> -->
       <!-- <origin xyz="0.01503 0 -0.02" rpy="0 1.57 0" />
       <geometry>

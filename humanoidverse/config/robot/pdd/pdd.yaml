@@ -16,26 +16,18 @@ robot:
   # policy_obs_dim: 241 # Jiawei
   # self_obs_max_coords: 298  # ${eval:1+20*(3+6+3+3)-3}
 
-  key_bodies: ["left_ankle_link", "right_ankle_link"]
-  contact_bodies: [ "left_ankle_link", "right_ankle_link" ]
-  right_foot_name: "right_ankle_link"
-  left_foot_name: "left_ankle_link"
+  key_bodies: ["leg_l5_link", "leg_r5_link"]
+  contact_bodies: ["leg_l5_link", "leg_r5_link"]
+  right_foot_name: "leg_r5_link"
+  left_foot_name: "leg_l5_link"
   foot_name: "ankle"
   knee_name: "knee_link"
   has_upper_body_dof: False
   has_torso: True
-  torso_name: "pelvis"
+  torso_name: "base_link"
   # DFS order (isaacgym order)
-  dof_names: ['left_hip_yaw_joint', 
-              'left_hip_roll_joint', 
-              'left_hip_pitch_joint', 
-              'left_knee_joint', 
-              'left_ankle_joint',
-              'right_hip_yaw_joint', 
-              'right_hip_roll_joint', 
-              'right_hip_pitch_joint', 
-              'right_knee_joint', 
-              'right_ankle_joint']
+  dof_names: ['leg_l1_joint', 'leg_l2_joint', 'leg_l3_joint', 'leg_l4_joint', 'leg_l5_joint',
+              'leg_r1_joint', 'leg_r2_joint', 'leg_r3_joint', 'leg_r4_joint', 'leg_r5_joint']
 
   decouple_upper_and_lower_dofs: false
 
@@ -48,13 +40,13 @@ robot:
   dof_joint_friction_list: [0.00, 0.00, 0.00, 0.00, 0.00, 
                             0.00, 0.00, 0.00, 0.00, 0.00]
 
-  body_names: ['pelvis', 
-                'left_hip_yaw_link', 'left_hip_roll_link','left_hip_pitch_link', 'left_knee_link', 'left_ankle_link',
-                'right_hip_yaw_link', 'right_hip_roll_link', 'right_hip_pitch_link', 'right_knee_link', 'right_ankle_link']
+  body_names: ['base_link',
+               'leg_l1_link', 'leg_l2_link', 'leg_l3_link', 'leg_l4_link', 'leg_l5_link',
+               'leg_r1_link', 'leg_r2_link', 'leg_r3_link', 'leg_r4_link', 'leg_r5_link']
 
 
-  terminate_after_contacts_on : ["pelvis", "shoulder", "hip"]
-  penalize_contacts_on: []
+  terminate_after_contacts_on: ["base_link"]
+  penalize_contacts_on: ["leg_l3_link", "leg_r3_link"]
   init_state:
     pos: [0.0, 0.0, 1.0] # x,y,z [m]
     rot: [0.0, 0.0, 0.0, 1.0] # x,y,z,w [quat]
@@ -118,10 +110,10 @@ robot:
     angular_damping: 0.
     linear_damping: 0.
 
-    urdf_file: "h1/${robot.asset.robot_type}.urdf"
-    usd_file: "h1/${robot.asset.robot_type}.usd"
-    xml_file: "h1/${robot.asset.robot_type}.xml"
-    robot_type: h1_10dof
+    urdf_file: "pdd/${robot.asset.robot_type}.urdf"
+    usd_file: "pdd/${robot.asset.robot_type}.usd"
+    xml_file: "pdd/${robot.asset.robot_type}.xml"
+    robot_type: pdd
     self_collisions: 1 # 1 to disable, 0 to enable self collisions
     default_dof_drive_mode: 3
 
