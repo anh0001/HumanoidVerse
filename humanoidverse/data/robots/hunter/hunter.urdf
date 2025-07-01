@@ -59,13 +59,13 @@
   </link>
 
   <!-- Imu is fixed to the base link -->
-  <joint name="base_imu_joint" type="fixed">
+  <joint name="imu_joint" type="fixed">
     <origin rpy="0. 0. 0." xyz="0. 0. 0"/>
     <parent link="pelvis"/>
-    <child link="base_imu"/>
+    <child link="imu_link"/>
   </joint>
   <!-- Imu link -->
-  <link name="base_imu">
+  <link name="imu_link">
     <inertial>
       <mass value="0.01"/>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -81,7 +81,7 @@
       <color rgba="255 108 10 255"/>
     </material>
   </link>
-  <gazebo reference="base_imu_joint">
+  <gazebo reference="imu_joint">
     <disableFixedJointLumping>true</disableFixedJointLumping>
   </gazebo>
 
