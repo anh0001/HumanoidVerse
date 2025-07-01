@@ -129,10 +129,10 @@ robot:
   motion:
     motion_file : 'humanoidverse/data/motions/hunter/hunter_locomotion.pkl'
     asset:
-      assetRoot: "humanoidverse/data/robots/h1/"
-      assetFileName: "h1_10dof.xml"
-      urdfFileName: "h1_10dof.urdf"
-    humanoid_type: h1
+      assetRoot: "humanoidverse/data/robots/hunter/"
+      assetFileName: "hunter.xml"
+      urdfFileName: "hunter.urdf"
+    humanoid_type: hunter
     bias_offset: False
     has_self_collision: True
     has_mesh: False
@@ -173,25 +173,25 @@ robot:
     sim_with_urdf: True
 
 
-    #### Config for extension
-    extend_config:
-      - joint_name: "left_hand_link"
-        parent_name: "left_elbow_link"
-        pos: [0.3, 0.0, 0.0]
-        rot: [1.0, 0.0, 0.0, 0.0]
-      - joint_name: "right_hand_link"
-        parent_name: "right_elbow_link"
-        pos: [0.3, 0.0, 0.0]
-        rot: [1.0, 0.0, 0.0, 0.0]
-      - joint_name: "head_link"
-        parent_name: "pelvis"
-        pos: [0.0, 0.0, 0.6]
-        rot: [1.0, 0.0, 0.0, 0.0]
+    # #### Config for extension
+    # extend_config:
+    #   - joint_name: "left_hand_link"
+    #     parent_name: "left_elbow_link"
+    #     pos: [0.3, 0.0, 0.0]
+    #     rot: [1.0, 0.0, 0.0, 0.0]
+    #   - joint_name: "right_hand_link"
+    #     parent_name: "right_elbow_link"
+    #     pos: [0.3, 0.0, 0.0]
+    #     rot: [1.0, 0.0, 0.0, 0.0]
+    #   - joint_name: "head_link"
+    #     parent_name: "pelvis"
+    #     pos: [0.0, 0.0, 0.6]
+    #     rot: [1.0, 0.0, 0.0, 0.0]
 
-    motion_tracking_link:
-      - "left_hand_link"
-      - "right_hand_link"
-      - "head_link"
+    # motion_tracking_link:
+    #   - "left_hand_link"
+    #   - "right_hand_link"
+    #   - "head_link"
 
     lower_body_link:
       - "pelvis"
@@ -206,19 +206,19 @@ robot:
       - "right_knee_link"
       - "right_ankle_link"
 
-    upper_body_link:
-      - "pelvis"
-      - "left_shoulder_pitch_link"
-      - "left_shoulder_roll_link"
-      - "left_shoulder_yaw_link"
-      - "left_elbow_link"
-      - "right_shoulder_pitch_link"
-      - "right_shoulder_roll_link"
-      - "right_shoulder_yaw_link"
-      - "right_elbow_link"
-      - "left_hand_link"
-      - "right_hand_link"
-      - "head_link"
+    # upper_body_link:
+    #   - "pelvis"
+    #   - "left_shoulder_pitch_link"
+    #   - "left_shoulder_roll_link"
+    #   - "left_shoulder_yaw_link"
+    #   - "left_elbow_link"
+    #   - "right_shoulder_pitch_link"
+    #   - "right_shoulder_roll_link"
+    #   - "right_shoulder_yaw_link"
+    #   - "right_elbow_link"
+    #   - "left_hand_link"
+    #   - "right_hand_link"
+    #   - "head_link"
 
 
     base_link: "pelvis"
@@ -230,20 +230,20 @@ robot:
       - ["right_hip_yaw_link", "R_Hip"]
       - ["right_knee_link", "R_Knee"]
       - ["right_ankle_link", "R_Ankle"]
-      - ["left_shoulder_roll_link", "L_Shoulder"]
-      - ["left_elbow_link", "L_Elbow"]
-      - ["left_hand_link", "L_Hand"]
-      - ["right_shoulder_roll_link", "R_Shoulder"]
-      - ["right_elbow_link", "R_Elbow"]
-      - ["right_hand_link", "R_Hand"]
-      - ["head_link", "Head"]
+      # - ["left_shoulder_roll_link", "L_Shoulder"]
+      # - ["left_elbow_link", "L_Elbow"]
+      # - ["left_hand_link", "L_Hand"]
+      # - ["right_shoulder_roll_link", "R_Shoulder"]
+      # - ["right_elbow_link", "R_Elbow"]
+      # - ["right_hand_link", "R_Hand"]
+      # - ["head_link", "Head"]
 
-    smpl_pose_modifier:
-      - Pelvis: "[np.pi/2, 0, np.pi/2]"
-      - L_Shoulder: "[0, 0, -np.pi/2]"
-      - R_Shoulder: "[0, 0, np.pi/2]"
-      - L_Elbow: "[0, -np.pi/2, 0]"
-      - R_Elbow: "[0, np.pi/2, 0]"
+    # smpl_pose_modifier:
+    #   - Pelvis: "[np.pi/2, 0, np.pi/2]"
+    #   - L_Shoulder: "[0, 0, -np.pi/2]"
+    #   - R_Shoulder: "[0, 0, np.pi/2]"
+    #   - L_Elbow: "[0, -np.pi/2, 0]"
+    #   - R_Elbow: "[0, np.pi/2, 0]"
 
     visualization:
       customize_color : True
@@ -259,18 +259,18 @@ robot:
       - [0.929, 0.867, 0.437] # right_hip_pitch_joint
       - [0.929, 0.867, 0.437] # right_knee_joint
       - [0.929, 0.867, 0.437] # right_ankle_joint
-      - [0.929, 0.867, 0.437] # torso_joint
-      - [0.929, 0.867, 0.437] # left_shoulder_pitch_joint
-      - [0.929, 0.867, 0.437] # left_shoulder_roll_joint
-      - [0.929, 0.867, 0.437] # left_shoulder_yaw_joint
-      - [0.929, 0.867, 0.437] # left_elbow_joint
-      - [0.929, 0.867, 0.437] # right_shoulder_pitch_joint
-      - [0.929, 0.867, 0.437] # right_shoulder_roll_joint
-      - [0.929, 0.867, 0.437] # right_shoulder_yaw_joint
-      - [0.929, 0.867, 0.437] # right_elbow_joint
-      - [0, 0.351, 0.613] # left_elbow_joint_extend
-      - [0, 0.351, 0.613] # right_elbow_joint_extend
-      - [0, 0.351, 0.613] # head_link
+      # - [0.929, 0.867, 0.437] # torso_joint
+      # - [0.929, 0.867, 0.437] # left_shoulder_pitch_joint
+      # - [0.929, 0.867, 0.437] # left_shoulder_roll_joint
+      # - [0.929, 0.867, 0.437] # left_shoulder_yaw_joint
+      # - [0.929, 0.867, 0.437] # left_elbow_joint
+      # - [0.929, 0.867, 0.437] # right_shoulder_pitch_joint
+      # - [0.929, 0.867, 0.437] # right_shoulder_roll_joint
+      # - [0.929, 0.867, 0.437] # right_shoulder_yaw_joint
+      # - [0.929, 0.867, 0.437] # right_elbow_joint
+      # - [0, 0.351, 0.613] # left_elbow_joint_extend
+      # - [0, 0.351, 0.613] # right_elbow_joint_extend
+      # - [0, 0.351, 0.613] # head_link
 # Override motion lib default to use the adapted H1 variant
 # motion_lib:
 #   _target_: phys_anim.utils.motion_lib_h1.H1_MotionLib
