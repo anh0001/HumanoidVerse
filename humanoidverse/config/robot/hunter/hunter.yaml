@@ -56,7 +56,7 @@ robot:
   terminate_after_contacts_on : ["pelvis", "hip"]
   penalize_contacts_on: []
   init_state:
-    pos: [0.0, 0.0, 1.0] # x,y,z [m]
+    pos: [0.0, 0.0, 0.6] # x,y,z [m]
     rot: [0.0, 0.0, 0.0, 1.0] # x,y,z,w [quat]
     lin_vel: [0.0, 0.0, 0.0]  # x,y,z [m/s]
     ang_vel: [0.0, 0.0, 0.0]  # x,y,z [rad/s]
@@ -127,7 +127,7 @@ robot:
 
 
   motion:
-    motion_file : 'humanoidverse/data/motions/h1/h1_lift_box.pkl'
+    motion_file : 'humanoidverse/data/motions/hunter/hunter_locomotion.pkl'
     asset:
       assetRoot: "humanoidverse/data/robots/h1/"
       assetFileName: "h1_10dof.xml"
