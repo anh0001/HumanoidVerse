@@ -16,18 +16,26 @@ robot:
   # policy_obs_dim: 241 # Jiawei
   # self_obs_max_coords: 298  # ${eval:1+20*(3+6+3+3)-3}
 
-  key_bodies: ["leg_l5_link", "leg_r5_link"]
-  contact_bodies: ["leg_l5_link", "leg_r5_link"]
-  right_foot_name: "leg_r5_link"
-  left_foot_name: "leg_l5_link"
+  key_bodies: ["left_ankle_link", "right_ankle_link"]
+  contact_bodies: [ "left_ankle_link", "right_ankle_link" ]
+  right_foot_name: "right_ankle_link"
+  left_foot_name: "left_ankle_link"
   foot_name: "ankle"
   knee_name: "knee_link"
   has_upper_body_dof: False
   has_torso: True
-  torso_name: "base_link"
+  torso_name: "pelvis"
   # DFS order (isaacgym order)
-  dof_names: ['leg_l1_joint', 'leg_l2_joint', 'leg_l3_joint', 'leg_l4_joint', 'leg_l5_joint',
-              'leg_r1_joint', 'leg_r2_joint', 'leg_r3_joint', 'leg_r4_joint', 'leg_r5_joint']
+  dof_names: ['left_hip_yaw_joint', 
+              'left_hip_roll_joint', 
+              'left_hip_pitch_joint', 
+              'left_knee_joint', 
+              'left_ankle_joint',
+              'right_hip_yaw_joint', 
+              'right_hip_roll_joint', 
+              'right_hip_pitch_joint', 
+              'right_knee_joint', 
+              'right_ankle_joint']
 
   decouple_upper_and_lower_dofs: false
 
@@ -40,29 +48,29 @@ robot:
   dof_joint_friction_list: [0.00, 0.00, 0.00, 0.00, 0.00, 
                             0.00, 0.00, 0.00, 0.00, 0.00]
 
-  body_names: ['base_link',
-               'leg_l1_link', 'leg_l2_link', 'leg_l3_link', 'leg_l4_link', 'leg_l5_link',
-               'leg_r1_link', 'leg_r2_link', 'leg_r3_link', 'leg_r4_link', 'leg_r5_link']
+  body_names: ['pelvis', 
+                'left_hip_yaw_link', 'left_hip_roll_link','left_hip_pitch_link', 'left_knee_link', 'left_ankle_link',
+                'right_hip_yaw_link', 'right_hip_roll_link', 'right_hip_pitch_link', 'right_knee_link', 'right_ankle_link']
 
 
-  terminate_after_contacts_on: ["base_link"]
-  penalize_contacts_on: ["leg_l3_link", "leg_r3_link"]
+  terminate_after_contacts_on : ["pelvis", "hip"]
+  penalize_contacts_on: []
   init_state:
     pos: [0.0, 0.0, 1.0] # x,y,z [m]
     rot: [0.0, 0.0, 0.0, 1.0] # x,y,z,w [quat]
     lin_vel: [0.0, 0.0, 0.0]  # x,y,z [m/s]
     ang_vel: [0.0, 0.0, 0.0]  # x,y,z [rad/s]
     default_joint_angles :  # : target angles [rad] when action : 0.0
-      leg_l1_joint : 0. 
-      leg_l2_joint : 0            
-      leg_l3_joint : -0.4      
-      leg_l4_joint : 0.8    
-      leg_l5_joint : -0.4  
-      leg_r1_joint : 0. 
-      leg_r2_joint : 0 
-      leg_r3_joint : -0.4                                    
-      leg_r4_joint : 0.8                                          
-      leg_r5_joint : -0.4                                  
+      left_hip_yaw_joint : 0. 
+      left_hip_roll_joint : 0            
+      left_hip_pitch_joint : -0.4      
+      left_knee_joint : 0.8    
+      left_ankle_joint : -0.4  
+      right_hip_yaw_joint : 0. 
+      right_hip_roll_joint : 0 
+      right_hip_pitch_joint : -0.4                                    
+      right_knee_joint : 0.8                                          
+      right_ankle_joint : -0.4                                  
 
 
   randomize_link_body_names : [
@@ -74,28 +82,24 @@ robot:
     control_type: P
     # PD Drive parameters:
     stiffness: # [N*m/rad]
-      leg_l1_joint: 200  # left hip yaw
-      leg_l2_joint: 200  # left hip roll
-      leg_l3_joint: 200  # left hip pitch
-      leg_l4_joint: 300  # left knee
-      leg_l5_joint: 40   # left ankle
-      leg_r1_joint: 200  # right hip yaw
-      leg_r2_joint: 200  # right hip roll
-      leg_r3_joint: 200  # right hip pitch
-      leg_r4_joint: 300  # right knee
-      leg_r5_joint: 40   # right ankle
+      hip_yaw: 200
+      hip_roll: 200
+      hip_pitch: 200
+      knee: 300
+      ankle: 40
+      torso: 300
+      shoulder: 100
+      elbow : 100 # [N*m/rad]
 
     damping :
-      leg_l1_joint: 5   # left hip yaw
-      leg_l2_joint: 5   # left hip roll
-      leg_l3_joint: 5   # left hip pitch
-      leg_l4_joint: 6   # left knee
-      leg_l5_joint: 2   # left ankle
-      leg_r1_joint: 5   # right hip yaw
-      leg_r2_joint: 5   # right hip roll
-      leg_r3_joint: 5   # right hip pitch
-      leg_r4_joint: 6   # right knee
-      leg_r5_joint: 2   # right ankle
+      hip_yaw: 5
+      hip_roll: 5
+      hip_pitch: 5
+      knee: 6
+      ankle: 2
+      torso: 6
+      shoulder: 2
+      elbow: 2 # [N*m/rad]  # [N*m*s/rad]
 
     # action scale: target angle = actionScale * action + defaultAngle
     action_scale: 0.25
@@ -114,10 +118,10 @@ robot:
     angular_damping: 0.
     linear_damping: 0.
 
-    urdf_file: "pdd/${robot.asset.robot_type}.urdf"
-    usd_file: "pdd/${robot.asset.robot_type}.usd"
-    xml_file: "pdd/${robot.asset.robot_type}.xml"
-    robot_type: pdd
+    urdf_file: "hunter/${robot.asset.robot_type}.urdf"
+    usd_file: "hunter/${robot.asset.robot_type}.usd"
+    xml_file: "hunter/${robot.asset.robot_type}.xml"
+    robot_type: hunter
     self_collisions: 1 # 1 to disable, 0 to enable self collisions
     default_dof_drive_mode: 3
 
