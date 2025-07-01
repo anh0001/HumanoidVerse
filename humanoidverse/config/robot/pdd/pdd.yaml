@@ -53,16 +53,16 @@ robot:
     lin_vel: [0.0, 0.0, 0.0]  # x,y,z [m/s]
     ang_vel: [0.0, 0.0, 0.0]  # x,y,z [rad/s]
     default_joint_angles :  # : target angles [rad] when action : 0.0
-      left_hip_yaw_joint : 0. 
-      left_hip_roll_joint : 0            
-      left_hip_pitch_joint : -0.4      
-      left_knee_joint : 0.8    
-      left_ankle_joint : -0.4  
-      right_hip_yaw_joint : 0. 
-      right_hip_roll_joint : 0 
-      right_hip_pitch_joint : -0.4                                    
-      right_knee_joint : 0.8                                          
-      right_ankle_joint : -0.4                                  
+      leg_l1_joint : 0. 
+      leg_l2_joint : 0            
+      leg_l3_joint : -0.4      
+      leg_l4_joint : 0.8    
+      leg_l5_joint : -0.4  
+      leg_r1_joint : 0. 
+      leg_r2_joint : 0 
+      leg_r3_joint : -0.4                                    
+      leg_r4_joint : 0.8                                          
+      leg_r5_joint : -0.4                                  
 
 
   randomize_link_body_names : [
@@ -74,24 +74,28 @@ robot:
     control_type: P
     # PD Drive parameters:
     stiffness: # [N*m/rad]
-      hip_yaw: 200
-      hip_roll: 200
-      hip_pitch: 200
-      knee: 300
-      ankle: 40
-      torso: 300
-      shoulder: 100
-      elbow : 100 # [N*m/rad]
+      leg_l1_joint: 200  # left hip yaw
+      leg_l2_joint: 200  # left hip roll
+      leg_l3_joint: 200  # left hip pitch
+      leg_l4_joint: 300  # left knee
+      leg_l5_joint: 40   # left ankle
+      leg_r1_joint: 200  # right hip yaw
+      leg_r2_joint: 200  # right hip roll
+      leg_r3_joint: 200  # right hip pitch
+      leg_r4_joint: 300  # right knee
+      leg_r5_joint: 40   # right ankle
 
     damping :
-      hip_yaw: 5
-      hip_roll: 5
-      hip_pitch: 5
-      knee: 6
-      ankle: 2
-      torso: 6
-      shoulder: 2
-      elbow: 2 # [N*m/rad]  # [N*m*s/rad]
+      leg_l1_joint: 5   # left hip yaw
+      leg_l2_joint: 5   # left hip roll
+      leg_l3_joint: 5   # left hip pitch
+      leg_l4_joint: 6   # left knee
+      leg_l5_joint: 2   # left ankle
+      leg_r1_joint: 5   # right hip yaw
+      leg_r2_joint: 5   # right hip roll
+      leg_r3_joint: 5   # right hip pitch
+      leg_r4_joint: 6   # right knee
+      leg_r5_joint: 2   # right ankle
 
     # action scale: target angle = actionScale * action + defaultAngle
     action_scale: 0.25
