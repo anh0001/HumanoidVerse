@@ -39,10 +39,12 @@ robot:
 
   decouple_upper_and_lower_dofs: false
 
-  dof_pos_lower_limit_list: [-0.43, -0.43, -1.57, -0.26, -0.87,       -0.43, -0.43, -1.57, -0.26, -0.87,    ]
-  dof_pos_upper_limit_list: [0.43,  0.43,   1.57,  2.05,  0.52,        0.43, 0.43,  1.57,  2.05,   0.52,    ]
-  dof_vel_limit_list:       [23.,   23.,    23.,   14.,   9.,          23.,  23.,   23.,  14.,     9.,      ]
-  dof_effort_limit_list:    [200., 200.,  200.,    300.,  40.,         200., 200., 200., 300.,  40.,        ]
+  # Updated limits to match URDF exactly (URDF order: hip_roll, hip_yaw, hip_pitch, knee, ankle)
+  # DFS order used here: hip_yaw, hip_roll, hip_pitch, knee, ankle
+  dof_pos_lower_limit_list: [-0.5,  -0.2,  -0.8,   0.0,  -1.1,        -0.5,  -0.2,  -0.8,   0.0,  -1.1,     ]
+  dof_pos_upper_limit_list: [ 1.0,   0.5,   1.2,   1.5,   1.1,         1.0,   0.5,   1.2,   1.5,   1.1,     ]
+  dof_vel_limit_list:       [30.1,  30.1,  30.1,  30.1,  30.1,        30.1,  30.1,  30.1,  30.1,  30.1,     ]
+  dof_effort_limit_list:    [23.7,  23.7,  23.7,  23.7,  23.7,        23.7,  23.7,  23.7,  23.7,  23.7,     ]
   dof_armature_list: [0.1, 0.1, 0.1, 0.1, 0.1,
                       0.1, 0.1, 0.1, 0.1, 0.1]
   dof_joint_friction_list: [0.00, 0.00, 0.00, 0.00, 0.00, 
@@ -80,24 +82,25 @@ robot:
 
   control:
     control_type: P
-    # PD Drive parameters:
+    # PD Drive parameters scaled for realistic 23.7 Nm effort limits:
+    # Target: 70% of effort limit (16.6 Nm) at 20° error (0.35 rad) → Kp ≈ 47
     stiffness: # [N*m/rad]
-      hip_yaw: 200
-      hip_roll: 200
-      hip_pitch: 200
-      knee: 300
-      ankle: 40
-      torso: 300
-      shoulder: 100
-      elbow : 100 # [N*m/rad]
+      hip_yaw: 45
+      hip_roll: 45
+      hip_pitch: 45
+      knee: 47
+      ankle: 35
+      torso: 45
+      shoulder: 45
+      elbow : 45 # [N*m/rad]
 
     damping :
-      hip_yaw: 5
-      hip_roll: 5
-      hip_pitch: 5
-      knee: 6
-      ankle: 2
-      torso: 6
+      hip_yaw: 1.5
+      hip_roll: 1.5
+      hip_pitch: 1.5
+      knee: 1.6
+      ankle: 1.2
+      torso: 1.5
       shoulder: 2
       elbow: 2 # [N*m/rad]  # [N*m*s/rad]
 
