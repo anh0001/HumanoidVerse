@@ -1,5 +1,6 @@
 IsaacLab/
 *_env/
+.github/
 
 # Compiled Python bytecode
 *.py[cod]

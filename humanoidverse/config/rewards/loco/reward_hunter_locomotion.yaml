@@ -3,73 +3,104 @@
 # defaults:
 #   - reward_base
 
+# ============================================================================
+# HUNTER ROBOT LOCOMOTION REWARD CONFIGURATION
+# ============================================================================
+# This file defines the reward function for training the Hunter quadrupedal robot
+# to perform stable and efficient locomotion. The reward system balances:
+# 
+# 1. TRACKING PERFORMANCE: Following velocity commands accurately
+# 2. ENERGY EFFICIENCY: Minimizing torques and smooth movements  
+# 3. STABILITY: Maintaining upright posture and proper foot placement
+# 4. NATURAL GAIT: Encouraging appropriate swing/stance phases
+# 
+# Hunter Robot Specifications:
+# - 10 DOF quadruped (5 joints per leg: hip_yaw, hip_roll, hip_pitch, knee, ankle)
+# - Target standing height: 0.6m
+# - Contact bodies: left_ankle_link, right_ankle_link
+# ============================================================================
+
 rewards:
-  set_reward: Jiawei
-  set_reward_date: 20250630
+  set_reward: Anhar
+  set_reward_date: 20250715
   only_positive_rewards: False
   reward_scales:
-      tracking_lin_vel: 1.0
-      tracking_ang_vel: 0.5
-      penalty_lin_vel_z: -2.0
-      penalty_ang_vel_xy: -1.0
-      penalty_orientation: -1.0
-      penalty_torques: -0.00001
-      # penalty_dof_vel: -0.0001
-      penalty_dof_acc: -3.5e-8
-      penalty_action_rate: -0.01
-      # penalty_feet_contact_forces: -0.01
-      # penalty_stumble: -10.0
-      # penalty_slippage: -1.0
-      penalty_feet_ori: -2.0
-      limits_dof_pos: -10.0
-      # limits_dof_vel: -5.0
-      # limits_torque: -0.1
-      feet_air_time: 1.0
-      base_height: -100.0
-      penalty_feet_height: -5.
-      # termination: -500.0
-      # penalty_in_the_air: -100.0
-      # feet_max_height_for_this_air: -100.0
+      # TRACKING REWARDS (Positive - encourage desired behavior)
+      tracking_lin_vel: 1.0      # Reward for following linear velocity commands (x,y directions)
+      tracking_ang_vel: 0.5      # Reward for following angular velocity commands (yaw rotation)
+      
+      # PENALTY REWARDS (Negative - discourage unwanted behavior)
+      penalty_lin_vel_z: -2.0    # Penalize vertical velocity (bouncing up/down)
+      penalty_ang_vel_xy: -1.0   # Penalize roll/pitch rotations (keep robot upright)
+      penalty_orientation: -1.0  # Penalize deviation from upright base orientation
+      penalty_torques: -0.00001  # Penalize high joint torques (energy efficiency)
+      # penalty_dof_vel: -0.0001 # Penalize high joint velocities (smoothness)
+      penalty_dof_acc: -3.5e-8   # Penalize high joint accelerations (smooth movements)
+      penalty_action_rate: -0.01 # Penalize rapid changes in control actions (stability)
+      # penalty_feet_contact_forces: -0.01 # Penalize excessive contact forces on feet
+      # penalty_stumble: -10.0    # Penalize feet hitting vertical surfaces (stumbling)
+      # penalty_slippage: -1.0    # Penalize foot slippage when in contact with ground
+      penalty_feet_ori: -2.0     # Penalize feet orientation away from flat (proper foot placement)
+      
+      # LIMIT PENALTIES (Prevent reaching joint/actuator limits)
+      limits_dof_pos: -10.0      # Heavily penalize joints near position limits
+      # limits_dof_vel: -5.0     # Penalize joints near velocity limits
+      # limits_torque: -0.1      # Penalize joints near torque limits
+      
+      # GAIT AND LOCOMOTION REWARDS
+      feet_air_time: 1.0         # Reward appropriate swing phase duration (natural gait)
+      base_height: -100.0        # Penalize deviation from target standing height (0.98m)
+      penalty_feet_height: -5.   # Penalize inappropriate feet height during swing phase
+      
+      # TERMINATION AND STABILITY REWARDS (Currently disabled)
+      # termination: -500.0      # Large penalty for episode termination
+      # penalty_in_the_air: -100.0 # Penalize when both feet are off the ground
+      # feet_max_height_for_this_air: -100.0 # Penalize excessive foot lift height
 
 
 
+  # REWARD FUNCTION PARAMETERS
+  reward_tracking_sigma:        # Standard deviation for exponential tracking rewards
+    lin_vel: 0.25              # Tolerance for linear velocity tracking (smaller = stricter)
+    ang_vel: 0.25              # Tolerance for angular velocity tracking (smaller = stricter)
+  
+  reward_limit:                 # Soft limits as fraction of actual limits (0-1)
+    soft_dof_pos_limit: 0.9    # Start penalizing at 90% of position limit
+    soft_dof_vel_limit: 0.9    # Start penalizing at 90% of velocity limit  
+    soft_torque_limit: 0.9     # Start penalizing at 90% of torque limit
 
-  reward_tracking_sigma:
-    lin_vel: 0.25
-    ang_vel: 0.25
-  reward_limit:
-    soft_dof_pos_limit: 0.9
-    soft_dof_vel_limit: 0.9
-    soft_torque_limit: 0.9
+  # HUNTER ROBOT PHYSICAL TARGETS
+  feet_height_target: 0.02              # Target height for feet during swing phase (meters)
+  
+  locomotion_max_contact_force: 100.0   # Derived threshold: total mass ≈12.7 kg → weight ≈125 N; per-foot static load ≈62.5 N; with 50% margin → ≈93 N; rounded to 100 N
+  desired_feet_max_height_for_this_air: 0.06  # Desired maximum foot lift height (meters)
+  desired_base_height: 0.6              # Target standing height for Hunter robot (meters)
 
-  feet_height_target: 0.2
-  locomotion_max_contact_force: 200.0
-  desired_feet_max_height_for_this_air: 0.2
-  desired_base_height: 0.98
+  # REWARD PENALTY CURRICULUM SYSTEM (Currently disabled)
+  reward_penalty_curriculum: False      # Enable adaptive penalty scaling based on performance
+  reward_initial_penalty_scale : 1.0    # Initial scale factor for penalty rewards
+  reward_min_penalty_scale: 0.0         # Minimum penalty scale (easier training)
+  reward_max_penalty_scale: 1.0         # Maximum penalty scale (harder training)
+  reward_penalty_level_down_threshold: 400   # Episode length to decrease penalty scale
+  reward_penalty_level_up_threshold: 700     # Episode length to increase penalty scale
+  reward_penalty_degree: 0.00001        # Rate of penalty scale adjustment
+  num_compute_average_epl: 10000        # Number of episodes to average for curriculum
 
-  reward_penalty_curriculum: False
-  reward_initial_penalty_scale : 1.0
-  reward_min_penalty_scale: 0.0
-  reward_max_penalty_scale: 1.0
-  reward_penalty_level_down_threshold: 400
-  reward_penalty_level_up_threshold: 700
-  reward_penalty_degree: 0.00001
-  num_compute_average_epl: 10000
-
-  reward_penalty_reward_names : [
-    "penalty_torques",
-    "penalty_dof_acc",
-    "penalty_dof_vel",
-    "penalty_action_rate",
-    "penalty_feet_contact_forces",
-    "penalty_stumble",
-    "penalty_slippage",
-    "penalty_feet_ori",
-    "penalty_in_the_air",
-    "limits_dof_pos",
-    "limits_dof_vel",
-    "limits_torque",
-    "termination",
-    "feet_air_time",
-    "feet_max_height_for_this_air"]
+  # REWARDS AFFECTED BY PENALTY CURRICULUM
+  reward_penalty_reward_names : [       # List of rewards that can be scaled by curriculum
+    "penalty_torques",                  # Energy efficiency penalties
+    "penalty_dof_acc",                  # Joint smoothness penalties
+    "penalty_dof_vel",                  # Joint velocity penalties
+    "penalty_action_rate",              # Control smoothness penalties
+    "penalty_feet_contact_forces",      # Contact force penalties
+    "penalty_stumble",                  # Stumbling penalties
+    "penalty_slippage",                 # Foot slippage penalties
+    "penalty_feet_ori",                 # Foot orientation penalties
+    "penalty_in_the_air",               # Airtime penalties
+    "limits_dof_pos",                   # Position limit penalties
+    "limits_dof_vel",                   # Velocity limit penalties
+    "limits_torque",                    # Torque limit penalties
+    "termination",                      # Termination penalties
+    "feet_air_time",                    # Gait timing rewards
+    "feet_max_height_for_this_air"]     # Foot height penalties
 
