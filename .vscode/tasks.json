@@ -1,0 +1,57 @@
+{
+  "version": "2.0.0",
+  "tasks": [  
+    {
+      "label": "Test Hunter Initial Locomotion",
+      "type": "shell",
+      "command": "conda activate isaaclab && python",
+      "args": [
+        "humanoidverse/train_agent.py",
+        "+simulator=isaacsim",
+        "+exp=locomotion",
+        "+domain_rand=NO_domain_rand",
+        "+rewards=loco/reward_hunter_locomotion",
+        "+robot=hunter/hunter",
+        "+terrain=terrain_locomotion_plane",
+        "+obs=loco/leggedloco_obs_singlestep_withlinvel",
+        "num_envs=16",
+        "project_name=TestInitialLoco",
+        "experiment_name=Hunter_loco_IsaacSim",
+        "headless=False"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run TensorBoard",
+      "type": "shell",
+      "command": "conda activate isaaclab && tensorboard --bind_all --port=7777 --logdir logs",
+      "group": {
+        "kind": "none",
+        "isDefault": false
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-ic"]
+        }
+      },
+      "problemMatcher": []
+    }
+  ]
+}
