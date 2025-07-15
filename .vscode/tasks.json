@@ -44,7 +44,7 @@
     {
       "label": "Full Training Hunter Headless",
       "type": "shell",
-      "command": "source $(conda info --base)/etc/profile.d/conda.sh && conda activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_locomotion_plane +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=4096 project_name=FullTrainingHunter experiment_name=FullTrainingHunter headless=True",
+      "command": "nohup bash -ic \"source $(conda info --base)/etc/profile.d/conda.sh && conda activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_locomotion_plane +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=4096 project_name=FullTrainingHunter experiment_name=FullTrainingHunter headless=True\" > full_training_hunter.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",
