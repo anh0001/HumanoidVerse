@@ -60,9 +60,9 @@
       "problemMatcher": []
     },
     {
-      "label": "Evaluate Hunter Locomotion Model",
+      "label": "Evaluate Hunter Locomotion Model with Pseudo-Random Lateral Pushes",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_4000.pt +simulator=isaacsim\" &",
+      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +domain_rand.push_robots=True +domain_rand.max_push_vel_xy=0.7 +domain_rand.push_interval_s=[3,8]\" &",
       "presentation": {
       "echo": true,
       "reveal": "never",
@@ -77,6 +77,5 @@
       },
       "problemMatcher": []
     }
-    
   ]
 }
