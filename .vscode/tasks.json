@@ -4,7 +4,7 @@
     {
       "label": "Run TensorBoard",
       "type": "shell",
-      "command": "conda activate isaaclab && tensorboard --bind_all --port=7777 --logdir logs",
+      "command": "source ~/miniconda3/bin/activate isaaclab && tensorboard --bind_all --port=7777 --logdir logs",
       "group": {
         "kind": "none",
         "isDefault": false
@@ -26,7 +26,7 @@
     {
       "label": "Run Hunter Testing Initial Locomotion",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source $(conda info --base)/etc/profile.d/conda.sh && conda activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_locomotion_plane +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=16 project_name=TestInitialLoco experiment_name=Hunter_loco_IsaacSim headless=False\" &",
+      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_locomotion_plane +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=16 project_name=TestInitialLoco experiment_name=Hunter_loco_IsaacSim headless=False\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -44,7 +44,7 @@
     {
       "label": "Full Training Hunter Headless",
       "type": "shell",
-      "command": "nohup bash -ic \"source $(conda info --base)/etc/profile.d/conda.sh && conda activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_locomotion_plane +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=4096 project_name=FullTrainingHunter experiment_name=FullTrainingHunter headless=True\" > full_training_hunter.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_locomotion_plane +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=4096 project_name=FullTrainingHunter experiment_name=FullTrainingHunter headless=True\" > full_training_hunter.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -56,6 +56,24 @@
           "executable": "/bin/bash",
           "args": ["-ic"]
         }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Evaluate Hunter Locomotion Model",
+      "type": "shell",
+      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_4000.pt +simulator=isaacsim\" &",
+      "presentation": {
+      "echo": true,
+      "reveal": "never",
+      "focus": false,
+      "panel": "shared"
+      },
+      "options": {
+      "shell": {
+        "executable": "/bin/bash",
+        "args": ["-ic"]
+      }
       },
       "problemMatcher": []
     }
