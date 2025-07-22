@@ -24,26 +24,72 @@ def on_press(key, env):
         if key.char == 'n':
             env.next_task()
             logger.info("Moved to the next task.")
-        # Force Control
-       # Force Control
+        
+        # Manual locomotion commands (similar to IsaacGym implementation)
         if hasattr(key, 'char'):
+            # Forward/backward commands
+            if key.char == 'w':
+                # Move forward
+                if hasattr(env, 'command_generator'):
+                    env.command_generator.lin_vel_x_command[:] = 0.5
+                    logger.info("Manual command: Forward")
+            elif key.char == 's':
+                # Move backward
+                if hasattr(env, 'command_generator'):
+                    env.command_generator.lin_vel_x_command[:] = -0.5
+                    logger.info("Manual command: Backward")
+            elif key.char == 'a':
+                # Move left
+                if hasattr(env, 'command_generator'):
+                    env.command_generator.lin_vel_y_command[:] = 0.5
+                    logger.info("Manual command: Left")
+            elif key.char == 'd':
+                # Move right
+                if hasattr(env, 'command_generator'):
+                    env.command_generator.lin_vel_y_command[:] = -0.5
+                    logger.info("Manual command: Right")
+            elif key.char == 'q':
+                # Rotate counter-clockwise
+                if hasattr(env, 'command_generator'):
+                    env.command_generator.ang_vel_yaw_command[:] = 0.5
+                    logger.info("Manual command: Rotate CCW")
+            elif key.char == 'e':
+                # Rotate clockwise
+                if hasattr(env, 'command_generator'):
+                    env.command_generator.ang_vel_yaw_command[:] = -0.5
+                    logger.info("Manual command: Rotate CW")
+            elif key.char == 'x':
+                # Stop all movement
+                if hasattr(env, 'command_generator'):
+                    env.command_generator.lin_vel_x_command[:] = 0.0
+                    env.command_generator.lin_vel_y_command[:] = 0.0
+                    env.command_generator.ang_vel_yaw_command[:] = 0.0
+                    logger.info("Manual command: Stop")
+            
+            # Force Control (existing functionality)
             if key.char == '1':
                 env.apply_force_tensor[:, env.left_hand_link_index, 2] += 1.0
-                logger.info(f"Left hand force: {env.apply_force_tensor[:, env.left_hand_link_index, :]}")
+                logger.info("Left hand force: "
+                           f"{env.apply_force_tensor[:, env.left_hand_link_index, :]}")
             elif key.char == '2':
                 env.apply_force_tensor[:, env.left_hand_link_index, 2] -= 1.0
-                logger.info(f"Left hand force: {env.apply_force_tensor[:, env.left_hand_link_index, :]}")
+                logger.info("Left hand force: "
+                           f"{env.apply_force_tensor[:, env.left_hand_link_index, :]}")
             elif key.char == '3':
                 env.apply_force_tensor[:, env.right_hand_link_index, 2] += 1.0
-                logger.info(f"Right hand force: {env.apply_force_tensor[:, env.right_hand_link_index, :]}")
+                logger.info("Right hand force: "
+                           f"{env.apply_force_tensor[:, env.right_hand_link_index, :]}")
             elif key.char == '4':
                 env.apply_force_tensor[:, env.right_hand_link_index, 2] -= 1.0
-                logger.info(f"Right hand force: {env.apply_force_tensor[:, env.right_hand_link_index, :]}")
+                logger.info("Right hand force: "
+                           f"{env.apply_force_tensor[:, env.right_hand_link_index, :]}")
     except AttributeError:
         pass
 
+
 def listen_for_keypress(env):
-    with keyboard.Listener(on_press=lambda key: on_press(key, env)) as listener:
+    listener = keyboard.Listener(on_press=lambda key: on_press(key, env))
+    with listener:
         listener.join()
 
 
@@ -53,7 +99,9 @@ def listen_for_keypress(env):
 @hydra.main(config_path="config", config_name="base_eval")
 def main(override_config: OmegaConf):
     # logging to hydra log file
-    hydra_log_path = os.path.join(HydraConfig.get().runtime.output_dir, "eval.log")
+    hydra_log_path = os.path.join(
+        HydraConfig.get().runtime.output_dir, "eval.log"
+    )
     logger.remove()
     logger.add(hydra_log_path, level="DEBUG")
 

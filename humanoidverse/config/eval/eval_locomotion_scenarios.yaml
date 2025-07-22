@@ -1,0 +1,138 @@
+# @package _global_
+# Structured locomotion evaluation scenarios for Hunter robot
+# Each scenario defines specific locomotion commands and evaluation parameters
+
+# Note: This config is designed to be used with scenario-specific overrides
+# It does not include base environment config - that should be provided via command line
+
+# Base evaluation configuration
+eval_name: locomotion_scenarios
+eval_log_dir: logs_eval/${eval_name}/${eval_timestamp}
+
+# Scenario definitions - each defines constant command ranges for evaluation
+scenarios:
+  # Forward locomotion scenario
+  scenario_forward:
+    name: "Forward Locomotion"
+    description: "Evaluate forward walking at constant velocity"
+    eval_overrides:
+      env.config.max_episode_length_s: 60
+      env.config.locomotion_command_ranges.lin_vel_x: [0.5, 0.5]
+      env.config.locomotion_command_ranges.lin_vel_y: [0.0, 0.0]
+      env.config.locomotion_command_ranges.ang_vel_yaw: [0.0, 0.0]
+      env.config.locomotion_command_ranges.heading: [0.0, 0.0]
+      env.config.locomotion_command_resampling_time: 1000.0
+  
+  # Backward locomotion scenario
+  scenario_backward:
+    name: "Backward Locomotion"
+    description: "Evaluate backward walking at constant velocity"
+    eval_overrides:
+      env.config.max_episode_length_s: 60
+      env.config.locomotion_command_ranges.lin_vel_x: [-0.5, -0.5]
+      env.config.locomotion_command_ranges.lin_vel_y: [0.0, 0.0]
+      env.config.locomotion_command_ranges.ang_vel_yaw: [0.0, 0.0]
+      env.config.locomotion_command_ranges.heading: [0.0, 0.0]
+      env.config.locomotion_command_resampling_time: 1000.0
+  
+  # Left lateral locomotion scenario
+  scenario_left:
+    name: "Left Lateral Locomotion"
+    description: "Evaluate left lateral movement at constant velocity"
+    eval_overrides:
+      env.config.max_episode_length_s: 60
+      env.config.locomotion_command_ranges.lin_vel_x: [0.0, 0.0]
+      env.config.locomotion_command_ranges.lin_vel_y: [0.5, 0.5]
+      env.config.locomotion_command_ranges.ang_vel_yaw: [0.0, 0.0]
+      env.config.locomotion_command_ranges.heading: [0.0, 0.0]
+      env.config.locomotion_command_resampling_time: 1000.0
+  
+  # Right lateral locomotion scenario
+  scenario_right:
+    name: "Right Lateral Locomotion"
+    description: "Evaluate right lateral movement at constant velocity"
+    eval_overrides:
+      env.config.max_episode_length_s: 60
+      env.config.locomotion_command_ranges.lin_vel_x: [0.0, 0.0]
+      env.config.locomotion_command_ranges.lin_vel_y: [-0.5, -0.5]
+      env.config.locomotion_command_ranges.ang_vel_yaw: [0.0, 0.0]
+      env.config.locomotion_command_ranges.heading: [0.0, 0.0]
+      env.config.locomotion_command_resampling_time: 1000.0
+  
+  # Rotation scenario (clockwise)
+  scenario_rotate_cw:
+    name: "Clockwise Rotation"
+    description: "Evaluate clockwise rotation at constant angular velocity"
+    eval_overrides:
+      env.config.max_episode_length_s: 60
+      env.config.locomotion_command_ranges.lin_vel_x: [0.0, 0.0]
+      env.config.locomotion_command_ranges.lin_vel_y: [0.0, 0.0]
+      env.config.locomotion_command_ranges.ang_vel_yaw: [-0.5, -0.5]
+      env.config.locomotion_command_ranges.heading: [0.0, 0.0]
+      env.config.locomotion_command_resampling_time: 1000.0
+  
+  # Rotation scenario (counter-clockwise)
+  scenario_rotate_ccw:
+    name: "Counter-Clockwise Rotation"
+    description: "Evaluate counter-clockwise rotation at constant angular velocity"
+    eval_overrides:
+      env.config.max_episode_length_s: 60
+      env.config.locomotion_command_ranges.lin_vel_x: [0.0, 0.0]
+      env.config.locomotion_command_ranges.lin_vel_y: [0.0, 0.0]
+      env.config.locomotion_command_ranges.ang_vel_yaw: [0.5, 0.5]
+      env.config.locomotion_command_ranges.heading: [0.0, 0.0]
+      env.config.locomotion_command_resampling_time: 1000.0
+  
+  # Combined forward-left scenario
+  scenario_forward_left:
+    name: "Forward-Left Diagonal"
+    description: "Evaluate diagonal forward-left movement"
+    eval_overrides:
+      env.config.max_episode_length_s: 60
+      env.config.locomotion_command_ranges.lin_vel_x: [0.4, 0.4]
+      env.config.locomotion_command_ranges.lin_vel_y: [0.3, 0.3]
+      env.config.locomotion_command_ranges.ang_vel_yaw: [0.0, 0.0]
+      env.config.locomotion_command_ranges.heading: [0.0, 0.0]
+      env.config.locomotion_command_resampling_time: 1000.0
+  
+  # Combined forward-right scenario
+  scenario_forward_right:
+    name: "Forward-Right Diagonal"
+    description: "Evaluate diagonal forward-right movement"
+    eval_overrides:
+      env.config.max_episode_length_s: 60
+      env.config.locomotion_command_ranges.lin_vel_x: [0.4, 0.4]
+      env.config.locomotion_command_ranges.lin_vel_y: [-0.3, -0.3]
+      env.config.locomotion_command_ranges.ang_vel_yaw: [0.0, 0.0]
+      env.config.locomotion_command_ranges.heading: [0.0, 0.0]
+      env.config.locomotion_command_resampling_time: 1000.0
+  
+  # Static balance scenario
+  scenario_static:
+    name: "Static Balance"
+    description: "Evaluate static balance with no movement commands"
+    eval_overrides:
+      env.config.max_episode_length_s: 60
+      env.config.locomotion_command_ranges.lin_vel_x: [0.0, 0.0]
+      env.config.locomotion_command_ranges.lin_vel_y: [0.0, 0.0]
+      env.config.locomotion_command_ranges.ang_vel_yaw: [0.0, 0.0]
+      env.config.locomotion_command_ranges.heading: [0.0, 0.0]
+      env.config.locomotion_command_resampling_time: 1000.0
+
+# Default scenario (can be overridden by command line argument)
+scenario: scenario_forward
+
+# Evaluation metrics logging
+eval_metrics:
+  log_interval: 10  # Log metrics every 10 steps
+  save_trajectory: true
+  save_video: false
+  metrics_to_log:
+    - "linear_velocity_tracking"
+    - "angular_velocity_tracking"
+    - "base_height"
+    - "base_orientation"
+    - "joint_positions"
+    - "joint_velocities"
+    - "contact_forces"
+    - "energy_consumption"
