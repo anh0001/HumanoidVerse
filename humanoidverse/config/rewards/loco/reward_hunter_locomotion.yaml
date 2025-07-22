@@ -50,7 +50,7 @@ rewards:
       
       # GAIT AND LOCOMOTION REWARDS
       feet_air_time: 1.0         # Reward appropriate swing phase duration (natural gait)
-      base_height: -100.0        # Penalize deviation from target standing height (0.6m - correct for Hunter robot)
+      base_height: -10.0         # Penalize deviation from target standing height (0.6m - correct for Hunter robot)
       penalty_feet_height: -5.   # Penalize inappropriate feet height during swing phase
       
       # TERMINATION AND STABILITY REWARDS (Currently disabled)
