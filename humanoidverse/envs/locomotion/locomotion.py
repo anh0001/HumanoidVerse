@@ -72,7 +72,9 @@ class LeggedRobotLocomotion(LeggedRobotBase):
     def set_is_evaluating(self, command=None):
         super().set_is_evaluating()
         self.commands = torch.zeros((self.num_envs, 4), dtype=torch.float32, device=self.device)
-        if command is not None:
+        if command is None:
+            self._resample_commands(torch.arange(self.num_envs, device=self.device))
+        else:
             self.commands[:, :3] = torch.tensor(command).to(self.device)  # only set the first 3 commands
 
     ########################### TRACKING REWARDS ###########################
