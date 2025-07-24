@@ -19,48 +19,75 @@ from loguru import logger
 import threading
 from pynput import keyboard
 
-def on_press(key, env):
+def on_press(key, env, v_lin=0.5, v_ang=0.5, d_heading=0.2):
     try:
         if key.char == 'n':
             env.next_task()
             logger.info("Moved to the next task.")
         
-        # Manual locomotion commands (similar to IsaacGym implementation)
+        # Manual locomotion commands - fixed to work with locomotion environments
         if hasattr(key, 'char'):
-            # Forward/backward commands
-            if key.char == 'w':
-                # Move forward
-                if hasattr(env, 'command_generator'):
+            # Check if this is a locomotion environment (has commands tensor)
+            if hasattr(env, 'commands') and not hasattr(env, 'command_generator'):
+                # --- locomotion commands ------------------------------------------------
+                if key.char == "w":          # forward
+                    env.commands[:, 0] = v_lin
+                    env.commands[:, 1] = 0.0
+                    logger.info("Manual command: Forward")
+                elif key.char == "s":        # backward
+                    env.commands[:, 0] = -v_lin
+                    env.commands[:, 1] = 0.0
+                    logger.info("Manual command: Backward")x
+                elif key.char == "a":        # strafe left
+                    env.commands[:, 1] = v_lin
+                    env.commands[:, 0] = 0.0
+                    logger.info("Manual command: Left")
+                elif key.char == "d":        # strafe right
+                    env.commands[:, 1] = -v_lin
+                    env.commands[:, 0] = 0.0
+                    logger.info("Manual command: Right")
+                elif key.char == "q":        # rotate CCW
+                    env.commands[:, 3] += d_heading  # modify heading instead
+                    logger.info("Manual command: Rotate CCW")
+                elif key.char == "e":        # rotate CW
+                    env.commands[:, 3] -= d_heading  # modify heading instead
+                    logger.info("Manual command: Rotate CW")
+                elif key.char == "x":        # stop
+                    env.commands[:] = 0.0
+                    logger.info("Manual command: Stop")
+
+                # make sure the environment does **not** overwrite our commands
+                env.is_evaluating = True
+            
+            # Original command generator logic for other environments
+            elif hasattr(env, 'command_generator'):
+                # Forward/backward commands
+                if key.char == 'w':
+                    # Move forward
                     env.command_generator.lin_vel_x_command[:] = 0.5
                     logger.info("Manual command: Forward")
-            elif key.char == 's':
-                # Move backward
-                if hasattr(env, 'command_generator'):
+                elif key.char == 's':
+                    # Move backward
                     env.command_generator.lin_vel_x_command[:] = -0.5
                     logger.info("Manual command: Backward")
-            elif key.char == 'a':
-                # Move left
-                if hasattr(env, 'command_generator'):
+                elif key.char == 'a':
+                    # Move left
                     env.command_generator.lin_vel_y_command[:] = 0.5
                     logger.info("Manual command: Left")
-            elif key.char == 'd':
-                # Move right
-                if hasattr(env, 'command_generator'):
+                elif key.char == 'd':
+                    # Move right
                     env.command_generator.lin_vel_y_command[:] = -0.5
                     logger.info("Manual command: Right")
-            elif key.char == 'q':
-                # Rotate counter-clockwise
-                if hasattr(env, 'command_generator'):
+                elif key.char == 'q':
+                    # Rotate counter-clockwise
                     env.command_generator.ang_vel_yaw_command[:] = 0.5
                     logger.info("Manual command: Rotate CCW")
-            elif key.char == 'e':
-                # Rotate clockwise
-                if hasattr(env, 'command_generator'):
+                elif key.char == 'e':
+                    # Rotate clockwise
                     env.command_generator.ang_vel_yaw_command[:] = -0.5
                     logger.info("Manual command: Rotate CW")
-            elif key.char == 'x':
-                # Stop all movement
-                if hasattr(env, 'command_generator'):
+                elif key.char == 'x':
+                    # Stop all movement
                     env.command_generator.lin_vel_x_command[:] = 0.0
                     env.command_generator.lin_vel_y_command[:] = 0.0
                     env.command_generator.ang_vel_yaw_command[:] = 0.0
@@ -87,8 +114,18 @@ def on_press(key, env):
         pass
 
 
+def on_release(key, env):
+    """Handle key release to stop movement when no keys are held"""
+    # zero everything whenever a movement key is released
+    if hasattr(key, "char") and key.char in ["w", "a", "s", "d", "q", "e"]:
+        if hasattr(env, 'commands') and not hasattr(env, 'command_generator'):
+            env.commands[:] = 0.0
+
+
 def listen_for_keypress(env):
-    listener = keyboard.Listener(on_press=lambda key: on_press(key, env))
+    listener = keyboard.Listener(
+        on_press=lambda key: on_press(key, env),
+        on_release=lambda key: on_release(key, env))
     with listener:
         listener.join()
 
@@ -193,6 +230,9 @@ def main(override_config: OmegaConf):
     config.env.config.save_rendering_dir = str(checkpoint.parent / "renderings" / f"ckpt_{ckpt_num}")
     config.env.config.ckpt_dir = str(checkpoint.parent) # commented out for now, might need it back to save motion
     env = instantiate(config.env, device=device)
+
+    # Fix issue 1: Set environment to evaluation mode with zero commands to prevent automatic walking
+    env.set_is_evaluating(command=[0.0, 0.0, 0.0])  # stand still
 
     # Start a thread to listen for key press
     key_listener_thread = threading.Thread(target=listen_for_keypress, args=(env,))
