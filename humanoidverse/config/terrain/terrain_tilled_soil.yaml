@@ -1,0 +1,76 @@
+# @package _global_
+## ---------------------------------------------------------------------------
+#  Tilled‑soil terrain preset for Hunter biped evaluation in Isaac Sim
+#  – Matches loose, freshly‑worked loam described in the design notes:
+#      ρb ≈ 1 000‑1 300 kg m⁻³,  c ≈ 5‑15 kPa,  φ ≈ 25‑35°,  w ≈ 12‑22 %
+# ---------------------------------------------------------------------------
+#
+# How to use:
+#   1. Save the file alongside your other terrain presets.
+#   2. In your launch script or tasks.json, replace +terrain=terrain_locomotion_plane with
+#      +terrain=terrain_tilled_soil.
+#   3. To emulate wetter or drier fields, adjust just two knobs at runtime via CLI overrides:
+#
+#      +terrain.cohesion=15000 +terrain.static_friction=0.50   # "spring‑wet" clay loam
+#      +terrain.cohesion=5000  +terrain.static_friction=0.65   # "summer‑dry" sandy loam
+#
+#      Dynamic friction should track static friction − 0.15 for realism.
+#
+# The preset mirrors the physical recipe and simulation constants recommended earlier,
+# so the Hunter robot sees the same sink‑age, shear resistance and slip behaviour in‑sim
+# that you expect from a freshly tilled agricultural plot.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+#  Tilled‑soil terrain preset for Hunter biped evaluation in Isaac Sim
+#  – Matches loose, freshly‑worked loam described in the design notes:
+#      ρb ≈ 1 000‑1 300 kg m⁻³,  c ≈ 5‑15 kPa,  φ ≈ 25‑35°,  w ≈ 12‑22 %
+# ---------------------------------------------------------------------------
+
+
+
+defaults:
+  - terrain_base          # inherit all generic fields, then override below
+
+terrain:
+  # ---- Geometry representation ------------------------------------------------
+  mesh_type: 'heightfield'          # height‑field → fastest + supports scalar “noise”
+  horizontal_scale: 0.10            # 10 cm per grid cell ⇒ captures hoof‑size undulations
+  vertical_scale: 0.005             # 5 mm vertical resolution keeps sub‑cm bumps smooth
+  border_size: 40                   # metre padding so robot never steps off mesh
+
+  # ---- Material mechanics -----------------------------------------------------
+  # Static / dynamic friction chosen from φ = 25‑30°  →  μ ≈ tanφ = 0.47‑0.58.
+  # Add ~15 % safety to cover compaction variations.
+  static_friction: 0.60             # upper‑range so stance foot “sticks” before slip
+  dynamic_friction: 0.45            # lower because sliding soil shears and polishes
+  restitution: 0.02                 # almost inelastic; matches <1 cm rebound drop test
+
+  # These extra keys are passed straight to PhysX through the terrain importer
+  # (Supported by omni.isaac.lab ≥ 2024.1.  Remove if your fork ignores them.)
+  youngs_modulus: 1.0e7             # 10 MPa ⇔ loose granular top‑soil (dry side)
+  poisson_ratio: 0.30               # typical for soil skeleton
+  contact_stiffness: 1.0e5          # N m⁻¹ compliance → 2‑6 mm settlement under 15 kPa
+  contact_damping: 1.0e3            # N s m⁻¹ yields < 1 cm ball‑drop rebound
+  cohesion: 1.0e4                   # Pa (10 kPa) nominal; scale for wetter/drier runs
+
+  # ---- Topography “plough ridges” --------------------------------------------
+  # Generate shallow furrows via Perlin noise; wavelengths 0.05‑0.15 m, RMS ≈ 15 mm
+  selected: True
+  terrain_kwargs:
+    type: 'perlin'
+    amplitude: 0.015                # m RMS height → boot sinks ~1‑2 cm between ridges
+    frequency: 12.0                 # cycles m⁻¹ ⇒ λ ≈ 0.08 m (≈ ankle‑width clods)
+
+  # ---- Curriculum / layout ----------------------------------------------------
+  curriculum: False                 # keep uniform surface; enable if progressive diff.
+  terrain_length: 8.0               # m  (single env footprint)
+  terrain_width:  8.0               # m
+  num_rows: 1                       # disable multi‑row auto‑generator
+  num_cols: 1
+  terrain_types: ['flat']           # placeholder – all detail comes from Perlin noise
+  terrain_proportions: [1.0]
+
+  # ---- Height‑field post‑processing ------------------------------------------
+  slope_treshold: 0.75              # same as default; >0.75 becomes vertical face
+  measure_heights: False            # Hunter doesn’t need terrain‑height observations
