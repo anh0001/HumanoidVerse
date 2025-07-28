@@ -18,6 +18,7 @@ class BaseSimulator:
         """
         self.config = config
         self.sim_device = device
+        self.device = device  # Add for compatibility
         self.headless = False
 
         self._rigid_body_pos: torch.Tensor

@@ -47,6 +47,7 @@ from humanoidverse.simulator.isaacsim.events import randomize_body_com
 class IsaacSim(BaseSimulator):
     def __init__(self, config, device):
         super().__init__(config, device)
+        self.device = device  # Add this line for compatibility
         self.simulator_config = config.simulator.config
         self.robot_config = config.robot
         self.env_config = config
@@ -594,7 +595,8 @@ class IsaacSim(BaseSimulator):
     def create_envs(self, num_envs, env_origins, base_init_state):
         
         self.num_envs = num_envs
-        self.env_origins = env_origins
+        # Copy env_origins from scene after build - this is the key fix!
+        self.env_origins = self.scene.env_origins.to(self.sim_device)
         self.base_init_state = base_init_state
         
         return self.scene, self._robot

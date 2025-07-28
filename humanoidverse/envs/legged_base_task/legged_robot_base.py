@@ -758,8 +758,13 @@ class LeggedRobotBase(BaseTask):
         #                                     gymtorch.unwrap_tensor(self.simulator.dof_state),
         #                                     gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
 
+    def _apply_env_offset(self, root_states, env_ids):
+        """Apply environment offset to root states. Nuclear fallback."""
+        root_states[env_ids, :3] += self.simulator.env_origins[env_ids]
+        return root_states
+
     def _reset_root_states(self, env_ids, target_root_states=None):
-        """ Resets ROOT states position and velocities of selected environmments
+        """ Resets ROOT states position and velocities of selected envs
             if target_root_states is not None, reset to target_root_states
         Args:
             env_ids (List[int]): Environemnt ids
@@ -768,22 +773,29 @@ class LeggedRobotBase(BaseTask):
         if target_root_states is not None:
             self.simulator.robot_root_states[env_ids] = target_root_states
             # keep env spacing offset when resetting with custom root states
-            self.simulator.robot_root_states[env_ids, :3] += self.simulator.env_origins[env_ids]
+            self.simulator.robot_root_states = self._apply_env_offset(
+                self.simulator.robot_root_states, env_ids)
 
         else:
             # base position
             if self.custom_origins:
-                self.simulator.robot_root_states[env_ids] = self.base_init_state
+                self.simulator.robot_root_states[env_ids] = \
+                    self.base_init_state
                 # maintain per-env translation when resetting default states
-                self.simulator.robot_root_states[env_ids, :3] += self.simulator.env_origins[env_ids]
-                self.simulator.robot_root_states[env_ids, :2] += torch_rand_float(-1., 1., (len(env_ids), 2), device=str(self.device)) # xy position within 1m of the center
+                self.simulator.robot_root_states = self._apply_env_offset(
+                    self.simulator.robot_root_states, env_ids)
+                rand_xy = torch_rand_float(
+                    -1., 1., (len(env_ids), 2), device=str(self.device))
+                self.simulator.robot_root_states[env_ids, :2] += rand_xy
             else:
-                self.simulator.robot_root_states[env_ids] = self.base_init_state
-                self.simulator.robot_root_states[env_ids, :3] += self.simulator.env_origins[env_ids]
+                self.simulator.robot_root_states[env_ids] = \
+                    self.base_init_state
+                self.simulator.robot_root_states = self._apply_env_offset(
+                    self.simulator.robot_root_states, env_ids)
             # base velocities
-            
-            self.simulator.robot_root_states[env_ids, 7:13] = torch_rand_float(-0.5, 0.5, (len(env_ids), 6), device=str(self.device)) # [7:10]: lin vel, [10:13]: ang vel
-
+            rand_vel = torch_rand_float(
+                -0.5, 0.5, (len(env_ids), 6), device=str(self.device))
+            self.simulator.robot_root_states[env_ids, 7:13] = rand_vel
 
     def _plot_domain_rand_params(self):
         raise NotImplementedError
