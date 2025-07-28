@@ -767,17 +767,19 @@ class LeggedRobotBase(BaseTask):
         """
         if target_root_states is not None:
             self.simulator.robot_root_states[env_ids] = target_root_states
-            self.simulator.robot_root_states[env_ids, :3] += self.env_origins[env_ids]
+            # keep env spacing offset when resetting with custom root states
+            self.simulator.robot_root_states[env_ids, :3] += self.simulator.env_origins[env_ids]
 
         else:
             # base position
             if self.custom_origins:
                 self.simulator.robot_root_states[env_ids] = self.base_init_state
-                self.simulator.robot_root_states[env_ids, :3] += self.env_origins[env_ids]
+                # maintain per-env translation when resetting default states
+                self.simulator.robot_root_states[env_ids, :3] += self.simulator.env_origins[env_ids]
                 self.simulator.robot_root_states[env_ids, :2] += torch_rand_float(-1., 1., (len(env_ids), 2), device=str(self.device)) # xy position within 1m of the center
             else:
                 self.simulator.robot_root_states[env_ids] = self.base_init_state
-                self.simulator.robot_root_states[env_ids, :3] += self.env_origins[env_ids]
+                self.simulator.robot_root_states[env_ids, :3] += self.simulator.env_origins[env_ids]
             # base velocities
             
             self.simulator.robot_root_states[env_ids, 7:13] = torch_rand_float(-0.5, 0.5, (len(env_ids), 6), device=str(self.device)) # [7:10]: lin vel, [10:13]: ang vel
