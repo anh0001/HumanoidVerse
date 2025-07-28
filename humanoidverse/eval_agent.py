@@ -37,7 +37,7 @@ def on_press(key, env, v_lin=0.5, v_ang=0.5, d_heading=0.2):
                 elif key.char == "s":        # backward
                     env.commands[:, 0] = -v_lin
                     env.commands[:, 1] = 0.0
-                    logger.info("Manual command: Backward")x
+                    logger.info("Manual command: Backward")
                 elif key.char == "a":        # strafe left
                     env.commands[:, 1] = v_lin
                     env.commands[:, 0] = 0.0
