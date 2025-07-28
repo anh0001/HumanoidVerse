@@ -33,6 +33,7 @@ defaults:
   - terrain_base          # inherit all generic fields, then override below
 
 terrain:
+  max_init_terrain_level: 9
   # ---- Geometry representation ------------------------------------------------
   mesh_type: 'heightfield'          # height‑field → fastest + supports scalar “noise”
   horizontal_scale: 0.10            # 10 cm per grid cell ⇒ captures hoof‑size undulations

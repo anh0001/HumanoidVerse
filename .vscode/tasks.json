@@ -202,6 +202,24 @@
         }
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Run Hunter Testing Initial Locomotion Tilled Soil",
+      "type": "shell",
+      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_tilled_soil +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=16 project_name=TestInitialLocoTilledSoil experiment_name=Hunter_loco_IsaacSim_TilledSoil headless=False > train.log 2>&1\" &",
+      "presentation": {
+        "echo": true,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-ic"]
+        }
+      },
+      "problemMatcher": []
     }
   ]
 }
