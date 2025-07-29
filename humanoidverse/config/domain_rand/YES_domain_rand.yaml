@@ -1,0 +1,10 @@
+# @package _global_
+# Standard domain randomization configuration
+# Enables robust training with parameter variations
+
+defaults:
+  - domain_rand_base  # inherit all base randomization settings
+
+# This configuration simply enables all the base domain randomization
+# settings without any modifications. For soil-specific training, 
+# use YES_domain_rand_soil.yaml instead.

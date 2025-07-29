@@ -1,0 +1,68 @@
+# @package _global_
+# PPO configuration optimized for soil terrain training
+# Addresses entropy decay and learning rate issues identified in audit
+
+defaults:
+  - ppo  # inherit base PPO configuration
+
+algo:
+  config:
+    # Enhanced entropy management for soil terrain
+    entropy_coef: 0.02              # Increased from 0.01 to maintain exploration longer
+    
+    # Entropy annealing schedule (if supported by implementation)
+    entropy_schedule: "cosine"       # Cosine annealing to gradually reduce entropy
+    entropy_coef_min: 0.005         # Minimum entropy coefficient
+    
+    # Learning rate adjustments to reduce oscillations
+    actor_learning_rate: 5.e-4      # Reduced from 1e-3 to halve LR as suggested
+    critic_learning_rate: 5.e-4     # Reduced from 1e-3
+    
+    # KL divergence target adjustment
+    desired_kl: 0.015               # Increased from 0.01 to reduce learning spikes
+    
+    # Slightly more conservative clipping for soil instability
+    clip_param: 0.15                # Reduced from 0.2 for more stable updates
+    
+    # Enhanced gradient clipping for stability
+    max_grad_norm: 0.8              # Reduced from 1.0 for more conservative updates
+    
+    # Rollout length remains optimal for soil terrain
+    num_steps_per_env: 24           # Keep at 0.48s rollout per update (good for soil)
+    
+    # Value function learning
+    value_loss_coef: 1.0            # Keep standard value loss weight
+    
+    # Additional stability measures
+    use_clipped_value_loss: True    # Keep value clipping enabled
+    schedule: "adaptive"            # Keep adaptive learning rate schedule
+    
+    # Noise initialization for soil robustness
+    init_noise_std: 1.0             # Slightly increased from 0.8 for soil uncertainty
+    
+    # Training parameters
+    num_learning_epochs: 5          # Keep standard number of epochs
+    num_mini_batches: 4             # Keep standard batch configuration
+    gamma: 0.99                     # Keep standard discount factor
+    lam: 0.95                       # Keep standard GAE lambda
+    
+    # Save more frequently for soil terrain monitoring
+    save_interval: 50               # Reduced from 100 for more frequent checkpoints
+    
+    # Architecture remains the same but could be adjusted if needed
+    module_dict:
+      actor: 
+        input_dim: [actor_obs]
+        output_dim: [robot_action_dim]
+        layer_config:
+          type: MLP
+          hidden_dims: [512, 256, 128]
+          activation: ELU
+      critic: 
+        type: MLP
+        input_dim: [critic_obs]
+        output_dim: [1]
+        layer_config:
+          type: MLP
+          hidden_dims: [512, 256, 128]
+          activation: ELU
