@@ -168,7 +168,7 @@ pip install -e .
 To test your installation, try a minimum working example of training locomotion task in IsaacSim:
 
 ```bash
-IsaacLab/isaaclab.sh -p source/standalone/tools/convert_urdf.py humanoidverse/data/robots/hunter/hunter.urdf humanoidverse/data/robots/hunter/hunter.usd --merge-joints --make-instanceable
+IsaacLab/isaaclab.sh -p IsaacLab/source/standalone/tools/convert_urdf.py humanoidverse/data/robots/hunter/hunter.urdf humanoidverse/data/robots/hunter/hunter.usd --merge-joints --make-instanceable
 
 python humanoidverse/train_agent.py \
 +simulator=isaacsim \

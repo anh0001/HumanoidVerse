@@ -41,7 +41,7 @@ robot:
 
   # Updated limits to match URDF exactly (URDF order: hip_roll, hip_yaw, hip_pitch, knee, ankle)
   # DFS order used here: hip_yaw, hip_roll, hip_pitch, knee, ankle
-  dof_pos_lower_limit_list: [-1.0,  -0.2,  -0.8,   0.0,  -1.1,        -1.0,  -0.2,  -0.8,   0.0,  -1.1]
+  dof_pos_lower_limit_list: [-0.5,  -0.2,  -0.8,   0.0,  -1.1,        -0.5,  -0.2,  -0.8,   0.0,  -1.1]
   dof_pos_upper_limit_list: [ 1.0,   0.5,   1.2,   1.5,   1.1,         1.0,   0.5,   1.2,   1.5,   1.1,     ]
   dof_vel_limit_list:       [30.1,  30.1,  30.1,  30.1,  30.1,        30.1,  30.1,  30.1,  30.1,  30.1,     ]
   dof_effort_limit_list:    [23.7,  23.7,  23.7,  23.7,  23.7,        23.7,  23.7,  23.7,  23.7,  23.7,     ]
