@@ -33,8 +33,8 @@ rewards:
       penalty_lin_vel_z: -2.0    # Penalize vertical velocity (bouncing up/down)
       penalty_ang_vel_xy: -1.0   # Penalize roll/pitch rotations (keep robot upright)
       penalty_orientation: -2.0  # Penalize deviation from upright base orientation
-      # penalty_torques: -0.00001  # Penalize high joint torques (energy efficiency)
-      penalty_torques: -0.0003   # Scaled up from -0.00001 due to realistic 23.7 Nm limits (was tuned for 300 Nm)
+      penalty_torques: -0.00001  # Penalize high joint torques (energy efficiency)
+      # penalty_torques: -0.0003   # Scaled up from -0.00001 due to realistic 23.7 Nm limits (was tuned for 300 Nm)
       # penalty_dof_vel: -0.0001 # Penalize high joint velocities (smoothness)
       penalty_dof_acc: -3.5e-8   # Penalize high joint accelerations (smooth movements)
       penalty_action_rate: -0.01 # Penalize rapid changes in control actions (stability)
