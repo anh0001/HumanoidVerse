@@ -47,10 +47,12 @@ def on_press(key, env, v_lin=0.5, v_ang=0.5, d_heading=0.2):
                     env.commands[:, 0] = 0.0
                     logger.info("Manual command: Right")
                 elif key.char == "q":        # rotate CCW
-                    env.commands[:, 3] += d_heading  # modify heading instead
+                    # Set yaw-rate command directly for immediate control
+                    env.commands[:, 2] = v_ang
                     logger.info("Manual command: Rotate CCW")
                 elif key.char == "e":        # rotate CW
-                    env.commands[:, 3] -= d_heading  # modify heading instead
+                    # Set yaw-rate command directly for immediate control
+                    env.commands[:, 2] = -v_ang
                     logger.info("Manual command: Rotate CW")
                 elif key.char == "x":        # stop
                     env.commands[:] = 0.0

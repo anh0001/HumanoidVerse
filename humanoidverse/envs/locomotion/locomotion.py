@@ -38,7 +38,8 @@ class LeggedRobotLocomotion(LeggedRobotBase):
 
     def _update_tasks_callback(self):
         """ Callback called before computing terminations, rewards, and observations
-            Default behaviour: Compute ang vel command based on target and heading, compute measured terrain heights and randomly push robots
+            Default behaviour: Compute ang vel command based on target and heading,
+            compute measured terrain heights and randomly push robots
         """
         # 
         super()._update_tasks_callback()
@@ -47,13 +48,14 @@ class LeggedRobotLocomotion(LeggedRobotBase):
         if not self.is_evaluating:
             env_ids = (self.episode_length_buf % int(self.config.locomotion_command_resampling_time / self.dt)==0).nonzero(as_tuple=False).flatten()
             self._resample_commands(env_ids)
-        forward = quat_apply(self.base_quat, self.forward_vec)
-        heading = torch.atan2(forward[:, 1], forward[:, 0])
-        self.commands[:, 2] = torch.clip(
-            0.5 * wrap_to_pi(self.commands[:, 3] - heading), 
-            self.command_ranges["ang_vel_yaw"][0], 
-            self.command_ranges["ang_vel_yaw"][1]
-        )
+            # Only compute automatic yaw-rate command during training, not eval
+            forward = quat_apply(self.base_quat, self.forward_vec)
+            heading = torch.atan2(forward[:, 1], forward[:, 0])
+            self.commands[:, 2] = torch.clip(
+                0.5 * wrap_to_pi(self.commands[:, 3] - heading),
+                self.command_ranges["ang_vel_yaw"][0],
+                self.command_ranges["ang_vel_yaw"][1]
+            )
 
     def _resample_commands(self, env_ids):
         self.commands[env_ids, 0] = torch_rand_float(self.command_ranges["lin_vel_x"][0], self.command_ranges["lin_vel_x"][1], (len(env_ids), 1), device=str(self.device)).squeeze(1)
