@@ -42,9 +42,9 @@
       "problemMatcher": []
     },
     {
-      "label": "Full Training Hunter Headless",
+      "label": "Stage 0 Plane Terrain Full Training Hunter Headless",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_locomotion_plane +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=4096 project_name=FullTrainingHunter experiment_name=FullTrainingHunter headless=True\" > full_training_hunter.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_locomotion_plane +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=4096 project_name=Stage0FullTrainingHunter experiment_name=HunterTraining headless=True\" > full_training_hunter.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -188,7 +188,7 @@
     {
       "label": "Evaluate Hunter - Manual Control Mode",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval.log 2>&1\" &",
+      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250728_171825-FullTrainingHunter-locomotion-hunter/model_54700.pt +simulator=isaacsim ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -224,7 +224,7 @@
     {
       "label": "Full Training Hunter Headless Soil Terrain",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +exp=locomotion algo=ppo_soil +domain_rand=YES_domain_rand_soil +rewards=loco/reward_hunter_soil_locomotion +robot=hunter/hunter +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=2048 project_name=FullTrainingHunterSoil experiment_name=FullTrainingHunterSoil headless=True\" > full_training_hunter_soil.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion algo=ppo_soil +domain_rand=YES_domain_rand_soil +rewards=loco/reward_hunter_soil_locomotion +robot=hunter/hunter +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=2048 project_name=FullTrainingHunterSoil experiment_name=FullTrainingHunterSoil headless=True\" > full_training_hunter_soil.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -242,7 +242,7 @@
     {
       "label": "Full Training Hunter Headless Soil Terrain (High Memory)",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +exp=locomotion algo=ppo_soil +domain_rand=YES_domain_rand_soil +rewards=loco/reward_hunter_soil_locomotion +robot=hunter/hunter +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=4096 project_name=FullTrainingHunterSoil experiment_name=FullTrainingHunterSoil headless=True\" > full_training_hunter_soil.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion algo=ppo_soil +domain_rand=YES_domain_rand_soil +rewards=loco/reward_hunter_soil_locomotion +robot=hunter/hunter +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=4096 project_name=FullTrainingHunterSoil experiment_name=FullTrainingHunterSoil headless=True\" > full_training_hunter_soil.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -260,7 +260,7 @@
     {
       "label": "Evaluate Hunter - Manual Control Mode Soil Terrain",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunterSoil/20250729_180343-FullTrainingHunterSoil-locomotion-hunter/model_49350.pt +simulator=isaacsim +exp=locomotion +rewards=loco/reward_hunter_soil_locomotion +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval.log 2>&1\" &",
+      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunterSoil/20250730_075343-FullTrainingHunterSoil-locomotion-hunter/model_10000.pt +simulator=isaacsim +exp=locomotion +rewards=loco/reward_hunter_soil_locomotion +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
