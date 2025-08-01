@@ -8,11 +8,9 @@ Humanoid Robot Sim-to-Real Learning. </h1>
 </p>
 
 
-[![IsaacGym](https://img.shields.io/badge/IsaacGym-Preview4-b.svg)](https://developer.nvidia.com/isaac-gym)
-
 [![IsaacSim](https://img.shields.io/badge/IsaacSim-4.2.0-b.svg)](https://docs.isaacsim.omniverse.nvidia.com/4.2.0/index.html)
 
-[![Genesis](https://img.shields.io/badge/Genesis-0.2.1-b.svg)](https://docs.isaacsim.omniverse.nvidia.com/4.2.0/index.html)
+[![IsaacLab](https://img.shields.io/badge/IsaacLab-1.4.1-b.svg)](https://isaac-sim.github.io/IsaacLab/)
 
 
 [![Linux platform](https://img.shields.io/badge/Platform-linux--64-orange.svg)](https://ubuntu.com/blog/tag/22-04-lts)
@@ -39,103 +37,20 @@ We compared the scope of HumanoidVerse with other sim-to-real frameworks and sum
 </div>
 
 ## TODO
-- [x] Support for multiple simulators: (Currently) IsaacGym, Genesis, IsaacLab.
+- [x] Support for IsaacSim simulator.
 - [x] Support for multiple embodiments: (Currently) Unitree Humanoid H1-10DoF, H1-19DoF, G1-12DoF, G1-23DoF.
 - [ ] Sim-to-Sim and Sim-to-Real pipelines.
 - [ ] Motion tracking tasks.
 
 # News
 
-- 2025-02-04: :tada: Initial Public Release! We have released the locomotion training pipeline for humanoid robots in IsaacGym, IsaacSim and Genesis.
+- 2025-02-04: :tada: Initial Public Release! We have released the locomotion training pipeline for humanoid robots in IsaacSim.
 
 
 # Installation
 
 Note: 
-- We recommend using `mamba` other than using `conda`, beacuse `mamba` is faster. Refer to [Docs of Mamaba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) to install mamba.
-- We are creating separate environments for each simulator, to avoid the dependency hell of different simulators.
-- You do not need to install all of the simulators at once. If you only want to use IsaacGym, you can skip the installation of the other simulators.
-
-## IsaacGym
-
-<details>
-<summary>Environment Setup for IsaacGym Simulator.</summary>
-
-Clone the repository from source:
-
-```bash
-git clone git@github.com:LeCAR-Lab/HumanoidVerse.git
-cd HumanoidVerse
-```
-
-Create a virtual environment with python 3.8.
-
-```bash
-mamba create -n hgym python=3.8
-mamba activate hgym
-```
-
-Download [IsaacGym](https://developer.nvidia.com/isaac-gym) outside of the HumanoidVerse repository, and extract it.
-
-```bash
-cd ../
-wget https://developer.nvidia.com/isaac-gym-preview-4
-tar -xvzf isaac-gym-preview-4
-```
-
-Now the file structure should look like this:
-
-```text
-❯ tree . -L 1
-.
-├── isaacgym
-└── HumanoidVerse
-
-2 directories, 0 files
-```
-
-Install IsaacGym Python API, `PyTorch` will be installed at this step.
-
-```bash
-pip install -e ./isaacgym/python/.
-```
-
-(Optional) Test IsaacGym installation:
-
-```bash
-cd isaacgym/python/examples/
-python 1080_balls_of_solitude.py # or
-python joint_monkey.py
-```
-
-Install HumanoidVerse:
-
-```bash
-# at the root of HumanoidVerse repository
-pip install -e .
-```
-
-To test your installation, try a minimum working example of training locomotion task in IsaacGym:
-
-```bash
-python humanoidverse/train_agent.py \
-+simulator=isaacgym \
-+exp=locomotion \
-+domain_rand=NO_domain_rand \
-+rewards=loco/reward_h1_locomotion \
-+robot=h1/h1_10dof \
-+terrain=terrain_locomotion_plane \
-+obs=loco/leggedloco_obs_singlestep_withlinvel \
-num_envs=1 \
-project_name=TESTInstallation \
-experiment_name=H110dof_loco_IsaacGym \
-headless=False
-```
-
-Then you should see:
-<img src="assets/isaacgym_test.gif" width="800px"/>
-
-</details>
+- We use `conda` for environment management.
 
 ## IsaacSim
 
@@ -152,8 +67,8 @@ cd HumanoidVerse
 Create a virtual environment with python 3.10.
 
 ```bash
-mamba create -n hsim python=3.10
-mamba activate 
+conda create -n hsim python=3.10
+conda activate hsim
 ```
 Install IsaacSim following instructions [here](https://isaac-sim.github.io/IsaacLab/main/source/setup/installation/binaries_installation.html#installing-isaac-sim)
 
@@ -163,6 +78,83 @@ Install HumanoidVerse:
 
 ```bash
 pip install -e .
+```
+
+**Fix for Isaac Sim 4.2 Python Environment Integration:**
+
+If you encounter `ModuleNotFoundError: No module named 'omni.isaac.kit'` when running tasks, you need to integrate Isaac Sim's Python environment with your conda environment. Create conda activation/deactivation scripts:
+
+```bash
+# Create conda environment directories
+mkdir -p ~/miniconda3/envs/isaaclab/etc/conda/activate.d ~/miniconda3/envs/isaaclab/etc/conda/deactivate.d
+
+# Create activation script
+cat > ~/miniconda3/envs/isaaclab/etc/conda/activate.d/isaac_sim.sh << 'EOF'
+#!/bin/bash
+# Save current environment variables
+export ISAAC_SIM_PYTHONPATH_BACKUP="$PYTHONPATH"
+export ISAAC_SIM_LD_LIBRARY_PATH_BACKUP="$LD_LIBRARY_PATH"
+
+# Source Isaac Sim environment
+source ~/isaacsim_4.2/setup_python_env.sh
+EOF
+
+# Create deactivation script
+cat > ~/miniconda3/envs/isaaclab/etc/conda/deactivate.d/isaac_sim.sh << 'EOF'
+#!/bin/bash
+# Restore original environment variables
+if [ -n "$ISAAC_SIM_PYTHONPATH_BACKUP" ]; then
+    export PYTHONPATH="$ISAAC_SIM_PYTHONPATH_BACKUP"
+    unset ISAAC_SIM_PYTHONPATH_BACKUP
+fi
+
+if [ -n "$ISAAC_SIM_LD_LIBRARY_PATH_BACKUP" ]; then
+    export LD_LIBRARY_PATH="$ISAAC_SIM_LD_LIBRARY_PATH_BACKUP"
+    unset ISAAC_SIM_LD_LIBRARY_PATH_BACKUP
+fi
+EOF
+
+# Make scripts executable
+chmod +x ~/miniconda3/envs/isaaclab/etc/conda/activate.d/isaac_sim.sh
+chmod +x ~/miniconda3/envs/isaaclab/etc/conda/deactivate.d/isaac_sim.sh
+```
+
+After setting this up, deactivate and reactivate your conda environment:
+```bash
+conda deactivate
+conda activate isaaclab
+```
+
+This automatically sources Isaac Sim's Python environment when the conda environment is activated, eliminating the need to modify VSCode tasks or manually source setup scripts.
+
+**Fix for EXP_PATH KeyError:**
+
+If you encounter `KeyError: 'EXP_PATH'` when running training tasks, this means the Isaac Sim environment variables are not properly set in your conda environment. Add the missing environment variables to your conda activation script:
+
+```bash
+# Add Isaac Sim environment variables to conda activation script
+cat >> ~/miniconda3/envs/isaaclab/etc/conda/activate.d/setenv.sh << 'EOF'
+
+# for Isaac Sim
+export CARB_APP_PATH=~/isaacsim_4.2/kit
+export EXP_PATH=~/isaacsim_4.2/apps
+export ISAAC_PATH=~/isaacsim_4.2
+EOF
+
+# Add corresponding unset commands to deactivation script
+cat >> ~/miniconda3/envs/isaaclab/etc/conda/deactivate.d/unsetenv.sh << 'EOF'
+unset CARB_APP_PATH
+unset EXP_PATH
+unset ISAAC_PATH
+EOF
+```
+
+**Note:** Replace `~/isaacsim_4.2` with your actual Isaac Sim installation path.
+
+After adding these variables, reactivate your conda environment:
+```bash
+conda deactivate
+conda activate isaaclab
 ```
 
 To test your installation, try a minimum working example of training locomotion task in IsaacSim:
@@ -189,66 +181,15 @@ Then you should see:
 
 </details>
 
-## Genesis
-
-<details>
-<summary>Environment Setup for Genesis Simulator.</summary>
-
-Clone the repository from source:
-
-```bash
-git clone git@github.com:LeCAR-Lab/HumanoidVerse.git
-cd HumanoidVerse
-```
-
-Create a virtual environment with python 3.10.
-
-```bash
-mamba create -n hgen python=3.10
-mamba activate hgen
-```
-Install `Genesis`. Note that `Genesis` simulator is still under development, and some functions such as the built-in `recording` is not stable.
-
-```bash
-pip install torch
-pip install genesis-world==0.2.1
-```
-
-Install HumanoidVerse:
-
-```bash
-pip install -e .
-```
-To test your installation, try a minimum working example of training locomotion task in Genesis:
-
-```bash
-python humanoidverse/train_agent.py \
-+simulator=genesis \
-+exp=locomotion \
-+domain_rand=NO_domain_rand \
-+rewards=loco/reward_h1_locomotion \
-+robot=h1/h1_10dof \
-+terrain=terrain_locomotion_plane \
-+obs=loco/leggedloco_obs_singlestep_withlinvel \
-num_envs=1 \
-project_name=TESTInstallation \
-experiment_name=H110dof_loco_Genesis \
-headless=False
-```
-
-Then you should see:
-<img src="assets/genesis_test.gif" width="800px"/>
-
-</details>
 
 
 # Training & Evaluation
-We support training & evluating in multiple simulators: `IsaacGym`, `IsaacSim` and `Genesis` by changing only **ONE** command line: `+simulator=<simulator_name>`
+We support training & evaluating in IsaacSim simulator.
 ## Policy Training
 To train your policy, follow this command format:
 ```bash
 python humanoidverse/train_agent.py \
-+simulator=<simulator_name> \
++simulator=isaacsim \
 +exp=<task_name> \
 +domain_rand=<domain_randomization> \
 +rewards=<reward_function> \
@@ -267,16 +208,16 @@ If you want to use `wandb` for logging, you can add `+opt=wandb` in the command.
 
 ```bash
 python humanoidverse/train_agent.py \
-+simulator=isaacgym \
++simulator=isaacsim \
 +exp=locomotion \
 +domain_rand=NO_domain_rand \
-+rewards=loco/reward_h1_locomotion \
-+robot=h1/h1_10dof \
++rewards=loco/reward_hunter_locomotion \
++robot=hunter/hunter \
 +terrain=terrain_locomotion_plane \
 +obs=loco/leggedloco_obs_singlestep_withlinvel \
 num_envs=4096 \
 project_name=HumanoidLocomotion \
-experiment_name=H110dof_loco_IsaacGym \
+experiment_name=Hunter_loco_IsaacSim \
 headless=True \
 +opt=wandb
 ```
@@ -300,46 +241,13 @@ python humanoidverse/eval_agent.py +checkpoint=logs/xxx/../xx.pt
 ```bash
 python humanoidverse/eval_agent.py +checkpoint=logs/xxx/../xx.pt \
 +domain_rand.push_robots=True \
-+simulator=genesis # you can load the policy trained in isaacgym
++simulator=isaacsim
 ```
 </details>
 
 # Start Training Your Humanoids!
 
-Here are some starting commands to train & evaluate the locomotion policy on Unitree H1 Humanoid Robot among multiple simulators.
-
-## IsaacGym
-<details>
-<summary>Training Command</summary>
-
-```bash
-python humanoidverse/train_agent.py \
-+simulator=isaacgym \
-+exp=locomotion \
-+domain_rand=NO_domain_rand \
-+rewards=loco/reward_h1_locomotion \
-+robot=h1/h1_10dof \
-+terrain=terrain_locomotion_plane \
-+obs=loco/leggedloco_obs_singlestep_withlinvel \
-num_envs=4096 \
-project_name=HumanoidLocomotion \
-experiment_name=H110dof_loco_IsaacGym \
-headless=True
-```
-</details>
-
-After around 3000 epochs, evaluating in `IsaacGym` and `Genesis`:
-<table>
-  <tr>
-    <td style="text-align: center;">
-      <img src="assets/isaacgym_issacgym.gif" style="width: 100%;"/>
-    </td>
-    <td style="text-align: center;">
-      <img src="assets/isaacgym_genesis.gif" style="width: 100%;"/>
-    </td>
-  </tr>
-</table>
-
+Here is the command to train & evaluate the locomotion policy on Hunter Humanoid Robot in IsaacSim.
 
 ## IsaacSim
 <details>
@@ -350,64 +258,22 @@ python humanoidverse/train_agent.py \
 +simulator=isaacsim \
 +exp=locomotion \
 +domain_rand=NO_domain_rand \
-+rewards=loco/reward_h1_locomotion \
-+robot=h1/h1 \
++rewards=loco/reward_hunter_locomotion \
++robot=hunter/hunter \
 +terrain=terrain_locomotion_plane \
 +obs=loco/leggedloco_obs_singlestep_withlinvel \
 num_envs=4096 \
 project_name=HumanoidLocomotion \
-experiment_name=H119dof_loco_IsaacSim \
+experiment_name=Hunter_loco_IsaacSim \
 headless=True
 ```
 </details>
 
-After around 3000 epochs, evaluating in `IsaacSim` and `Genesis`:
+After around 3000 epochs, evaluating in IsaacSim:
 
-<table>
-  <tr>
-    <td style="text-align: center;">
-      <img src="assets/isaacsim_isaacsim.gif" style="width: 100%;"/>
-    </td>
-    <td style="text-align: center;">
-      <img src="assets/isaacsim_genesis.gif" style="width: 100%;"/>
-    </td>
-  </tr>
-</table>
-
-## Genesis
-<details>
-<summary>Training Command</summary>
-
-```bash
-python humanoidverse/train_agent.py \
-+simulator=genesis \
-+exp=locomotion \
-+domain_rand=NO_domain_rand \
-+rewards=loco/reward_h1_locomotion \
-+robot=h1/h1_10dof \
-+terrain=terrain_locomotion_plane \
-+obs=loco/leggedloco_obs_singlestep_withlinvel \
-num_envs=4096 \
-project_name=HumanoidLocomotion \
-experiment_name=H110dof_loco_Genesis \
-headless=True \
-rewards.reward_penalty_curriculum=True \
-rewards.reward_initial_penalty_scale=0.5
-```
-</details>
-
-After around 5000 epochs, evaluating in `Genesis` and `IsaacGym`:
-
-<table>
-  <tr>
-    <td style="text-align: center;">
-      <img src="assets/genesis_genesis.gif" style="width: 100%;"/>
-    </td>
-    <td style="text-align: center;">
-      <img src="assets/genesis_isaacgym.gif" style="width: 100%;"/>
-    </td>
-  </tr>
-</table>
+<div align="center">
+  <img src="assets/isaacsim_isaacsim.gif" width="800px"/>
+</div>
 
 # References and Acknowledgements
 
