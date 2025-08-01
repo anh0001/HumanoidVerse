@@ -2,6 +2,7 @@ IsaacLab/
 *_env/
 .github/
 nohup.out
+.claud/
 
 # Compiled Python bytecode
 *.py[cod]

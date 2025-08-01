@@ -34,7 +34,7 @@ git --version
 
 ### Download IsaacSim Binary
 
-1. Visit the [NVIDIA Isaac Sim download page](https://developer.nvidia.com/isaac-sim)
+1. Visit the [NVIDIA Isaac Sim download page](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/installation/download.html)
 2. Download the **Isaac Sim 4.2.0** Linux binary zip file
 
 ### Install IsaacSim
@@ -48,7 +48,7 @@ cd ~/isaacsim_4.2
 unzip ~/Downloads/isaac-sim-4.2.0-linux-x86_64-release.zip
 
 # Make the setup script executable
-chmod +x isaac-sim/setup_conda_env.sh
+chmod +x ./setup_conda_env.sh
 ```
 
 ### Verify IsaacSim Installation

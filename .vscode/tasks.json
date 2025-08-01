@@ -26,7 +26,7 @@
     {
       "label": "Run Hunter Testing Initial Locomotion",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_locomotion_plane +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=16 project_name=TestInitialLoco experiment_name=Hunter_loco_IsaacSim headless=False\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_locomotion_plane +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=16 project_name=TestInitialLoco experiment_name=Hunter_loco_IsaacSim headless=False > test.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -62,7 +62,7 @@
     {
       "label": "Evaluate Hunter Locomotion Model with Pseudo-Random Lateral Pushes",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/Stage0FullTrainingHunter/20250731_133824-HunterTraining-locomotion-hunter/model_5600.pt +simulator=isaacsim +domain_rand.push_robots=True +domain_rand.max_push_vel_xy=0.7 +domain_rand.push_interval_s=[3,8]\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/Stage0FullTrainingHunter/20250731_133824-HunterTraining-locomotion-hunter/model_5600.pt +simulator=isaacsim +domain_rand.push_robots=True +domain_rand.max_push_vel_xy=0.7 +domain_rand.push_interval_s=[3,8]\" &",
       "presentation": {
       "echo": true,
       "reveal": "never",
@@ -80,7 +80,7 @@
     {
       "label": "Evaluate Hunter - Forward Locomotion Scenario",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.XAUTHORITY xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/Stage0FullTrainingHunter/20250731_133824-HunterTraining-locomotion-hunter/model_5600.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=60 +env.config.locomotion_command_ranges.lin_vel_x=[0.5,0.5] +env.config.locomotion_command_ranges.lin_vel_y=[0.0,0.0] +env.config.locomotion_command_ranges.ang_vel_yaw=[0.0,0.0] ++env.config.locomotion_command_resampling_time=1000.0 > eval.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.XAUTHORITY xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/Stage0FullTrainingHunter/20250731_133824-HunterTraining-locomotion-hunter/model_5600.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=60 +env.config.locomotion_command_ranges.lin_vel_x=[0.5,0.5] +env.config.locomotion_command_ranges.lin_vel_y=[0.0,0.0] +env.config.locomotion_command_ranges.ang_vel_yaw=[0.0,0.0] ++env.config.locomotion_command_resampling_time=1000.0 > eval.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -98,7 +98,7 @@
     {
       "label": "Evaluate Hunter - Backward Locomotion Scenario",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=60 +env.config.locomotion_command_ranges.lin_vel_x=[-0.5,-0.5] +env.config.locomotion_command_ranges.lin_vel_y=[0.0,0.0] +env.config.locomotion_command_ranges.ang_vel_yaw=[0.0,0.0] ++env.config.locomotion_command_resampling_time=1000.0 > eval.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=60 +env.config.locomotion_command_ranges.lin_vel_x=[-0.5,-0.5] +env.config.locomotion_command_ranges.lin_vel_y=[0.0,0.0] +env.config.locomotion_command_ranges.ang_vel_yaw=[0.0,0.0] ++env.config.locomotion_command_resampling_time=1000.0 > eval.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -116,7 +116,7 @@
     {
       "label": "Evaluate Hunter - Left Lateral Locomotion Scenario",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=60 +env.config.locomotion_command_ranges.lin_vel_x=[0.0,0.0] +env.config.locomotion_command_ranges.lin_vel_y=[0.5,0.5] +env.config.locomotion_command_ranges.ang_vel_yaw=[0.0,0.0] ++env.config.locomotion_command_resampling_time=1000.0 > eval.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=60 +env.config.locomotion_command_ranges.lin_vel_x=[0.0,0.0] +env.config.locomotion_command_ranges.lin_vel_y=[0.5,0.5] +env.config.locomotion_command_ranges.ang_vel_yaw=[0.0,0.0] ++env.config.locomotion_command_resampling_time=1000.0 > eval.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -134,7 +134,7 @@
     {
       "label": "Evaluate Hunter - Right Lateral Locomotion Scenario",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=60 +env.config.locomotion_command_ranges.lin_vel_x=[0.0,0.0] +env.config.locomotion_command_ranges.lin_vel_y=[-0.5,-0.5] +env.config.locomotion_command_ranges.ang_vel_yaw=[0.0,0.0] ++env.config.locomotion_command_resampling_time=1000.0 > eval.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=60 +env.config.locomotion_command_ranges.lin_vel_x=[0.0,0.0] +env.config.locomotion_command_ranges.lin_vel_y=[-0.5,-0.5] +env.config.locomotion_command_ranges.ang_vel_yaw=[0.0,0.0] ++env.config.locomotion_command_resampling_time=1000.0 > eval.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -152,7 +152,7 @@
     {
       "label": "Evaluate Hunter - Clockwise Rotation Scenario",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=60 +env.config.locomotion_command_ranges.lin_vel_x=[0.0,0.0] +env.config.locomotion_command_ranges.lin_vel_y=[0.0,0.0] +env.config.locomotion_command_ranges.ang_vel_yaw=[-0.5,-0.5] ++env.config.locomotion_command_resampling_time=1000.0 > eval.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=60 +env.config.locomotion_command_ranges.lin_vel_x=[0.0,0.0] +env.config.locomotion_command_ranges.lin_vel_y=[0.0,0.0] +env.config.locomotion_command_ranges.ang_vel_yaw=[-0.5,-0.5] ++env.config.locomotion_command_resampling_time=1000.0 > eval.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -170,7 +170,7 @@
     {
       "label": "Evaluate Hunter - Counter-Clockwise Rotation Scenario",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=60 +env.config.locomotion_command_ranges.lin_vel_x=[0.0,0.0] +env.config.locomotion_command_ranges.lin_vel_y=[0.0,0.0] +env.config.locomotion_command_ranges.ang_vel_yaw=[0.5,0.5] ++env.config.locomotion_command_resampling_time=1000.0 > eval.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunter/20250715_134736-FullTrainingHunter-locomotion-hunter/model_83000.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=60 +env.config.locomotion_command_ranges.lin_vel_x=[0.0,0.0] +env.config.locomotion_command_ranges.lin_vel_y=[0.0,0.0] +env.config.locomotion_command_ranges.ang_vel_yaw=[0.5,0.5] ++env.config.locomotion_command_resampling_time=1000.0 > eval.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -188,7 +188,7 @@
     {
       "label": "Evaluate Hunter - Manual Control Mode",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/Stage0FullTrainingHunter/20250731_133824-HunterTraining-locomotion-hunter/model_5600.pt +exp=locomotion +simulator=isaacsim ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/Stage0FullTrainingHunter/20250731_133824-HunterTraining-locomotion-hunter/model_5600.pt +exp=locomotion +simulator=isaacsim ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -206,7 +206,7 @@
     {
       "label": "Run Hunter Testing Initial Locomotion Tilled Soil",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion algo=ppo_soil +domain_rand=YES_domain_rand_soil +rewards=loco/reward_hunter_soil_locomotion +robot=hunter/hunter +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=16 project_name=TestInitialLocoTilledSoil experiment_name=Hunter_loco_IsaacSim_TilledSoil headless=False > train.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion algo=ppo_soil +domain_rand=YES_domain_rand_soil +rewards=loco/reward_hunter_soil_locomotion +robot=hunter/hunter +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=16 project_name=TestInitialLocoTilledSoil experiment_name=Hunter_loco_IsaacSim_TilledSoil headless=False > train.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -260,7 +260,7 @@
     {
       "label": "Evaluate Hunter - Manual Control Mode Soil Terrain",
       "type": "shell",
-      "command": "DISPLAY=:0 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunterSoil/20250730_075343-FullTrainingHunterSoil-locomotion-hunter/model_10000.pt +simulator=isaacsim +exp=locomotion +rewards=loco/reward_hunter_soil_locomotion +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunterSoil/20250730_075343-FullTrainingHunterSoil-locomotion-hunter/model_10000.pt +simulator=isaacsim +exp=locomotion +rewards=loco/reward_hunter_soil_locomotion +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
