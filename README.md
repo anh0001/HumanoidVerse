@@ -12,7 +12,6 @@ Humanoid Robot Sim-to-Real Learning. </h1>
 
 [![IsaacLab](https://img.shields.io/badge/IsaacLab-1.4.1-b.svg)](https://isaac-sim.github.io/IsaacLab/)
 
-
 [![Linux platform](https://img.shields.io/badge/Platform-linux--64-orange.svg)](https://ubuntu.com/blog/tag/22-04-lts)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
 
@@ -49,137 +48,7 @@ We compared the scope of HumanoidVerse with other sim-to-real frameworks and sum
 
 # Installation
 
-Note: 
-- We use `conda` for environment management.
-
-## IsaacSim
-
-<details>
-<summary>Environment Setup for IsaacSim Simulator.</summary>
-
-Clone the repository from source:
-
-```bash
-git clone git@github.com:LeCAR-Lab/HumanoidVerse.git
-cd HumanoidVerse
-```
-
-Create a virtual environment with python 3.10.
-
-```bash
-conda create -n hsim python=3.10
-conda activate hsim
-```
-Install IsaacSim following instructions [here](https://isaac-sim.github.io/IsaacLab/main/source/setup/installation/binaries_installation.html#installing-isaac-sim)
-
-Install IsaacLab following instructions [here](https://isaac-sim.github.io/IsaacLab/main/source/setup/installation/binaries_installation.html#installing-isaac-lab)
-
-Install HumanoidVerse:
-
-```bash
-pip install -e .
-```
-
-**Fix for Isaac Sim 4.2 Python Environment Integration:**
-
-If you encounter `ModuleNotFoundError: No module named 'omni.isaac.kit'` when running tasks, you need to integrate Isaac Sim's Python environment with your conda environment. Create conda activation/deactivation scripts:
-
-```bash
-# Create conda environment directories
-mkdir -p ~/miniconda3/envs/isaaclab/etc/conda/activate.d ~/miniconda3/envs/isaaclab/etc/conda/deactivate.d
-
-# Create activation script
-cat > ~/miniconda3/envs/isaaclab/etc/conda/activate.d/isaac_sim.sh << 'EOF'
-#!/bin/bash
-# Save current environment variables
-export ISAAC_SIM_PYTHONPATH_BACKUP="$PYTHONPATH"
-export ISAAC_SIM_LD_LIBRARY_PATH_BACKUP="$LD_LIBRARY_PATH"
-
-# Source Isaac Sim environment
-source ~/isaacsim_4.2/setup_python_env.sh
-EOF
-
-# Create deactivation script
-cat > ~/miniconda3/envs/isaaclab/etc/conda/deactivate.d/isaac_sim.sh << 'EOF'
-#!/bin/bash
-# Restore original environment variables
-if [ -n "$ISAAC_SIM_PYTHONPATH_BACKUP" ]; then
-    export PYTHONPATH="$ISAAC_SIM_PYTHONPATH_BACKUP"
-    unset ISAAC_SIM_PYTHONPATH_BACKUP
-fi
-
-if [ -n "$ISAAC_SIM_LD_LIBRARY_PATH_BACKUP" ]; then
-    export LD_LIBRARY_PATH="$ISAAC_SIM_LD_LIBRARY_PATH_BACKUP"
-    unset ISAAC_SIM_LD_LIBRARY_PATH_BACKUP
-fi
-EOF
-
-# Make scripts executable
-chmod +x ~/miniconda3/envs/isaaclab/etc/conda/activate.d/isaac_sim.sh
-chmod +x ~/miniconda3/envs/isaaclab/etc/conda/deactivate.d/isaac_sim.sh
-```
-
-After setting this up, deactivate and reactivate your conda environment:
-```bash
-conda deactivate
-conda activate isaaclab
-```
-
-This automatically sources Isaac Sim's Python environment when the conda environment is activated, eliminating the need to modify VSCode tasks or manually source setup scripts.
-
-**Fix for EXP_PATH KeyError:**
-
-If you encounter `KeyError: 'EXP_PATH'` when running training tasks, this means the Isaac Sim environment variables are not properly set in your conda environment. Add the missing environment variables to your conda activation script:
-
-```bash
-# Add Isaac Sim environment variables to conda activation script
-cat >> ~/miniconda3/envs/isaaclab/etc/conda/activate.d/setenv.sh << 'EOF'
-
-# for Isaac Sim
-export CARB_APP_PATH=~/isaacsim_4.2/kit
-export EXP_PATH=~/isaacsim_4.2/apps
-export ISAAC_PATH=~/isaacsim_4.2
-EOF
-
-# Add corresponding unset commands to deactivation script
-cat >> ~/miniconda3/envs/isaaclab/etc/conda/deactivate.d/unsetenv.sh << 'EOF'
-unset CARB_APP_PATH
-unset EXP_PATH
-unset ISAAC_PATH
-EOF
-```
-
-**Note:** Replace `~/isaacsim_4.2` with your actual Isaac Sim installation path.
-
-After adding these variables, reactivate your conda environment:
-```bash
-conda deactivate
-conda activate isaaclab
-```
-
-To test your installation, try a minimum working example of training locomotion task in IsaacSim:
-
-```bash
-IsaacLab/isaaclab.sh -p IsaacLab/source/standalone/tools/convert_urdf.py humanoidverse/data/robots/hunter/hunter.urdf humanoidverse/data/robots/hunter/hunter.usd --merge-joints --make-instanceable
-
-python humanoidverse/train_agent.py \
-+simulator=isaacsim \
-+exp=locomotion \
-+domain_rand=NO_domain_rand \
-+rewards=loco/reward_hunter_locomotion \
-+robot=hunter/hunter \
-+terrain=terrain_locomotion_plane \
-+obs=loco/leggedloco_obs_singlestep_withlinvel \
-num_envs=1 \
-project_name=TESTInstallation \
-experiment_name=Hunter_loco_IsaacSim \
-headless=False
-```
-
-Then you should see:
-<img src="assets/isaacsim_test.gif" width="800px"/>
-
-</details>
+For detailed installation instructions, please refer to the [Installation Guide](docs/installation_guide.md).
 
 
 

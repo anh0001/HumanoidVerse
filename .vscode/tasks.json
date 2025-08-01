@@ -188,7 +188,7 @@
     {
       "label": "Evaluate Hunter - Manual Control Mode",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/Stage0FullTrainingHunter/20250731_133824-HunterTraining-locomotion-hunter/model_5600.pt +exp=locomotion +simulator=isaacsim ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/Stage0FullTrainingHunter/20250731_183713-HunterTraining-locomotion-hunter/model_76400.pt +exp=locomotion +simulator=isaacsim ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",

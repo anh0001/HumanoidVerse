@@ -118,6 +118,9 @@ cd IsaacLab
 # 2. Install required Python packages
 # 3. Setup the environment for IsaacLab
 
+# Source conda profile first
+source ~/miniconda3/etc/profile.d/conda.sh
+
 # Activate the environment
 conda activate isaaclab
 ```
@@ -260,6 +263,83 @@ Add to your `~/.bashrc`:
 # Add IsaacSim to library path
 export LD_LIBRARY_PATH=~/isaacsim_4.2/kit/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=~/isaacsim_4.2/kit/bin:$LD_LIBRARY_PATH
+```
+
+#### 6. Isaac Sim 4.2 Python Environment Integration
+
+If you encounter `ModuleNotFoundError: No module named 'omni.isaac.kit'` when running tasks, you need to integrate Isaac Sim's Python environment with your conda environment. Create conda activation/deactivation scripts:
+
+```bash
+# Create conda environment directories
+mkdir -p ~/miniconda3/envs/isaaclab/etc/conda/activate.d ~/miniconda3/envs/isaaclab/etc/conda/deactivate.d
+
+# Create activation script
+cat > ~/miniconda3/envs/isaaclab/etc/conda/activate.d/isaac_sim.sh << 'EOF'
+#!/bin/bash
+# Save current environment variables
+export ISAAC_SIM_PYTHONPATH_BACKUP="$PYTHONPATH"
+export ISAAC_SIM_LD_LIBRARY_PATH_BACKUP="$LD_LIBRARY_PATH"
+
+# Source Isaac Sim environment
+source ~/isaacsim_4.2/setup_python_env.sh
+EOF
+
+# Create deactivation script
+cat > ~/miniconda3/envs/isaaclab/etc/conda/deactivate.d/isaac_sim.sh << 'EOF'
+#!/bin/bash
+# Restore original environment variables
+if [ -n "$ISAAC_SIM_PYTHONPATH_BACKUP" ]; then
+    export PYTHONPATH="$ISAAC_SIM_PYTHONPATH_BACKUP"
+    unset ISAAC_SIM_PYTHONPATH_BACKUP
+fi
+
+if [ -n "$ISAAC_SIM_LD_LIBRARY_PATH_BACKUP" ]; then
+    export LD_LIBRARY_PATH="$ISAAC_SIM_LD_LIBRARY_PATH_BACKUP"
+    unset ISAAC_SIM_LD_LIBRARY_PATH_BACKUP
+fi
+EOF
+
+# Make scripts executable
+chmod +x ~/miniconda3/envs/isaaclab/etc/conda/activate.d/isaac_sim.sh
+chmod +x ~/miniconda3/envs/isaaclab/etc/conda/deactivate.d/isaac_sim.sh
+```
+
+After setting this up, deactivate and reactivate your conda environment:
+```bash
+conda deactivate
+conda activate isaaclab
+```
+
+This automatically sources Isaac Sim's Python environment when the conda environment is activated, eliminating the need to modify VSCode tasks or manually source setup scripts.
+
+#### 7. EXP_PATH KeyError
+
+If you encounter `KeyError: 'EXP_PATH'` when running training tasks, this means the Isaac Sim environment variables are not properly set in your conda environment. Add the missing environment variables to your conda activation script:
+
+```bash
+# Add Isaac Sim environment variables to conda activation script
+cat >> ~/miniconda3/envs/isaaclab/etc/conda/activate.d/setenv.sh << 'EOF'
+
+# for Isaac Sim
+export CARB_APP_PATH=~/isaacsim_4.2/kit
+export EXP_PATH=~/isaacsim_4.2/apps
+export ISAAC_PATH=~/isaacsim_4.2
+EOF
+
+# Add corresponding unset commands to deactivation script
+cat >> ~/miniconda3/envs/isaaclab/etc/conda/deactivate.d/unsetenv.sh << 'EOF'
+unset CARB_APP_PATH
+unset EXP_PATH
+unset ISAAC_PATH
+EOF
+```
+
+**Note:** Replace `~/isaacsim_4.2` with your actual Isaac Sim installation path.
+
+After adding these variables, reactivate your conda environment:
+```bash
+conda deactivate
+conda activate isaaclab
 ```
 
 ## Environment Variables
