@@ -82,27 +82,27 @@ robot:
 
   control:
     control_type: P
-    # PD Drive parameters scaled for realistic 23.7 Nm effort limits:
-    # Target: 70% of effort limit (16.6 Nm) at 20° error (0.35 rad) → Kp ≈ 47
+    # PD Drive parameters TUNED FOR SOIL TERRAIN (increased by ~1.7x for compliance):
+    # Higher gains needed to counteract soil sinkage and prevent pogo behavior
     stiffness: # [N*m/rad]
-      hip_yaw: 45
-      hip_roll: 45
-      hip_pitch: 45
-      knee: 47
-      ankle: 35
-      torso: 45
-      shoulder: 45
-      elbow : 45 # [N*m/rad]
+      hip_yaw: 76    # 45 * 1.7 = 76.5
+      hip_roll: 76   # 45 * 1.7 = 76.5
+      hip_pitch: 76  # 45 * 1.7 = 76.5
+      knee: 80       # 47 * 1.7 = 79.9
+      ankle: 60      # 35 * 1.7 = 59.5
+      torso: 76      # 45 * 1.7 = 76.5
+      shoulder: 76   # 45 * 1.7 = 76.5
+      elbow : 76     # 45 * 1.7 = 76.5 [N*m/rad]
 
     damping :
-      hip_yaw: 1.5
-      hip_roll: 1.5
-      hip_pitch: 1.5
-      knee: 1.6
-      ankle: 1.2
-      torso: 1.5
-      shoulder: 2
-      elbow: 2 # [N*m/rad]  # [N*m*s/rad]
+      hip_yaw: 2.6   # 1.5 * 1.7 = 2.55
+      hip_roll: 2.6  # 1.5 * 1.7 = 2.55
+      hip_pitch: 2.6 # 1.5 * 1.7 = 2.55
+      knee: 2.7      # 1.6 * 1.7 = 2.72
+      ankle: 2.0     # 1.2 * 1.7 = 2.04
+      torso: 2.6     # 1.5 * 1.7 = 2.55
+      shoulder: 3.4  # 2.0 * 1.7 = 3.4
+      elbow: 3.4     # 2.0 * 1.7 = 3.4 [N*m*s/rad]
 
     # action scale: target angle = actionScale * action + defaultAngle
     action_scale: 0.25

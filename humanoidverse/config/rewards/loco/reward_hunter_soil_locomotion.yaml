@@ -26,22 +26,22 @@ rewards:
   only_positive_rewards: False
   reward_scales:
       # TRACKING REWARDS (Positive - encourage desired behavior)
-      tracking_lin_vel: 0.8      # Reward for following linear velocity commands (x,y directions)
+      tracking_lin_vel: 1.2      # Increased from 0.8 - stronger positive reward for tracking
       tracking_ang_vel: 1.0      # Reward for following angular velocity commands (yaw rotation)
       
-      # PENALTY REWARDS (Negative - discourage unwanted behavior)
-      penalty_lin_vel_z: -2.0    # Penalize vertical velocity (bouncing up/down)
+      # PENALTY REWARDS (Negative - discourage unwanted behavior) - REBALANCED FOR SOIL
+      penalty_lin_vel_z: -1.0    # Reduced from -2.0 - allow natural soil settling
       penalty_ang_vel_xy: -1.0   # Penalize roll/pitch rotations (keep robot upright)
       penalty_orientation: -2.0  # Penalize deviation from upright base orientation
       # penalty_torques: -0.00001  # Penalize high joint torques (energy efficiency)
-      penalty_torques: -0.0003   # Scaled up from -0.00001 due to realistic 23.7 Nm limits (was tuned for 300 Nm)
+      penalty_torques: -0.0001   # Reduced from -0.0003 - less harsh torque penalties
       # penalty_dof_vel: -0.0001 # Penalize high joint velocities (smoothness)
       # penalty_dof_acc: -3.5e-8   # Penalize high joint accelerations (smooth movements)
       # penalty_action_rate: -0.01 # Penalize rapid changes in control actions (stability)
       penalty_feet_contact_forces: -0.05 # Penalize excessive contact forces on feet
       # penalty_stumble: -10.0    # Penalize feet hitting vertical surfaces (stumbling)
-      penalty_slippage: -2.0     # Penalize foot slippage when in contact with ground
-      penalty_feet_ori: -3.0     # Penalize feet orientation away from flat (proper foot placement)
+      penalty_slippage: -0.5     # Reduced from -2.0 - soil naturally has some slip
+      penalty_feet_ori: -0.5     # Reduced from -3.0 - uneven terrain makes perfect foot placement impossible
       
       # LIMIT PENALTIES (Prevent reaching joint/actuator limits)
       limits_dof_pos: -10.0      # Heavily penalize joints near position limits
@@ -53,8 +53,8 @@ rewards:
       base_height: -4.0          # Mild penalty for height deviation (reduced from -12.0 to account for soil sinkage)
       penalty_feet_height: -1.   # Penalize inappropriate feet height during swing phase
       
-      # TERMINATION AND STABILITY REWARDS (Currently disabled)
-      # termination: -500.0      # Large penalty for episode termination
+      # TERMINATION AND STABILITY REWARDS
+      termination: -500.0        # Large penalty for episode termination - ENABLED to encourage staying upright
       # penalty_in_the_air: -100.0 # Penalize when both feet are off the ground
       # feet_max_height_for_this_air: -100.0 # Penalize excessive foot lift height
 

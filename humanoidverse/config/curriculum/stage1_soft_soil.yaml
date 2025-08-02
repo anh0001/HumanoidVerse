@@ -9,6 +9,7 @@ defaults:
   - /terrain: terrain_tilled_soil
   - /domain_rand: NO_domain_rand
   - /rewards: loco/reward_hunter_soil_locomotion
+  - /env: locomotion_soil  # Use soil-specific locomotion configuration
 
 # Keep soil terrain properties from terrain_tilled_soil but ensure no randomization
 terrain:

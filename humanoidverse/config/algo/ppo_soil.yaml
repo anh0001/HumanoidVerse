@@ -7,16 +7,16 @@ defaults:
 
 algo:
   config:
-    # Enhanced entropy management for soil terrain
-    entropy_coef: 0.02              # Increased from 0.01 to maintain exploration longer
+    # STABILIZED entropy management for soil terrain (reduced per post-mortem analysis)
+    entropy_coef: 0.01              # Reduced from 0.02 to prevent policy jumps
     
-    # Entropy annealing schedule (if supported by implementation)
-    entropy_schedule: "cosine"       # Cosine annealing to gradually reduce entropy
-    entropy_coef_min: 0.005         # Minimum entropy coefficient
+    # Entropy annealing schedule - DISABLED to prevent cosine spikes
+    # entropy_schedule: "cosine"     # DISABLED - was causing instability
+    entropy_coef_min: 0.005         # Linear decay target
     
-    # Learning rate adjustments to reduce oscillations
-    actor_learning_rate: 5.e-4      # Reduced from 1e-3 to halve LR as suggested
-    critic_learning_rate: 5.e-4     # Reduced from 1e-3
+    # FIXED learning rate to prevent oscillations (no cosine schedule)
+    actor_learning_rate: 2.5e-4     # Further reduced from 5e-4 per post-mortem
+    critic_learning_rate: 2.5e-4    # Further reduced from 5e-4 per post-mortem
     
     # KL divergence target adjustment
     desired_kl: 0.015               # Increased from 0.01 to reduce learning spikes

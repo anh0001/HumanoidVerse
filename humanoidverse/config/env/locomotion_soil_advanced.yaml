@@ -1,0 +1,17 @@
+# @package _global_
+# Advanced locomotion environment configuration for Stage 2 soil terrain training
+# Progressive command ranges for final curriculum stage
+
+defaults:
+  - locomotion_soil  # Inherit from Stage 1 soil config
+
+# Override command ranges for Stage 2 - more challenging
+env:
+  config:
+    # PROGRESSIVE command ranges for Stage 2 (intermediate between Stage 1 and full)
+    locomotion_command_ranges:
+      lin_vel_x: [-0.6, 0.6]  # Increased from [-0.3, 0.3] but still conservative vs full [-1.0, 1.0]
+      lin_vel_y: [-0.6, 0.6]  # Increased from [-0.3, 0.3] but still conservative vs full [-1.0, 1.0]
+      ang_vel_yaw: [-0.6, 0.6]  # Increased from [-0.3, 0.3] but still conservative vs full [-1.0, 1.0]
+      heading: [-3.14, 3.14]
+    locomotion_command_resampling_time: 12.0  # Slightly faster than Stage 1 (15.0) but slower than default (10.0)
