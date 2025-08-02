@@ -1,0 +1,35 @@
+# @package _global_
+# Stage 0: Static plane terrain with no randomization
+# 
+# This is the foundation stage for Hunter locomotion training.
+# Uses simple plane terrain with high friction and no domain randomization.
+# Suitable for loading pretrained model_157400.pt and initial policy learning.
+
+defaults:
+  - /terrain: terrain_locomotion_plane
+  - /domain_rand: NO_domain_rand
+  - /rewards: loco/reward_hunter_locomotion
+
+# Override terrain settings for maximum stability
+terrain:
+  mesh_type: 'plane'
+  static_friction: 1.0
+  dynamic_friction: 1.0
+  restitution: 0.0
+  curriculum: False
+  selected: False
+
+# Ensure no domain randomization
+domain_rand:
+  push_robots: False
+  randomize_friction: False
+  randomize_base_mass: False
+  randomize_base_com: False
+  randomize_link_mass: False
+  randomize_pd_gain: False
+  randomize_torque_rfi: False
+  randomize_ctrl_delay: False
+  randomize_motion_ref_xyz: False
+  motion_package_loss: False
+  born_offset: False
+  born_heading_randomization: False

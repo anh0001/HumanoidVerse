@@ -1,0 +1,59 @@
+# @package _global_
+# Stage 1: Soft soil physics only
+# 
+# Introduces soil terrain physics without domain randomization.
+# Uses the tilled soil terrain with realistic soil properties but
+# maintains consistent conditions for stable learning progression.
+
+defaults:
+  - /terrain: terrain_tilled_soil
+  - /domain_rand: NO_domain_rand
+  - /rewards: loco/reward_hunter_soil_locomotion
+
+# Keep soil terrain properties from terrain_tilled_soil but ensure no randomization
+terrain:
+  # Soil physics properties (from terrain_tilled_soil.yaml)
+  mesh_type: 'heightfield'
+  horizontal_scale: 0.10
+  vertical_scale: 0.005
+  border_size: 40
+  
+  # Soil material properties - consistent values
+  static_friction: 0.60
+  dynamic_friction: 0.45
+  restitution: 0.02
+  youngs_modulus: 1.0e7
+  poisson_ratio: 0.30
+  contact_stiffness: 1.0e5
+  contact_damping: 1.0e3
+  cohesion: 1.0e4
+  
+  # Terrain generation - simplified for consistency
+  selected: True
+  terrain_kwargs:
+    type: 'perlin'
+    amplitude: 0.015
+    frequency: 12.0
+  
+  curriculum: False
+  terrain_length: 8.0
+  terrain_width: 8.0
+  num_rows: 1
+  num_cols: 1
+  terrain_types: ['flat']
+  terrain_proportions: [1.0]
+
+# Explicitly disable all domain randomization
+domain_rand:
+  push_robots: False
+  randomize_friction: False
+  randomize_base_mass: False
+  randomize_base_com: False
+  randomize_link_mass: False
+  randomize_pd_gain: False
+  randomize_torque_rfi: False
+  randomize_ctrl_delay: False
+  randomize_motion_ref_xyz: False
+  motion_package_loss: False
+  born_offset: False
+  born_heading_randomization: False

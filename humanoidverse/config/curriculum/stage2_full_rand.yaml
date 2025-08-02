@@ -1,0 +1,96 @@
+# @package _global_
+# Stage 2: Full randomization with soil physics
+# 
+# Advanced training stage combining soil terrain physics with comprehensive
+# domain randomization including pushes, parameter variations, and
+# environmental disturbances for maximum robustness.
+
+defaults:
+  - /terrain: terrain_tilled_soil
+  - /domain_rand: YES_domain_rand_soil
+  - /rewards: loco/reward_hunter_soil_locomotion
+
+# Use soil terrain with full variability
+terrain:
+  # Soil physics properties with realistic ranges
+  mesh_type: 'heightfield'
+  horizontal_scale: 0.10
+  vertical_scale: 0.005
+  border_size: 40
+  
+  # Base soil material properties (will be randomized by domain_rand)
+  static_friction: 0.60
+  dynamic_friction: 0.45
+  restitution: 0.02
+  youngs_modulus: 1.0e7
+  poisson_ratio: 0.30
+  contact_stiffness: 1.0e5
+  contact_damping: 1.0e3
+  cohesion: 1.0e4
+  
+  # Enable terrain generation with variability
+  selected: True
+  terrain_kwargs:
+    type: 'perlin'
+    amplitude: 0.015  # Will be randomized by domain_rand
+    frequency: 12.0
+  
+  curriculum: False
+  terrain_length: 8.0
+  terrain_width: 8.0
+  num_rows: 1
+  num_cols: 1
+  terrain_types: ['flat']
+  terrain_proportions: [1.0]
+
+# Enable comprehensive domain randomization (from YES_domain_rand_soil.yaml)
+domain_rand:
+  # Robot external disturbances
+  push_robots: True
+  push_interval_s: [4, 8]
+  max_push_vel_xy: 0.8
+  
+  # Terrain property randomization
+  randomize_terrain_properties: True
+  terrain_friction_range: [0.50, 0.70]
+  terrain_cohesion_range: [5000, 15000]
+  terrain_amplitude_range: [0.010, 0.020]
+  
+  # Robot physical parameter variations
+  randomize_base_com: True
+  base_com_range:
+    x: [-0.12, 0.12]
+    y: [-0.12, 0.12]
+    z: [-0.12, 0.12]
+  
+  randomize_link_mass: True
+  link_mass_range: [0.75, 1.3]
+  
+  randomize_pd_gain: True
+  kp_range: [0.7, 1.3]
+  kd_range: [0.7, 1.3]
+  
+  randomize_friction: True
+  friction_range: [0.4, 1.4]
+  
+  # Actuator and sensor noise
+  randomize_torque_rfi: True
+  rfi_lim: 0.12
+  randomize_rfi_lim: True
+  rfi_lim_range: [0.4, 1.6]
+  
+  randomize_ctrl_delay: True
+  ctrl_delay_step_range: [0, 3]
+  
+  # Environmental variations
+  randomize_gravity: True
+  gravity_range: [9.5, 10.3]
+  
+  randomize_joint_limits: True
+  joint_limit_range: [0.95, 1.0]
+  
+  # Other potentially useful randomizations from base config
+  randomize_motion_ref_xyz: False  # Keep reference motions stable
+  motion_package_loss: False       # Avoid communication issues in training
+  born_offset: False               # Keep spawn consistent
+  born_heading_randomization: False
