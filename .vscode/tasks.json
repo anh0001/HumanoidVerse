@@ -224,7 +224,7 @@
     {
       "label": "Curriculum Stage 1: Hunter Soil Training (Test) - Load model_157400.pt",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +simulator=isaacsim +exp=locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/Stage0FullTrainingHunter/20250731_183713-HunterTraining-locomotion-hunter/model_157400.pt num_envs=16 project_name=CurriculumStage1Test experiment_name=Hunter_Stage1_SoftSoil_From157400 headless=False > stage1_test.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +simulator=isaacsim +exp=locomotion env=locomotion_soil +obs=loco/leggedloco_obs_singlestep_withlinvel ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/Stage0FullTrainingHunter/20250731_183713-HunterTraining-locomotion-hunter/model_157400.pt num_envs=16 project_name=CurriculumStage1Test experiment_name=Hunter_Stage1_SoftSoil_From157400 headless=False > stage1_test.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -242,7 +242,7 @@
     {
       "label": "Curriculum Stage 1: Hunter Soil Training (Full) - Load model_157400.pt",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +simulator=isaacsim +exp=locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/Stage0FullTrainingHunter/20250731_183713-HunterTraining-locomotion-hunter/model_157400.pt num_envs=2048 project_name=CurriculumStage1 experiment_name=Hunter_Stage1_SoftSoil_From157400 headless=True\" > stage1_full.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +simulator=isaacsim +exp=locomotion env=locomotion_soil +obs=loco/leggedloco_obs_singlestep_withlinvel ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/Stage0FullTrainingHunter/20250731_183713-HunterTraining-locomotion-hunter/model_157400.pt num_envs=2048 project_name=CurriculumStage1 experiment_name=Hunter_Stage1_SoftSoil_From157400 headless=True\" > stage1_full.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -296,7 +296,7 @@
     {
       "label": "Curriculum Stage 1: Hunter Soil Training (Continue from Stage 0)",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +simulator=isaacsim +exp=locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/CurriculumStage0/latest/model.pt num_envs=2048 project_name=CurriculumStage1Continue experiment_name=Hunter_Stage1_FromStage0 headless=True\" > stage1_continue.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +simulator=isaacsim +exp=locomotion env=locomotion_soil +obs=loco/leggedloco_obs_singlestep_withlinvel ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/CurriculumStage0/latest/model.pt num_envs=2048 project_name=CurriculumStage1Continue experiment_name=Hunter_Stage1_FromStage0 headless=True\" > stage1_continue.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -350,7 +350,7 @@
     {
       "label": "Test model_157400.pt on Stage 1 Curriculum (Baseline)",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +checkpoint=logs/Stage0FullTrainingHunter/20250731_183713-HunterTraining-locomotion-hunter/model_157400.pt +simulator=isaacsim +exp=locomotion ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_model157400_stage1.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +checkpoint=logs/Stage0FullTrainingHunter/20250731_183713-HunterTraining-locomotion-hunter/model_157400.pt +simulator=isaacsim +exp=locomotion env=locomotion_soil ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_model157400_stage1.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -386,7 +386,7 @@
     {
       "label": "Evaluate Stage 1: Hunter Soil Model",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +checkpoint=logs/CurriculumStage1/latest/model.pt +simulator=isaacsim +exp=locomotion ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage1.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +checkpoint=logs/CurriculumStage1/latest/model.pt +simulator=isaacsim +exp=locomotion env=locomotion_soil ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage1.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -458,7 +458,7 @@
     {
       "label": "Evaluate Stage 2 Model on Stage 1 Terrain (Progression Test)",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +checkpoint=logs/CurriculumStage2/latest/model.pt +simulator=isaacsim +exp=locomotion ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage2_on_stage1.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +checkpoint=logs/CurriculumStage2/latest/model.pt +simulator=isaacsim +exp=locomotion env=locomotion_soil ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage2_on_stage1.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
