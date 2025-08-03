@@ -38,8 +38,8 @@ terrain:
   curriculum: False
   terrain_length: 8.0
   terrain_width: 8.0
-  num_rows: 1
-  num_cols: 1
+  num_rows: 64
+  num_cols: 64
   terrain_types: ['flat']
   terrain_proportions: [1.0]
 

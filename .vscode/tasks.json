@@ -242,7 +242,7 @@
     {
       "label": "Curriculum Stage 1: Hunter Soil Training (Full) - Load model_157400.pt",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil +obs=loco/leggedloco_obs_singlestep_withlinvel simulator.config.scene.env_spacing=4.0 +checkpoint=logs/BaseModel/model_157400.pt num_envs=16 project_name=CurriculumStage1 experiment_name=Hunter_Stage1_SoftSoil_From157400 headless=True\" > stage1_full.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil +obs=loco/leggedloco_obs_singlestep_withlinvel simulator.config.scene.env_spacing=4.0 +checkpoint=logs/BaseModel/model_157400.pt num_envs=4096 project_name=CurriculumStage1 experiment_name=Hunter_Stage1_SoftSoil_From157400 headless=True\" > stage1_full.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",
