@@ -9,7 +9,6 @@ defaults:
   - /terrain: terrain_tilled_soil
   - /domain_rand: YES_domain_rand_soil
   - /rewards: loco/reward_hunter_soil_locomotion
-  - /env: locomotion_soil_advanced  # Use advanced soil locomotion configuration for Stage 2
 
 # Use soil terrain with full variability
 terrain:
@@ -39,17 +38,17 @@ terrain:
   curriculum: False
   terrain_length: 8.0
   terrain_width: 8.0
-  num_rows: 1
-  num_cols: 1
+  num_rows: 64
+  num_cols: 64
   terrain_types: ['flat']
   terrain_proportions: [1.0]
 
 # Enable comprehensive domain randomization (from YES_domain_rand_soil.yaml)
 domain_rand:
   # Robot external disturbances
-  push_robots: True
+  push_robots: False
   push_interval_s: [4, 8]
-  max_push_vel_xy: 0.8
+  max_push_vel_xy: 0.4
   
   # Terrain property randomization
   randomize_terrain_properties: True
@@ -58,36 +57,36 @@ domain_rand:
   terrain_amplitude_range: [0.010, 0.020]
   
   # Robot physical parameter variations
-  randomize_base_com: True
+  randomize_base_com: False
   base_com_range:
     x: [-0.12, 0.12]
     y: [-0.12, 0.12]
     z: [-0.12, 0.12]
   
-  randomize_link_mass: True
+  randomize_link_mass: False
   link_mass_range: [0.75, 1.3]
   
-  randomize_pd_gain: True
+  randomize_pd_gain: False
   kp_range: [0.7, 1.3]
   kd_range: [0.7, 1.3]
   
-  randomize_friction: True
+  randomize_friction: False
   friction_range: [0.4, 1.4]
   
   # Actuator and sensor noise
-  randomize_torque_rfi: True
+  randomize_torque_rfi: False
   rfi_lim: 0.12
-  randomize_rfi_lim: True
+  randomize_rfi_lim: False
   rfi_lim_range: [0.4, 1.6]
   
-  randomize_ctrl_delay: True
+  randomize_ctrl_delay: False
   ctrl_delay_step_range: [0, 3]
   
   # Environmental variations
-  randomize_gravity: True
+  randomize_gravity: False
   gravity_range: [9.5, 10.3]
   
-  randomize_joint_limits: True
+  randomize_joint_limits: False
   joint_limit_range: [0.95, 1.0]
   
   # Other potentially useful randomizations from base config
