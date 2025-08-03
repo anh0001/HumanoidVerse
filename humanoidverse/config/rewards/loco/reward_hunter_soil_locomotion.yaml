@@ -54,7 +54,7 @@ rewards:
       penalty_feet_height: -1.   # Penalize inappropriate feet height during swing phase
       
       # TERMINATION AND STABILITY REWARDS
-      termination: -500.0        # Large penalty for episode termination - ENABLED to encourage staying upright
+      # termination: -500.0        # Large penalty for episode termination - ENABLED to encourage staying upright
       # penalty_in_the_air: -100.0 # Penalize when both feet are off the ground
       # feet_max_height_for_this_air: -100.0 # Penalize excessive foot lift height
 
