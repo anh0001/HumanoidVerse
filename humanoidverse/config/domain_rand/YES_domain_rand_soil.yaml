@@ -22,10 +22,10 @@ domain_rand:
   
   # Enhanced robot parameter randomization for soil robustness
   
-  # # Push disturbances (more aggressive for soil terrain)
-  # push_robots: True
-  # push_interval_s: [4, 8]  # More frequent pushes to test stability
-  # max_push_vel_xy: 0.4     # Slightly higher push forces
+  # Push disturbances (more aggressive for soil terrain)
+  push_robots: True
+  push_interval_s: [4, 8]  # More frequent pushes to test stability
+  max_push_vel_xy: 0.4     # Slightly higher push forces
   
   # Base COM randomization (center of mass shifts)
   randomize_base_com: True
