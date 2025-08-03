@@ -386,7 +386,7 @@
     {
       "label": "Evaluate Stage 1: Hunter Soil Model",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +checkpoint=logs/CurriculumStage1/20250803_140015-Hunter_Stage1_SoftSoil_From157400-locomotion-hunter/model_5000.pt +simulator=isaacsim +exp=locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage1.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +checkpoint=logs/CurriculumStage1/20250803_140015-Hunter_Stage1_SoftSoil_From157400-locomotion-hunter/model_5000.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage1.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
