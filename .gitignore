@@ -3,6 +3,9 @@ IsaacLab/
 .github/
 nohup.out
 .claud/
+/AGENTS.md
+/CLAUDE.md
+/AGENT.md
 
 # Compiled Python bytecode
 *.py[cod]
