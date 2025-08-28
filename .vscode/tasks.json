@@ -260,7 +260,7 @@
     {
       "label": "Curriculum Stage 2: Hunter Full Randomization (Test)",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage2_full_rand +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil_advanced +obs=loco/leggedloco_obs_singlestep_withlinvel simulator.config.scene.env_spacing=4.0 +checkpoint=logs/CurriculumStage1/20250803_154748-Hunter_Stage1_SoftSoil_From157400-locomotion-hunter/model_15600.pt num_envs=16 project_name=CurriculumStage2Test experiment_name=Hunter_Stage2_FullRand headless=False > stage2_test.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage2_full_rand +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil_advanced +obs=loco/leggedloco_obs_singlestep_withlinvel simulator.config.scene.env_spacing=4.0 +checkpoint=logs/CurriculumStage1/20250803_154748-Hunter_Stage1_SoftSoil_From157400-locomotion-hunter/model_17000.pt num_envs=16 project_name=CurriculumStage2Test experiment_name=Hunter_Stage2_FullRand headless=False > stage2_test.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -278,7 +278,7 @@
     {
       "label": "Curriculum Stage 2: Hunter Full Randomization (Full)",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage2_full_rand +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil +obs=loco/leggedloco_obs_singlestep_withlinvel ++simulator.config.scene.env_spacing=4.0 num_envs=2048 project_name=CurriculumStage2 experiment_name=Hunter_Stage2_FullRand headless=True\" > stage2_full.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage2_full_rand +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil_advanced +obs=loco/leggedloco_obs_singlestep_withlinvel ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/CurriculumStage1/20250803_154748-Hunter_Stage1_SoftSoil_From157400-locomotion-hunter/model_17000.pt num_envs=4096 project_name=CurriculumStage2 experiment_name=Hunter_Stage2_FullRand headless=True\" > stage2_full.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",
