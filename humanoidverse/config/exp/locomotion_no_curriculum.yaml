@@ -1,0 +1,19 @@
+# @package _global_
+# No-Curriculum Baseline Experiment
+# Trains directly on Stage-2 (tilled soil) terrain without curriculum progression
+
+defaults:
+  - exp: locomotion_soil              # inherit the standard soil locomotion config
+  - /terrain: terrain_tilled_soil     # use tilled soil terrain for environment
+
+# Override to disable curriculum progression
+env:
+  config:
+    curriculum: false                 # disable curriculum progression
+
+# Use Stage-2 terrain and reward settings
+terrain:
+  curriculum: false                   # disable terrain curriculum as well
+
+log_task_name: "no_curriculum"
+experiment_name: "stage2_baseline"

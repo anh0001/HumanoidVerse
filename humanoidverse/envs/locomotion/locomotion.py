@@ -2,6 +2,7 @@ from time import time
 from warnings import WarningMessage
 import numpy as np
 import os
+import math
 
 from humanoidverse.utils.torch_utils import *
 # from isaacgym import gymtorch, gymapi, gymutil
@@ -25,6 +26,11 @@ class LeggedRobotLocomotion(LeggedRobotBase):
         # import ipdb; ipdb.set_trace()
         if config.robot.motion.get("hips_link", None):
             self.hips_dof_id = [self.simulator._body_list.index(link) - 1 for link in config.robot.motion.hips_link] # Yuanhang: -1 for the base link (pelvis)
+        
+        # Initialize tracking for episode metrics (distance, slip)
+        self.start_pos = torch.zeros((self.num_envs, 2), device=self.device)
+        self.slip_distance = torch.zeros(self.num_envs, device=self.device)
+        self.last_foot_pos = [[None, None] for _ in range(self.num_envs)]  # last contact position for each foot
 
     def _init_buffers(self):
         super()._init_buffers()
@@ -67,9 +73,40 @@ class LeggedRobotLocomotion(LeggedRobotBase):
 
 
     def _reset_tasks_callback(self, env_ids):
+        # Collect episode info before reset
+        if len(env_ids) > 0:
+            if not hasattr(self, 'episode_info'):
+                self.episode_info = {}
+            
+            for env_id in env_ids:
+                env_id_int = int(env_id.item())
+                
+                # Calculate episode metrics
+                if hasattr(self, 'start_pos'):
+                    current_pos = self.simulator.robot_root_states[env_id_int, :2]
+                    distance_traveled = torch.norm(current_pos - self.start_pos[env_id_int]).item()
+                    slip_distance = self.slip_distance[env_id_int].item()
+                    fell = not self.time_out_buf[env_id_int].item()  # Not timeout = fell
+                    episode_length = self.episode_length_buf[env_id_int].item()
+                    
+                    # Store in episode info
+                    self.episode_info[f'env_{env_id_int}'] = {
+                        'distance': distance_traveled,
+                        'slip_distance': slip_distance,
+                        'fell': fell,
+                        'episode_length': episode_length
+                    }
+        
         super()._reset_tasks_callback(env_ids)
         if not self.is_evaluating:
             self._resample_commands(env_ids)
+        
+        # On episode reset, record start position and reset slip metrics
+        self.start_pos[env_ids] = self.simulator.robot_root_states[env_ids, :2]  # starting base (x,y) for each env
+        self.slip_distance[env_ids] = 0.0
+        for env_id in env_ids:
+            env_id_int = int(env_id.item())
+            self.last_foot_pos[env_id_int] = [None, None]
 
     def set_is_evaluating(self, command=None):
         super().set_is_evaluating()
@@ -221,6 +258,36 @@ class LeggedRobotLocomotion(LeggedRobotBase):
         assert self.config.robot.has_upper_body_dof
         deviation = torch.abs(self.simulator.dof_pos[:, self.upper_dof_indices] - self.default_dof_pos[:,self.upper_dof_indices])
         return torch.sum(deviation, dim=1)
+    
+    def _post_physics_step(self):
+        super()._post_physics_step()
+        
+        # Update slip-distance tracker for feet in contact with ground
+        left_pos = self.simulator._rigid_body_pos[:, self.feet_indices[0]]   # shape: (num_envs, 3)
+        right_pos = self.simulator._rigid_body_pos[:, self.feet_indices[1]]  # shape: (num_envs, 3)
+        left_contact = left_pos[:, 2] < 0.02    # foot is on ground (threshold ~2cm)
+        right_contact = right_pos[:, 2] < 0.02
+        
+        for env in range(self.num_envs):
+            # Left foot slip
+            if left_contact[env]:
+                if self.last_foot_pos[env][0] is not None:
+                    dx = float(left_pos[env, 0] - self.last_foot_pos[env][0][0])
+                    dy = float(left_pos[env, 1] - self.last_foot_pos[env][0][1])
+                    self.slip_distance[env] += math.sqrt(dx*dx + dy*dy)
+                self.last_foot_pos[env][0] = (float(left_pos[env, 0]), float(left_pos[env, 1]))
+            else:
+                self.last_foot_pos[env][0] = None
+            
+            # Right foot slip
+            if right_contact[env]:
+                if self.last_foot_pos[env][1] is not None:
+                    dx = float(right_pos[env, 0] - self.last_foot_pos[env][1][0])
+                    dy = float(right_pos[env, 1] - self.last_foot_pos[env][1][1])
+                    self.slip_distance[env] += math.sqrt(dx*dx + dy*dy)
+                self.last_foot_pos[env][1] = (float(right_pos[env, 0]), float(right_pos[env, 1]))
+            else:
+                self.last_foot_pos[env][1] = None
     
     ######################### Observations #########################
     def _get_obs_command_lin_vel(self):

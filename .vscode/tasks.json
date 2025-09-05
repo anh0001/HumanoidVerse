@@ -472,6 +472,90 @@
         }
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Train No-Curriculum Baseline (Stage-2 only)",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "humanoidverse/train_agent.py",
+        "+exp=locomotion_no_curriculum",
+        "seed=${input:seed}",
+        "headless=true"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-ic"]
+        },
+        "env": {
+          "PATH": "~/miniconda3/envs/isaaclab/bin:${env:PATH}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Evaluate Flat-Only Policy on Soil",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "humanoidverse/sample_eps.py",
+        "+checkpoint=path/to/stage1_model.pt",
+        "+terrain=terrain_locomotion_tilled",
+        "num_envs=100",
+        "num_episodes=100",
+        "headless=true"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-ic"]
+        },
+        "env": {
+          "PATH": "~/miniconda3/envs/isaaclab/bin:${env:PATH}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Train Smaller-Net 3-Stage Curriculum",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "humanoidverse/train_agent.py",
+        "+exp=locomotion_terrain",
+        "+algo=ppo_small",
+        "seed=${input:seed}",
+        "headless=true"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-ic"]
+        },
+        "env": {
+          "PATH": "~/miniconda3/envs/isaaclab/bin:${env:PATH}"
+        }
+      },
+      "problemMatcher": []
     }
   ]
 }

@@ -1,0 +1,26 @@
+# @package _global_
+# Small Network PPO Configuration
+# Reduced-capacity policy network for ablation studies
+
+defaults:
+  - algo: ppo                # base PPO config as default
+
+# Override only the network architecture
+algo:
+  config:
+    module_dict:
+      actor:
+        input_dim: [actor_obs]
+        output_dim: [robot_action_dim]
+        layer_config:
+          type: MLP
+          hidden_dims: [256, 128, 64]   # reduced network size (half of 512,256,128)
+          activation: ELU
+      critic:
+        type: MLP
+        input_dim: [critic_obs]
+        output_dim: [1]
+        layer_config:
+          type: MLP
+          hidden_dims: [256, 128, 64]   # reduced network size (half of 512,256,128)
+          activation: ELU
