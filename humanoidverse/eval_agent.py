@@ -233,8 +233,37 @@ def main(override_config: OmegaConf):
     config.env.config.ckpt_dir = str(checkpoint.parent) # commented out for now, might need it back to save motion
     env = instantiate(config.env, device=device)
 
-    # Fix issue 1: Set environment to evaluation mode with zero commands to prevent automatic walking
-    env.set_is_evaluating(command=[0.0, 0.0, 0.0])  # stand still
+    # Optional: allow constant eval command via CLI/Hydra override
+    # Usage example: +eval_command=[0.2,0.0,0.0]
+    def _parse_eval_command(cmd):
+        try:
+            import collections.abc
+            if cmd is None:
+                return None
+            if isinstance(cmd, collections.abc.Sequence) and not isinstance(cmd, str):
+                return [float(x) for x in cmd]
+            if isinstance(cmd, str):
+                s = cmd.strip()
+                if s.startswith("[") and s.endswith("]"):
+                    s = s[1:-1]
+                parts = [p.strip() for p in s.split(",") if p.strip()]
+                if not parts:
+                    return None
+                return [float(p) for p in parts]
+        except Exception:
+            pass
+        return None
+
+    eval_command = None
+    try:
+        eval_command = _parse_eval_command(getattr(config, "eval_command", None))
+    except Exception:
+        eval_command = None
+
+    if eval_command is None:
+        eval_command = [0.0, 0.0, 0.0]  # stand still by default
+
+    env.set_is_evaluating(command=eval_command)
 
     # Start a thread to listen for key press
     key_listener_thread = threading.Thread(target=listen_for_keypress, args=(env,))
