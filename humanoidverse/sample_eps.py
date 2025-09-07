@@ -222,7 +222,7 @@ def main(override_config: OmegaConf):
     avg_episode_length = total_episode_length / len(ep_infos) if ep_infos else 0.0
     avg_distance = total_dist / len(ep_infos) if ep_infos else 0.0
     
-    # Print results
+    # Print results to stdout
     print("\n" + "="*50)
     print("EVALUATION RESULTS")
     print("="*50)
@@ -234,6 +234,23 @@ def main(override_config: OmegaConf):
     print(f"Falls per 100m: {falls_per_100m:.2f}")
     print(f"Slip distance per 100m: {slip_per_100m:.2f} m")
     print("="*50)
+
+    # Also log results via loguru so they appear in Hydra eval.log and any redirected stdout
+    logger.info("==== EVALUATION RESULTS ====")
+    logger.info(f"Episodes completed: {len(ep_infos)}")
+    logger.info(f"Total distance traveled: {total_dist:.2f} m")
+    logger.info(f"Total falls: {total_falls}")
+    logger.info(f"Average episode length: {avg_episode_length:.1f} steps")
+    logger.info(f"Average distance per episode: {avg_distance:.2f} m")
+    logger.info(f"Falls per 100m: {falls_per_100m:.2f}")
+    logger.info(f"Slip distance per 100m: {slip_per_100m:.2f} m")
+
+    # Flush stdout to ensure the summary is written when running under nohup/redirects
+    try:
+        sys.stdout.flush()
+        sys.stderr.flush()
+    except Exception:
+        pass
     
     # Close simulator
     if 'simulation_app' in locals():
