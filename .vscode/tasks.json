@@ -476,16 +476,10 @@
     {
       "label": "Train No-Curriculum Baseline (Stage-2 only)",
       "type": "shell",
-      "command": "python",
-      "args": [
-        "humanoidverse/train_agent.py",
-        "+exp=locomotion_no_curriculum",
-        "seed=${input:seed}",
-        "headless=true"
-      ],
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage2_full_rand +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil_advanced +obs=loco/leggedloco_obs_singlestep_withlinvel ++simulator.config.scene.env_spacing=4.0 num_envs=4096 project_name=NoCurriculumBaseline experiment_name=Hunter_Stage2_NoCurriculum headless=True\" > no_curriculum_baseline.log 2>&1 &",
       "presentation": {
         "echo": true,
-        "reveal": "always",
+        "reveal": "never",
         "focus": false,
         "panel": "shared"
       },
@@ -493,9 +487,6 @@
         "shell": {
           "executable": "/bin/bash",
           "args": ["-ic"]
-        },
-        "env": {
-          "PATH": "~/miniconda3/envs/isaaclab/bin:${env:PATH}"
         }
       },
       "problemMatcher": []
@@ -503,18 +494,10 @@
     {
       "label": "Evaluate Flat-Only Policy on Soil",
       "type": "shell",
-      "command": "python",
-      "args": [
-        "humanoidverse/sample_eps.py",
-        "+checkpoint=path/to/stage1_model.pt",
-        "+terrain=terrain_locomotion_tilled",
-        "num_envs=100",
-        "num_episodes=100",
-        "headless=true"
-      ],
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/BaseModel/model_157400.pt +simulator=isaacsim +terrain=terrain_tilled_soil +num_envs=100 +num_episodes=100 +headless=True\" > eval_flat_on_soil.log 2>&1 &",
       "presentation": {
         "echo": true,
-        "reveal": "always",
+        "reveal": "never",
         "focus": false,
         "panel": "shared"
       },
@@ -522,9 +505,6 @@
         "shell": {
           "executable": "/bin/bash",
           "args": ["-ic"]
-        },
-        "env": {
-          "PATH": "~/miniconda3/envs/isaaclab/bin:${env:PATH}"
         }
       },
       "problemMatcher": []
@@ -532,17 +512,10 @@
     {
       "label": "Train Smaller-Net 3-Stage Curriculum",
       "type": "shell",
-      "command": "python",
-      "args": [
-        "humanoidverse/train_agent.py",
-        "+exp=locomotion_terrain",
-        "+algo=ppo_small",
-        "seed=${input:seed}",
-        "headless=true"
-      ],
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +curriculum=stage0_plane +robot=hunter/hunter +simulator=isaacsim +exp=locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel algo=ppo_small num_envs=4096 project_name=SmallerNetCurriculum experiment_name=Hunter_SmallerNet_3Stage headless=True\" > smaller_net_curriculum.log 2>&1 &",
       "presentation": {
         "echo": true,
-        "reveal": "always",
+        "reveal": "never",
         "focus": false,
         "panel": "shared"
       },
@@ -550,9 +523,6 @@
         "shell": {
           "executable": "/bin/bash",
           "args": ["-ic"]
-        },
-        "env": {
-          "PATH": "~/miniconda3/envs/isaaclab/bin:${env:PATH}"
         }
       },
       "problemMatcher": []

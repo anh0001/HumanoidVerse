@@ -10,12 +10,10 @@ from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
 from humanoidverse.utils.logging import HydraLoggerBridge
 import logging
-from utils.config_utils import *  # noqa: E402, F403
-
 from humanoidverse.utils.config_utils import *  # noqa: E402, F403
 from loguru import logger
 
-@hydra.main(config_path="config", config_name="base_eval")
+@hydra.main(config_path="config", config_name="base_eval", version_base="1.1")
 def main(override_config: OmegaConf):
     # logging to hydra log file
     hydra_log_path = os.path.join(
@@ -69,11 +67,24 @@ def main(override_config: OmegaConf):
         parser.add_argument("--num_envs", type=int, default=100, help="Number of environments to simulate.")
         parser.add_argument("--num_episodes", type=int, default=100, help="Number of episodes to run.")
         parser.add_argument("--seed", type=int, default=None, help="Seed used for the environment")
-        parser.add_argument("--headless", type=bool, default=True, help="Run headless.")
+        # Do NOT add --headless here; AppLauncher adds it and will conflict if duplicated.
         AppLauncher.add_app_launcher_args(parser)
 
         # Parse known arguments to get argparse params
         args_cli, hydra_args = parser.parse_known_args()
+
+        # Sync Hydra overrides into AppLauncher args (mirrors train_agent.py)
+        if hasattr(config, 'num_envs'):
+            args_cli.num_envs = config.num_envs
+        if hasattr(config, 'seed'):
+            args_cli.seed = config.seed
+        # env spacing lives under env.config in our configs
+        if hasattr(config, 'env') and hasattr(config.env, 'config') and hasattr(config.env.config, 'env_spacing'):
+            args_cli.env_spacing = config.env.config.env_spacing
+        if hasattr(config, 'output_dir'):
+            args_cli.output_dir = config.output_dir
+        if hasattr(config, 'headless'):
+            args_cli.headless = config.headless
 
         app_launcher = AppLauncher(args_cli)
         simulation_app = app_launcher.app
@@ -110,18 +121,25 @@ def main(override_config: OmegaConf):
     # Get inference policy
     eval_policy = algo._get_inference_policy()
     obs_dict = env.reset_all()
-    init_actions = torch.zeros(env.num_envs, env.dim_actions, device=device)
+    # ensure tensors on the same device as the model
+    for k in list(obs_dict.keys()):
+        if isinstance(obs_dict[k], torch.Tensor):
+            obs_dict[k] = obs_dict[k].to(device)
     
     logger.info("Starting episode collection...")
     
     while episodes_completed < num_episodes:
         # Get actions from policy
         with torch.no_grad():
-            actions = eval_policy(obs_dict)
+            actions = eval_policy(obs_dict["actor_obs"])  # policy expects actor_obs tensor
         
         # Take environment step
-        actor_state = {"obs": obs_dict, "actions": actions}
+        actor_state = {"actions": actions}
         obs_dict, rewards, dones, infos = env.step(actor_state)
+        # move obs back to device for next policy call
+        for k in list(obs_dict.keys()):
+            if isinstance(obs_dict[k], torch.Tensor):
+                obs_dict[k] = obs_dict[k].to(device)
         
         # Check for completed episodes
         done_indices = torch.nonzero(dones, as_tuple=False).flatten()
