@@ -38,7 +38,8 @@ Thumbs.db
 *.wmv
 
 # logs
-logs
+logs/*
+!logs/archive_models.sh
 logs_eval
 runs
 outputs
