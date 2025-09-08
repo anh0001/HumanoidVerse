@@ -107,6 +107,23 @@ def main(override_config: OmegaConf):
     
     # Create environment
     env = instantiate(config.env, device=device)
+    # Log effective timing for sanity checks
+    try:
+        sim_dt = getattr(env, 'sim_dt', None)
+        dt = getattr(env, 'dt', None)
+        max_eplen_s = getattr(env, 'max_episode_length_s', None)
+        max_eplen = getattr(env, 'max_episode_length', None)
+        ctrl_dec = None
+        try:
+            ctrl_dec = config.simulator.config.sim.control_decimation
+        except Exception:
+            pass
+        logger.info(
+            f"Eval timing: sim_dt={sim_dt:.5f}s, control_decimation={ctrl_dec}, dt={dt:.5f}s, "
+            f"max_episode_length_s={max_eplen_s}, max_episode_length={int(max_eplen) if max_eplen is not None else 'NA'}"
+        )
+    except Exception:
+        pass
 
     # Optional: constant eval command via CLI/Hydra override
     # Usage example:
@@ -182,24 +199,44 @@ def main(override_config: OmegaConf):
         
         for env_idx in done_indices:
             env_idx_int = int(env_idx.item())
-            
-            # Calculate episode metrics
-            start_pos = env.start_pos[env_idx_int]
-            current_pos = env.simulator.robot_root_states[env_idx_int, :2]
-            distance_traveled = torch.norm(current_pos - start_pos).item()
-            
-            slip_distance = env.slip_distance[env_idx_int].item()
-            
-            # Check if episode ended due to fall (termination)
-            fell = env.time_out_buf[env_idx_int].item() == False  # Not a timeout = termination (fall)
-            
-            episode_info = {
-                'distance': distance_traveled,
-                'slip_distance': slip_distance, 
-                'fell': fell,
-                'episode_length': env.episode_length_buf[env_idx_int].item()
-            }
-            
+
+            # IMPORTANT: The environment resets done envs inside step().
+            # Reading live buffers (episode_length_buf, slip_distance, start_pos)
+            # here returns values for the NEW episode (often zero).
+            # Instead, use the snapshot captured in _reset_tasks_callback(): env.episode_info
+            episode_data = None
+            if hasattr(env, 'episode_info'):
+                episode_data = env.episode_info.get(f'env_{env_idx_int}', None)
+
+            if episode_data is not None:
+                episode_info = {
+                    'distance': float(episode_data.get('distance', 0.0)),
+                    'slip_distance': float(episode_data.get('slip_distance', 0.0)),
+                    'fell': bool(episode_data.get('fell', False)),
+                    'episode_length': float(episode_data.get('episode_length', 0.0)),
+                }
+            else:
+                # Fallback (best-effort) if env.episode_info is unavailable
+                # Note: episode_length_buf is zeroed on reset; use last_episode_length_buf if present
+                ep_len = 0.0
+                if hasattr(env, 'last_episode_length_buf'):
+                    try:
+                        ep_len = float(env.last_episode_length_buf[env_idx_int].item())
+                    except Exception:
+                        ep_len = 0.0
+                # Fall back for fell flag based on timeout buffer (set at termination time)
+                fell_flag = False
+                try:
+                    fell_flag = (env.time_out_buf[env_idx_int].item() == False)
+                except Exception:
+                    fell_flag = False
+                episode_info = {
+                    'distance': 0.0,  # cannot reliably reconstruct after reset
+                    'slip_distance': 0.0,  # cannot reliably reconstruct after reset
+                    'fell': fell_flag,
+                    'episode_length': ep_len,
+                }
+
             ep_infos.append(episode_info)
             episodes_completed += 1
             
@@ -210,6 +247,13 @@ def main(override_config: OmegaConf):
                 break
     
     logger.info(f"Evaluation completed. Collected {len(ep_infos)} episodes.")
+    # Sanity warning for zero-length episodes
+    try:
+        zero_len_eps = sum(1 for info in ep_infos if float(info.get('episode_length', 0.0)) <= 0.0)
+        if zero_len_eps > 0:
+            logger.warning(f"Detected {zero_len_eps} episode(s) with zero/non-positive length; check reset timing.")
+    except Exception:
+        pass
     
     # Compute aggregate metrics over all evaluation episodes
     total_falls = sum(1 for info in ep_infos if info.get('fell'))

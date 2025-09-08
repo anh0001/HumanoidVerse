@@ -278,7 +278,7 @@
     {
       "label": "Evaluate Flat-Only Policy on Soil",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/NoCurriculumBaseline/20250907_214218-Hunter_Stage2_NoCurriculum-locomotion-hunter/model_1300.pt +simulator=isaacsim +terrain=terrain_tilled_soil +env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_flat_on_soil.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/20250803_220625-Hunter_Stage2_FullRand-locomotion-hunter/model_1300.pt +simulator=isaacsim +terrain=terrain_tilled_soil +env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_flat_on_soil.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",

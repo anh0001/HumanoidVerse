@@ -31,6 +31,9 @@ class LeggedRobotLocomotion(LeggedRobotBase):
         self.start_pos = torch.zeros((self.num_envs, 2), device=self.device)
         self.slip_distance = torch.zeros(self.num_envs, device=self.device)
         self.last_foot_pos = [[None, None] for _ in range(self.num_envs)]  # last contact position for each foot
+        # Slip contact detection thresholds (force-based is robust on soil)
+        self.slip_contact_force_threshold = 1.0  # normal force threshold (N) to consider foot in contact
+        self.slip_contact_height_threshold = 0.03  # fallback z-height threshold (m)
 
     def _init_buffers(self):
         super()._init_buffers()
@@ -87,7 +90,11 @@ class LeggedRobotLocomotion(LeggedRobotBase):
                     distance_traveled = torch.norm(current_pos - self.start_pos[env_id_int]).item()
                     slip_distance = self.slip_distance[env_id_int].item()
                     fell = not self.time_out_buf[env_id_int].item()  # Not timeout = fell
-                    episode_length = self.episode_length_buf[env_id_int].item()
+                    # Use last_episode_length_buf captured before zeroing in reset
+                    if hasattr(self, 'last_episode_length_buf'):
+                        episode_length = self.last_episode_length_buf[env_id_int].item()
+                    else:
+                        episode_length = self.episode_length_buf[env_id_int].item()
                     
                     # Store in episode info
                     self.episode_info[f'env_{env_id_int}'] = {
@@ -263,10 +270,16 @@ class LeggedRobotLocomotion(LeggedRobotBase):
         super()._post_physics_step()
         
         # Update slip-distance tracker for feet in contact with ground
-        left_pos = self.simulator._rigid_body_pos[:, self.feet_indices[0]]   # shape: (num_envs, 3)
-        right_pos = self.simulator._rigid_body_pos[:, self.feet_indices[1]]  # shape: (num_envs, 3)
-        left_contact = left_pos[:, 2] < 0.02    # foot is on ground (threshold ~2cm)
-        right_contact = right_pos[:, 2] < 0.02
+        left_pos = self.simulator._rigid_body_pos[:, self.feet_indices[0]]   # (num_envs, 3)
+        right_pos = self.simulator._rigid_body_pos[:, self.feet_indices[1]]  # (num_envs, 3)
+        # Prefer contact-force gating; OR with z-height as conservative fallback
+        foot_normal_forces = self.simulator.contact_forces[:, self.feet_indices, 2]  # (num_envs, 2)
+        left_contact_force = foot_normal_forces[:, 0] > self.slip_contact_force_threshold
+        right_contact_force = foot_normal_forces[:, 1] > self.slip_contact_force_threshold
+        left_contact_height = left_pos[:, 2] < self.slip_contact_height_threshold
+        right_contact_height = right_pos[:, 2] < self.slip_contact_height_threshold
+        left_contact = torch.logical_or(left_contact_force, left_contact_height)
+        right_contact = torch.logical_or(right_contact_force, right_contact_height)
         
         for env in range(self.num_envs):
             # Left foot slip
