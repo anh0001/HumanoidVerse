@@ -3,7 +3,7 @@
 # Reduced-capacity policy network for ablation studies
 
 defaults:
-  - algo: ppo                # base PPO config as default
+  - ppo                # base PPO config as default
 
 # Override only the network architecture
 algo:
