@@ -40,9 +40,6 @@ python humanoidverse/train_agent.py +exp=locomotion_no_curriculum \
 python humanoidverse/train_agent.py +exp=locomotion_terrain +algo=ppo_small \
   seed=42 headless=true num_envs=2048 \
   project_name=BaselineExperiments experiment_name=SmallNetworkBaseline &
-
-# Wait for completion
-wait
 ```
 
 ### Step 3: Collect All Evaluation Data

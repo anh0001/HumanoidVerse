@@ -404,7 +404,7 @@
     {
       "label": "Evaluate Stage 2: Hunter Full Randomization Model",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage2_full_rand +robot=hunter/hunter +checkpoint=logs/CurriculumStage2/latest/model.pt +simulator=isaacsim +exp=locomotion ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage2.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage2_full_rand +robot=hunter/hunter +checkpoint=logs/NoCurriculumBaseline/20250907_214218-Hunter_Stage2_NoCurriculum-locomotion-hunter/model_18300.pt +simulator=isaacsim +exp=locomotion ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage2.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
