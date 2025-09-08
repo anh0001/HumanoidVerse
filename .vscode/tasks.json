@@ -24,24 +24,6 @@
       "problemMatcher": []
     },
     {
-      "label": "Run Hunter Testing Initial Locomotion",
-      "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_locomotion_plane +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=16 project_name=TestInitialLoco experiment_name=Hunter_loco_IsaacSim headless=False > test.log 2>&1\" &",
-      "presentation": {
-        "echo": true,
-        "reveal": "never",
-        "focus": false,
-        "panel": "shared"
-      },
-      "options": {
-        "shell": {
-          "executable": "/bin/bash",
-          "args": ["-ic"]
-        }
-      },
-      "problemMatcher": []
-    },
-    {
       "label": "Stage 0 Plane Terrain Full Training Hunter Headless",
       "type": "shell",
       "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion +domain_rand=NO_domain_rand +rewards=loco/reward_hunter_locomotion +robot=hunter/hunter +terrain=terrain_locomotion_plane +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=4096 project_name=Stage0FullTrainingHunter experiment_name=HunterTraining headless=True\" > full_training_hunter.log 2>&1 &",
@@ -96,42 +78,6 @@
       "problemMatcher": []
     },
     {
-      "label": "Evaluate Hunter - Manual Control Mode",
-      "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/Stage0FullTrainingHunter/20250731_183713-HunterTraining-locomotion-hunter/model_76400.pt +exp=locomotion +simulator=isaacsim ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval.log 2>&1\" &",
-      "presentation": {
-        "echo": true,
-        "reveal": "never",
-        "focus": false,
-        "panel": "shared"
-      },
-      "options": {
-        "shell": {
-          "executable": "/bin/bash",
-          "args": ["-ic"]
-        }
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Run Hunter Testing Initial Locomotion Tilled Soil",
-      "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion algo=ppo_soil +domain_rand=YES_domain_rand_soil +rewards=loco/reward_hunter_soil_locomotion +robot=hunter/hunter +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=16 project_name=TestInitialLocoTilledSoil experiment_name=Hunter_loco_IsaacSim_TilledSoil headless=False > train.log 2>&1\" &",
-      "presentation": {
-        "echo": true,
-        "reveal": "never",
-        "focus": false,
-        "panel": "shared"
-      },
-      "options": {
-        "shell": {
-          "executable": "/bin/bash",
-          "args": ["-ic"]
-        }
-      },
-      "problemMatcher": []
-    },
-    {
       "label": "Full Training Hunter Headless Soil Terrain",
       "type": "shell",
       "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion algo=ppo_soil +domain_rand=YES_domain_rand_soil +rewards=loco/reward_hunter_soil_locomotion +robot=hunter/hunter +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=2048 project_name=FullTrainingHunterSoil experiment_name=FullTrainingHunterSoil headless=True\" > full_training_hunter_soil.log 2>&1 &",
@@ -153,24 +99,6 @@
       "label": "Full Training Hunter Headless Soil Terrain (High Memory)",
       "type": "shell",
       "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion algo=ppo_soil +domain_rand=YES_domain_rand_soil +rewards=loco/reward_hunter_soil_locomotion +robot=hunter/hunter +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 +obs=loco/leggedloco_obs_singlestep_withlinvel num_envs=4096 project_name=FullTrainingHunterSoil experiment_name=FullTrainingHunterSoil headless=True\" > full_training_hunter_soil.log 2>&1 &",
-      "presentation": {
-        "echo": true,
-        "reveal": "never",
-        "focus": false,
-        "panel": "shared"
-      },
-      "options": {
-        "shell": {
-          "executable": "/bin/bash",
-          "args": ["-ic"]
-        }
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Evaluate Hunter - Manual Control Mode Soil Terrain",
-      "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/FullTrainingHunterSoil/20250730_075343-FullTrainingHunterSoil-locomotion-hunter/model_10000.pt +simulator=isaacsim +exp=locomotion +rewards=loco/reward_hunter_soil_locomotion +terrain=terrain_tilled_soil ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -330,43 +258,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Test model_157400.pt on Stage 0 Curriculum",
-      "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage0_plane +robot=hunter/hunter +checkpoint=logs/Stage0FullTrainingHunter/20250731_183713-HunterTraining-locomotion-hunter/model_157400.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_model157400_stage0.log 2>&1\" &",
-      "presentation": {
-        "echo": true,
-        "reveal": "never",
-        "focus": false,
-        "panel": "shared"
-      },
-      "options": {
-        "shell": {
-          "executable": "/bin/bash",
-          "args": ["-ic"]
-        }
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Test model_157400.pt on Stage 1 Curriculum (Baseline)",
-      "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +checkpoint=logs/Stage0FullTrainingHunter/20250731_183713-HunterTraining-locomotion-hunter/model_157400.pt +simulator=isaacsim +exp=locomotion env=locomotion_soil ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_model157400_stage1.log 2>&1\" &",
-      "presentation": {
-        "echo": true,
-        "reveal": "never",
-        "focus": false,
-        "panel": "shared"
-      },
-      "options": {
-        "shell": {
-          "executable": "/bin/bash",
-          "args": ["-ic"]
-        }
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Evaluate Stage 0: Hunter Plane Model",
+      "label": "Evaluate on Stage 0: Hunter Plane Model",
       "type": "shell",
       "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage0_plane +robot=hunter/hunter +checkpoint=logs/Stage0FullTrainingHunter/20250731_183713-HunterTraining-locomotion-hunter/model_157400.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage0.log 2>&1\" &",
       "presentation": {
@@ -384,9 +276,9 @@
       "problemMatcher": []
     },
     {
-      "label": "Evaluate Stage 1: Hunter Soil Model",
+      "label": "Evaluate on Stage 1: Hunter Soil Model",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +checkpoint=logs/CurriculumStage1/20250803_154748-Hunter_Stage1_SoftSoil_From157400-locomotion-hunter/model_16000.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage1.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +checkpoint=logs/BaseModel/model_157400.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage1.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -402,63 +294,9 @@
       "problemMatcher": []
     },
     {
-      "label": "Evaluate Stage 2: Hunter Full Randomization Model",
+      "label": "Evaluate on Stage 2: Hunter Soil with Full Randomization Model",
       "type": "shell",
       "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage2_full_rand +robot=hunter/hunter +checkpoint=logs/NoCurriculumBaseline/20250907_214218-Hunter_Stage2_NoCurriculum-locomotion-hunter/model_18300.pt +simulator=isaacsim +exp=locomotion ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage2.log 2>&1\" &",
-      "presentation": {
-        "echo": true,
-        "reveal": "never",
-        "focus": false,
-        "panel": "shared"
-      },
-      "options": {
-        "shell": {
-          "executable": "/bin/bash",
-          "args": ["-ic"]
-        }
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Evaluate Stage 1 Model on Stage 0 Terrain (Regression Test)",
-      "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage0_plane +robot=hunter/hunter +checkpoint=logs/CurriculumStage1/latest/model.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage1_on_stage0.log 2>&1\" &",
-      "presentation": {
-        "echo": true,
-        "reveal": "never",
-        "focus": false,
-        "panel": "shared"
-      },
-      "options": {
-        "shell": {
-          "executable": "/bin/bash",
-          "args": ["-ic"]
-        }
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Evaluate Stage 2 Model on Stage 0 Terrain (Regression Test)",
-      "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage0_plane +robot=hunter/hunter +checkpoint=logs/CurriculumStage2/latest/model.pt +simulator=isaacsim +exp=locomotion ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage2_on_stage0.log 2>&1\" &",
-      "presentation": {
-        "echo": true,
-        "reveal": "never",
-        "focus": false,
-        "panel": "shared"
-      },
-      "options": {
-        "shell": {
-          "executable": "/bin/bash",
-          "args": ["-ic"]
-        }
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Evaluate Stage 2 Model on Stage 1 Terrain (Progression Test)",
-      "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +curriculum=stage1_soft_soil +robot=hunter/hunter +checkpoint=logs/CurriculumStage2/latest/model.pt +simulator=isaacsim +exp=locomotion env=locomotion_soil ++simulator.config.scene.env_spacing=4.0 ++env.config.max_episode_length_s=10000 ++env.config.locomotion_command_resampling_time=10000 > eval_stage2_on_stage1.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -494,7 +332,7 @@
     {
       "label": "Evaluate Flat-Only Policy on Soil",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/BaseModel/model_157400.pt +simulator=isaacsim +terrain=terrain_tilled_soil +env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_flat_on_soil.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/NoCurriculumBaseline/20250907_214218-Hunter_Stage2_NoCurriculum-locomotion-hunter/model_18300.pt +simulator=isaacsim +terrain=terrain_tilled_soil +env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_flat_on_soil.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",
