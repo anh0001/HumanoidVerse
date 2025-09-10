@@ -26,7 +26,7 @@
     {
       "label": "Eval: Rigid Reference Soil (50N pushes)",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +simulator=isaacsim +terrain=terrain_soil_rigid_reference +domain_rand=DR_soil_rigid +exp=locomotion num_envs=100 num_episodes=100 headless=True\" &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/20250803_220625-Hunter_Stage2_FullRand-locomotion-hunter/model_910050.pt +simulator=isaacsim +terrain=terrain_soil_rigid_reference +domain_rand=DR_soil_rigid +terrain.friction_combine_mode=max +env=locomotion env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_rigid_soil.log 2>&1 &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
@@ -34,7 +34,7 @@
     {
       "label": "Eval: Moderate Tilled Soil (50N pushes)",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +simulator=isaacsim +terrain=terrain_soil_moderate_tilled +domain_rand=DR_soil_moderate +exp=locomotion num_envs=100 num_episodes=100 headless=True\" &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/SmallerNetCurriculum/20250908_134008-Hunter_SmallerNet_3Stage-locomotion-hunter/model_4000.pt +simulator=isaacsim +terrain=terrain_soil_moderate_tilled +domain_rand=DR_soil_moderate +exp=locomotion +env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] num_envs=100 num_episodes=100 headless=True\" > eval_moderate_soil.log 2>&1 &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
@@ -42,7 +42,7 @@
     {
       "label": "Eval: Challenging Wet/Loose Soil (50N pushes)",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +simulator=isaacsim +terrain=terrain_soil_challenging_wet +domain_rand=DR_soil_challenging +exp=locomotion num_envs=100 num_episodes=100 headless=True\" &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/SmallerNetCurriculum/20250908_134008-Hunter_SmallerNet_3Stage-locomotion-hunter/model_4000.pt +simulator=isaacsim +terrain=terrain_soil_challenging_wet +domain_rand=DR_soil_challenging +exp=locomotion +env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] num_envs=100 num_episodes=100 headless=True\" > eval_challenging_soil.log 2>&1 &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []

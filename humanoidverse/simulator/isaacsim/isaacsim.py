@@ -395,6 +395,16 @@ class IsaacSim(BaseSimulator):
             mesh_prim_paths=["/World/ground"],
         )
         
+        # Ensure env spacing is at least the terrain tile size to avoid edge overlaps
+        try:
+            tile_L = float(self.terrain_config.terrain_length)
+            tile_W = float(self.terrain_config.terrain_width)
+            req_spacing = max(tile_L, tile_W)
+            if getattr(self.scene.cfg, "env_spacing", None) is not None:
+                self.scene.cfg.env_spacing = max(self.scene.cfg.env_spacing, req_spacing)
+        except Exception:
+            pass
+
         if (self.terrain_config.mesh_type == "heightfield") or (self.terrain_config.mesh_type == "trimesh"):
             sub_terrains = {}
             terrain_types = self.terrain_config.terrain_types
@@ -414,6 +424,31 @@ class IsaacSim(BaseSimulator):
                             proportion=proportion, grid_width=0.45, grid_height_range=(0.05, 0.2), platform_width=2.0
                         )
 
+            # If a single selected terrain is requested with custom kwargs, approximate it here.
+            # Currently supports a Perlin-like micro-roughness via uniform height noise.
+            try:
+                if getattr(self.terrain_config, "selected", False) and getattr(self.terrain_config, "terrain_kwargs", None):
+                    tkwargs = self.terrain_config.terrain_kwargs
+                    ttype = str(tkwargs.get("type", "")).lower()
+                    if ttype == "perlin":
+                        amp = float(tkwargs.get("amplitude", 0.0))
+                        freq = float(tkwargs.get("frequency", 10.0))
+                        # Map Perlin amplitude/frequency to a uniform noise config as an approximation.
+                        # noise_range ~ [0.5*amp, amp]; noise_step ~ 1/freq (meters)
+                        noise_low = max(0.0, 0.5 * amp)
+                        noise_high = max(noise_low, amp)
+                        noise_step = max(0.005, 1.0 / max(1e-6, freq))
+                        sub_terrains = {
+                            "flat": terrain_gen.HfRandomUniformTerrainCfg(
+                                proportion=1.0,
+                                noise_range=(noise_low, noise_high),
+                                noise_step=noise_step,
+                                border_width=0.0,
+                            )
+                        }
+            except Exception as e:
+                logger.warning(f"Selected terrain kwargs not applied: {e}")
+
             terrain_generator_config = TerrainGeneratorCfg(
                 curriculum=self.terrain_config.curriculum,
                 size=(self.terrain_config.terrain_length, self.terrain_config.terrain_width),
@@ -427,6 +462,10 @@ class IsaacSim(BaseSimulator):
                 sub_terrains=sub_terrains,
             )
 
+            # Allow overriding friction combine behavior from terrain config (default 'multiply').
+            _fric_mode = getattr(self.terrain_config, "friction_combine_mode", "multiply")
+            _rest_mode = getattr(self.terrain_config, "restitution_combine_mode", "multiply")
+
             terrain_config = TerrainImporterCfg(
                 prim_path="/World/ground",
                 terrain_type="generator",
@@ -434,8 +473,8 @@ class IsaacSim(BaseSimulator):
                 max_init_terrain_level=9,
                 collision_group=-1,
                 physics_material=sim_utils.RigidBodyMaterialCfg(
-                    friction_combine_mode="multiply",
-                    restitution_combine_mode="multiply",
+                    friction_combine_mode=_fric_mode,
+                    restitution_combine_mode=_rest_mode,
                     static_friction=self.terrain_config.static_friction,
                     dynamic_friction=self.terrain_config.dynamic_friction,
                 ),
@@ -446,16 +485,19 @@ class IsaacSim(BaseSimulator):
                 debug_vis=False,
             )
             terrain_config.num_envs = self.scene.cfg.num_envs
-            # terrain_config.env_spacing = self.scene.cfg.env_spacing
+            terrain_config.env_spacing = self.scene.cfg.env_spacing
 
         else:
+            _fric_mode = getattr(self.terrain_config, "friction_combine_mode", "multiply")
+            _rest_mode = getattr(self.terrain_config, "restitution_combine_mode", "multiply")
+
             terrain_config = TerrainImporterCfg(
                 prim_path="/World/ground",
                 terrain_type="plane",
                 collision_group=-1,
                 physics_material=sim_utils.RigidBodyMaterialCfg(
-                    friction_combine_mode="multiply",
-                    restitution_combine_mode="multiply",
+                    friction_combine_mode=_fric_mode,
+                    restitution_combine_mode=_rest_mode,
                     static_friction=self.terrain_config.static_friction,
                     dynamic_friction=self.terrain_config.dynamic_friction,
                     restitution=0.0,
