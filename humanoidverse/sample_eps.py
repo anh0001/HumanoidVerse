@@ -12,7 +12,9 @@ from humanoidverse.utils.logging import HydraLoggerBridge
 import logging
 from humanoidverse.utils.config_utils import *  # noqa: E402, F403
 from loguru import logger
-from humanoidverse.utils.spatial_utils.rotations import get_euler_xyz_in_tensor, quat_rotate_inverse
+# Use the 2-arg helpers used throughout the envs to avoid signature mismatch
+from humanoidverse.utils.torch_utils import quat_rotate_inverse
+from humanoidverse.utils.spatial_utils.rotations import get_euler_xyz_in_tensor
 
 @hydra.main(config_path="config", config_name="base_eval", version_base="1.1")
 def main(override_config: OmegaConf):
