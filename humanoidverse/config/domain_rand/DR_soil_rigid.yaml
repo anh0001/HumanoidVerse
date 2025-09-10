@@ -1,0 +1,23 @@
+# @package _global_
+
+defaults:
+  - domain_rand_base
+
+domain_rand:
+  # Friction consistent with rigid reference soil
+  randomize_friction: True
+  friction_range: [0.70, 0.90]
+
+  # External disturbances
+  push_robots: True
+  push_force_N: 50
+  push_duration_s_range: [0.12, 0.20]
+  push_interval_s: [6, 12]
+
+  # Keep other randomizations modest for this regime
+  randomize_base_com: True
+  base_com_range:
+    x: [-0.08, 0.08]
+    y: [-0.08, 0.08]
+    z: [-0.08, 0.08]
+

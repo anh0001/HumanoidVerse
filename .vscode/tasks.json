@@ -24,6 +24,30 @@
       "problemMatcher": []
     },
     {
+      "label": "Eval: Rigid Reference Soil (50N pushes)",
+      "type": "shell",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +simulator=isaacsim +terrain=terrain_soil_rigid_reference +domain_rand=DR_soil_rigid +exp=locomotion num_envs=100 num_episodes=100 headless=True\" &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
+      "label": "Eval: Moderate Tilled Soil (50N pushes)",
+      "type": "shell",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +simulator=isaacsim +terrain=terrain_soil_moderate_tilled +domain_rand=DR_soil_moderate +exp=locomotion num_envs=100 num_episodes=100 headless=True\" &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
+      "label": "Eval: Challenging Wet/Loose Soil (50N pushes)",
+      "type": "shell",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +simulator=isaacsim +terrain=terrain_soil_challenging_wet +domain_rand=DR_soil_challenging +exp=locomotion num_envs=100 num_episodes=100 headless=True\" &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
       "label": "Evaluate Hunter Locomotion Model with Pseudo-Random Lateral Pushes",
       "type": "shell",
       "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/Stage0FullTrainingHunter/20250731_133824-HunterTraining-locomotion-hunter/model_5600.pt +simulator=isaacsim +domain_rand.push_robots=True +domain_rand.max_push_vel_xy=0.7 +domain_rand.push_interval_s=[3,8]\" &",
@@ -278,7 +302,7 @@
     {
       "label": "Evaluate Flat-Only Policy on Soil",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/20250803_220625-Hunter_Stage2_FullRand-locomotion-hunter/model_1300.pt +simulator=isaacsim +terrain=terrain_tilled_soil +env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_flat_on_soil.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/SmallerNetCurriculum/20250908_134008-Hunter_SmallerNet_3Stage-locomotion-hunter/model_4000.pt +simulator=isaacsim +terrain=terrain_tilled_soil +env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_flat_on_soil.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",

@@ -336,6 +336,11 @@ class IsaacGym(BaseSimulator):
                 sum += p.mass
                 logger.debug(f"Mass of body {i}: {p.mass} (before randomization)")
             logger.debug(f"Total mass {sum} (before randomization)")
+            # store once for later use (e.g., force-based pushes)
+            try:
+                self.robot_mass = float(sum)
+            except Exception:
+                self.robot_mass = None
 
         # randomize base com
         if self.env_config.domain_rand.randomize_base_com:

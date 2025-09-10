@@ -62,7 +62,15 @@ class Terrain:
                 self.add_terrain_to_map(terrain, i, j)
 
     def selected_terrain(self):
-        terrain_type = self.cfg.terrain_kwargs.pop('type')
+        # Support both cfg.terrain_kwargs and legacy cfg.terrain_kwargs.terrain_kwargs
+        kwargs_cfg = getattr(self.cfg, 'terrain_kwargs', {})
+        try:
+            # OmegaConf may behave like dict
+            terrain_type = kwargs_cfg.get('type') if hasattr(kwargs_cfg, 'get') else kwargs_cfg['type']
+        except Exception:
+            # legacy nested
+            terrain_type = self.cfg.terrain_kwargs.terrain_kwargs.pop('type')
+            kwargs_cfg = self.cfg.terrain_kwargs.terrain_kwargs
         for k in range(self.cfg.num_sub_terrains):
             # Env coordinates in the world
             (i, j) = np.unravel_index(k, (self.cfg.num_rows, self.cfg.num_cols))
@@ -70,10 +78,14 @@ class Terrain:
             terrain = terrain_utils.SubTerrain("terrain",
                               width=self.width_per_env_pixels,
                               length=self.width_per_env_pixels,
-                              vertical_scale=self.vertical_scale,
-                              horizontal_scale=self.horizontal_scale)
+                              vertical_scale=self.cfg.vertical_scale,
+                              horizontal_scale=self.cfg.horizontal_scale)
 
-            eval(terrain_type)(terrain, **self.cfg.terrain_kwargs.terrain_kwargs)
+            # Call the chosen generator; if kwargs is OmegaConf, convert to dict
+            call_kwargs = dict(kwargs_cfg)
+            if 'type' in call_kwargs:
+                call_kwargs.pop('type')
+            eval(terrain_type)(terrain, **call_kwargs)
             self.add_terrain_to_map(terrain, i, j)
     
     def make_terrain(self, choice, difficulty):
@@ -155,3 +167,64 @@ def pit_terrain(terrain, depth, platform_size=1.):
     y1 = terrain.width // 2 - platform_size
     y2 = terrain.width // 2 + platform_size
     terrain.height_field_raw[x1:x2, y1:y2] = -depth
+
+
+# ---- Custom terrain generators for soil regimes -------------------------------------------
+def perlin(terrain, amplitude=0.01, frequency=10.0, seed=None):
+    """Lightweight pseudo-perlin using summed sinusoids (no extra dep).
+    Produces shallow undulations suitable as a neutral base on rigid soil.
+    """
+    if seed is not None:
+        np.random.seed(int(seed))
+    x = np.arange(terrain.length) * terrain.horizontal_scale
+    y = np.arange(terrain.width) * terrain.horizontal_scale
+    xx, yy = np.meshgrid(x, y, indexing='ij')
+    # Sum of two rotated sinusoids to mimic smooth noise
+    w = 2.0 * np.pi * frequency
+    h = amplitude * (np.sin(w * xx) + 0.5 * np.sin(w * 0.7 * (xx + 0.6 * yy)))
+    terrain.height_field_raw += (h / terrain.vertical_scale).astype(np.int16)
+
+
+def furrows(terrain, depth_range_m=(0.05, 0.15), spacing_range_m=(0.8, 1.2), orientation_deg=(-10.0, 10.0), seed=None):
+    """Generate parallel furrows as a heightfield modulation.
+    Depth: 5–15 cm, spacing: 0.8–1.2 m, small random orientation.
+    """
+    if seed is not None:
+        np.random.seed(int(seed))
+    depth = np.random.uniform(*depth_range_m)
+    spacing = np.random.uniform(*spacing_range_m)
+    theta = np.deg2rad(np.random.uniform(*orientation_deg))
+
+    # Coordinates in meters
+    x = np.arange(terrain.length) * terrain.horizontal_scale
+    y = np.arange(terrain.width) * terrain.horizontal_scale
+    xx, yy = np.meshgrid(x, y, indexing='ij')
+
+    # Rotate coordinates so furrows run along rotated x'
+    xr =  np.cos(theta) * xx + np.sin(theta) * yy
+    # Triangular wave to create grooves; values in [-1, 1]
+    tri = 2.0 * np.abs(((xr / spacing) - np.floor(0.5 + (xr / spacing)))) - 1.0
+    h = -0.5 * depth * (1.0 + tri)  # troughs down to -depth, crests near 0
+
+    terrain.height_field_raw += (h / terrain.vertical_scale).astype(np.int16)
+
+
+def wheel_tracks(terrain, track_width_m=0.35, depth_m=0.03, num_tracks=2, seed=None):
+    """Imprint parallel wheel tracks (shallow trenches) along x direction."""
+    if seed is not None:
+        np.random.seed(int(seed))
+    x = np.arange(terrain.length)
+    y = np.arange(terrain.width)
+    xx, yy = np.meshgrid(x, y, indexing='ij')
+
+    track_width_px = int(max(1, track_width_m / terrain.horizontal_scale))
+    center1 = int(terrain.width * 0.3)
+    center2 = int(terrain.width * 0.7) if num_tracks >= 2 else None
+
+    depth_px = int(depth_m / terrain.vertical_scale)
+    if center1 is not None:
+        y1 = slice(max(0, center1 - track_width_px // 2), min(terrain.width, center1 + track_width_px // 2))
+        terrain.height_field_raw[:, y1] -= depth_px
+    if center2 is not None:
+        y2 = slice(max(0, center2 - track_width_px // 2), min(terrain.width, center2 + track_width_px // 2))
+        terrain.height_field_raw[:, y2] -= depth_px

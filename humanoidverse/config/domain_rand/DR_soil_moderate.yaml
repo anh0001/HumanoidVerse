@@ -1,0 +1,23 @@
+# @package _global_
+
+defaults:
+  - domain_rand_base
+
+domain_rand:
+  # Friction window for moderate tilled soil
+  randomize_friction: True
+  friction_range: [0.50, 0.70]
+
+  # Approximate compliance via control/CoM variations and lower friction
+  push_robots: True
+  push_force_N: 50
+  push_duration_s_range: [0.12, 0.20]
+  push_interval_s: [5, 10]
+
+  # Leave other DR broad for robustness
+  randomize_base_com: True
+  base_com_range:
+    x: [-0.12, 0.12]
+    y: [-0.12, 0.12]
+    z: [-0.12, 0.12]
+

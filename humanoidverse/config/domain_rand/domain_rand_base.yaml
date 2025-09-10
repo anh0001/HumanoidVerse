@@ -5,6 +5,11 @@ domain_rand:
   push_robots : True
   push_interval_s : [5, 10]
   max_push_vel_xy : 1.0
+  # Optional: specify pushes as forces (more physical)
+  # If set, _push_robots converts this to a velocity impulse: dv = F * dt / m
+  # Falls back to max_push_vel_xy when not provided.
+  push_force_N: null           # e.g., 50 for 50 N lateral pushes
+  push_duration_s_range: [0.10, 0.20]
 
   # base com
   randomize_base_com : True

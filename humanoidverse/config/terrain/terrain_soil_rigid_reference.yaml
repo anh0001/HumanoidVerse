@@ -1,0 +1,39 @@
+# @package _global_
+
+defaults:
+  - terrain_base
+
+terrain:
+  # Representation
+  mesh_type: 'heightfield'
+  horizontal_scale: 0.10
+  vertical_scale: 0.005
+  border_size: 40
+
+  # Soil regime (Rigid Reference)
+  # concrete / packed soil
+  static_friction: 0.80      # target in [0.7, 0.9]
+  dynamic_friction: 0.75
+  restitution: 0.02
+  contact_stiffness: 1.0e6   # N/m (k_contact)
+  contact_damping: 1.0e3
+
+  # Layout: flat field with optional subtle perlin to avoid perfectly flatness
+  curriculum: False
+  selected: True
+  terrain_kwargs:
+    type: 'perlin'
+    amplitude: 0.005         # ~5 mm micro-roughness
+    frequency: 8.0
+
+  terrain_length: 10.0
+  terrain_width:  10.0
+  num_rows: 1
+  num_cols: 1
+  terrain_types: ['flat']
+  terrain_proportions: [1.0]
+
+  # Used by IsaacSim generator
+  slope_treshold: 0.75
+  measure_heights: False
+

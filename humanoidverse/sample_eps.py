@@ -12,6 +12,7 @@ from humanoidverse.utils.logging import HydraLoggerBridge
 import logging
 from humanoidverse.utils.config_utils import *  # noqa: E402, F403
 from loguru import logger
+from humanoidverse.utils.spatial_utils.rotations import get_euler_xyz_in_tensor, quat_rotate_inverse
 
 @hydra.main(config_path="config", config_name="base_eval", version_base="1.1")
 def main(override_config: OmegaConf):
@@ -162,6 +163,30 @@ def main(override_config: OmegaConf):
 
     env.set_is_evaluating(command=eval_command)  # Set to evaluation mode
 
+    # ---- Per-env accumulators for advanced metrics ----
+    num_envs = env.num_envs
+    dt_control = float(getattr(env, 'dt', 0.02))
+    g = 9.81
+    # Determine robot mass (prefer simulator-provided; allow +robot_mass_kg override; else default)
+    try:
+        robot_mass = float(getattr(env.simulator, 'robot_mass', None))
+    except Exception:
+        robot_mass = None
+    try:
+        mass_override = getattr(config, 'robot_mass_kg', None)
+        if mass_override is not None:
+            robot_mass = float(mass_override)
+    except Exception:
+        pass
+    if robot_mass is None:
+        robot_mass = 60.0
+
+    energy_accum = torch.zeros(num_envs, device=env.device)
+    vel_err_sum = torch.zeros(num_envs, device=env.device)
+    step_count = torch.zeros(num_envs, dtype=torch.long, device=env.device)
+    pitch_sum = torch.zeros(num_envs, device=env.device)
+    pitch_sq_sum = torch.zeros(num_envs, device=env.device)
+
     # Create and load algorithm
     algo: BaseAlgo = instantiate(config.algo, env=env, device=device, log_dir=None)
     algo.setup()
@@ -189,6 +214,31 @@ def main(override_config: OmegaConf):
         # Take environment step
         actor_state = {"actions": actions}
         obs_dict, rewards, dones, infos = env.step(actor_state)
+
+        # Accumulate step-wise metrics (IsaacSim focus; backend-agnostic when buffers exist)
+        try:
+            # Energy integral: sum(|tau * omega|) * dt
+            power = torch.sum(torch.abs(env.torques) * torch.abs(env.simulator.dof_vel), dim=1)
+            energy_accum += power * dt_control
+
+            # Velocity error in base frame (xy)
+            base_lv_world = env.simulator.robot_root_states[:, 7:10]
+            base_quat = env.simulator.base_quat
+            base_lv_local = quat_rotate_inverse(base_quat, base_lv_world)
+            cmd_xy = env.commands[:, :2]
+            vel_err = torch.linalg.norm(cmd_xy - base_lv_local[:, :2], dim=1)
+            vel_err_sum += vel_err
+
+            # Torso pitch (deg)
+            torso_quat = env.simulator._rigid_body_rot[:, env.torso_index]
+            rpy = get_euler_xyz_in_tensor(torso_quat)
+            pitch_deg = rpy[:, 1] * (180.0 / math.pi)
+            pitch_sum += pitch_deg
+            pitch_sq_sum += pitch_deg * pitch_deg
+
+            step_count += 1
+        except Exception:
+            pass
         # move obs back to device for next policy call
         for k in list(obs_dict.keys()):
             if isinstance(obs_dict[k], torch.Tensor):
@@ -208,12 +258,36 @@ def main(override_config: OmegaConf):
             if hasattr(env, 'episode_info'):
                 episode_data = env.episode_info.get(f'env_{env_idx_int}', None)
 
+            # Prepare advanced metrics for this completed episode
+            sigma_pitch_deg = None
+            cot = None
+            vel_err_mean = None
+            try:
+                n = int(step_count[env_idx_int].item())
+                if n > 0:
+                    mean_pitch = float(pitch_sum[env_idx_int].item()) / n
+                    mean_pitch_sq = float(pitch_sq_sum[env_idx_int].item()) / n
+                    var_pitch = max(0.0, mean_pitch_sq - mean_pitch * mean_pitch)
+                    sigma_pitch_deg = math.sqrt(var_pitch)
+                    vel_err_mean = float(vel_err_sum[env_idx_int].item()) / n
+            except Exception:
+                pass
+
             if episode_data is not None:
+                dist = float(episode_data.get('distance', 0.0))
+                try:
+                    if dist > 0.0:
+                        cot = float(energy_accum[env_idx_int].item()) / (robot_mass * g * dist)
+                except Exception:
+                    cot = None
                 episode_info = {
-                    'distance': float(episode_data.get('distance', 0.0)),
+                    'distance': dist,
                     'slip_distance': float(episode_data.get('slip_distance', 0.0)),
                     'fell': bool(episode_data.get('fell', False)),
                     'episode_length': float(episode_data.get('episode_length', 0.0)),
+                    'sigma_pitch_deg': sigma_pitch_deg,
+                    'cot': cot,
+                    'vel_err_mean': vel_err_mean,
                 }
             else:
                 # Fallback (best-effort) if env.episode_info is unavailable
@@ -235,10 +309,20 @@ def main(override_config: OmegaConf):
                     'slip_distance': 0.0,  # cannot reliably reconstruct after reset
                     'fell': fell_flag,
                     'episode_length': ep_len,
+                    'sigma_pitch_deg': sigma_pitch_deg,
+                    'cot': None,
+                    'vel_err_mean': vel_err_mean,
                 }
 
             ep_infos.append(episode_info)
             episodes_completed += 1
+
+            # Reset per-env accumulators after logging this episode
+            energy_accum[env_idx_int] = 0.0
+            vel_err_sum[env_idx_int] = 0.0
+            step_count[env_idx_int] = 0
+            pitch_sum[env_idx_int] = 0.0
+            pitch_sq_sum[env_idx_int] = 0.0
             
             if episodes_completed % 10 == 0:
                 logger.info(f"Completed {episodes_completed}/{num_episodes} episodes")
@@ -260,12 +344,31 @@ def main(override_config: OmegaConf):
     total_dist = sum(info.get('distance', 0.0) for info in ep_infos)
     total_slip = sum(info.get('slip_distance', 0.0) for info in ep_infos)
     total_episode_length = sum(info.get('episode_length', 0) for info in ep_infos)
+    # New metrics
+    sigma_list = [info.get('sigma_pitch_deg') for info in ep_infos if info.get('sigma_pitch_deg') is not None]
+    cot_list = [info.get('cot') for info in ep_infos if info.get('cot') is not None and math.isfinite(info.get('cot'))]
+    vel_err_list = [info.get('vel_err_mean') for info in ep_infos if info.get('vel_err_mean') is not None]
     
     falls_per_100m = (total_falls / (total_dist/100.0)) if total_dist > 0 else 0.0
     slip_per_100m = (total_slip / (total_dist/100.0)) if total_dist > 0 else 0.0
     avg_episode_length = total_episode_length / len(ep_infos) if ep_infos else 0.0
     avg_distance = total_dist / len(ep_infos) if ep_infos else 0.0
     
+    def _mean_and_ci(x):
+        if not x:
+            return (float('nan'), float('nan'))
+        import numpy as np
+        arr = np.array(x, dtype=float)
+        m = float(arr.mean())
+        s = float(arr.std(ddof=0))
+        n = max(1, len(arr))
+        ci = 1.96 * s / (n ** 0.5)
+        return (m, ci)
+
+    sigma_mean, sigma_ci = _mean_and_ci(sigma_list)
+    cot_mean, cot_ci = _mean_and_ci(cot_list)
+    vel_err_mean, vel_err_ci = _mean_and_ci(vel_err_list)
+
     # Print results to stdout
     print("\n" + "="*50)
     print("EVALUATION RESULTS")
@@ -277,6 +380,12 @@ def main(override_config: OmegaConf):
     print(f"Average distance per episode: {avg_distance:.2f} m")
     print(f"Falls per 100m: {falls_per_100m:.2f}")
     print(f"Slip distance per 100m: {slip_per_100m:.2f} m")
+    if sigma_list:
+        print(f"Sigma pitch (deg): {sigma_mean:.2f} ± {sigma_ci:.2f}")
+    if vel_err_list:
+        print(f"Velocity error (m/s): {vel_err_mean:.3f} ± {vel_err_ci:.3f}")
+    if cot_list:
+        print(f"CoT (J/kg·m): {cot_mean:.2f} ± {cot_ci:.2f}")
     print("="*50)
 
     # Also log results via loguru so they appear in Hydra eval.log and any redirected stdout
@@ -288,6 +397,12 @@ def main(override_config: OmegaConf):
     logger.info(f"Average distance per episode: {avg_distance:.2f} m")
     logger.info(f"Falls per 100m: {falls_per_100m:.2f}")
     logger.info(f"Slip distance per 100m: {slip_per_100m:.2f} m")
+    if sigma_list:
+        logger.info(f"Sigma pitch (deg): {sigma_mean:.2f} ± {sigma_ci:.2f}")
+    if vel_err_list:
+        logger.info(f"Velocity error (m/s): {vel_err_mean:.3f} ± {vel_err_ci:.3f}")
+    if cot_list:
+        logger.info(f"CoT (J/kg·m): {cot_mean:.2f} ± {cot_ci:.2f}")
 
     # Flush stdout to ensure the summary is written when running under nohup/redirects
     try:

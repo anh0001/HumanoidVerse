@@ -722,10 +722,38 @@ class LeggedRobotBase(BaseTask):
         if len(env_ids) == 0:
             return
         self.need_to_refresh_envs[env_ids] = True
-        max_vel = self.config.domain_rand.max_push_vel_xy
-        self.push_robot_vel_buf[env_ids] = torch_rand_float(-max_vel, max_vel, (len(env_ids), 2), device=str(self.device))  # lin vel x/y
-        self.record_push_robot_vel_buf[env_ids] = self.push_robot_vel_buf[env_ids].clone()
-        self.simulator.robot_root_states[env_ids, 7:9] = self.push_robot_vel_buf[env_ids]
+        # Prefer force-based pushes when configured; fall back to direct velocity set.
+        push_force = getattr(self.config.domain_rand, "push_force_N", None)
+        if push_force is not None:
+            # duration per env
+            dur_rng = getattr(self.config.domain_rand, "push_duration_s_range", [0.10, 0.20])
+            durations = torch_rand_float(float(dur_rng[0]), float(dur_rng[1]), (len(env_ids), 1), device=str(self.device)).squeeze(1)
+
+            # estimate robot mass (kg)
+            mass = getattr(self.simulator, "robot_mass", None)
+            if mass is None:
+                mass = getattr(self.config.robot, "mass_kg", None)
+            if mass is None:
+                # conservative default to avoid unrealistically large impulses
+                mass = 60.0
+            if not torch.is_tensor(mass):
+                mass = torch.tensor(float(mass), device=self.device)
+
+            # delta-v = F * dt / m; apply purely lateral (y-axis), random sign
+            dv = (float(push_force) * durations) / mass
+            signs = torch.where(torch.rand(len(env_ids), device=self.device) > 0.5, 1.0, -1.0)
+            dv_y = dv * signs
+            dv_xy = torch.stack([torch.zeros_like(dv_y), dv_y], dim=1)
+
+            self.push_robot_vel_buf[env_ids] = dv_xy
+            self.record_push_robot_vel_buf[env_ids] = self.push_robot_vel_buf[env_ids].clone()
+            # Add the impulse to current velocity instead of overwriting
+            self.simulator.robot_root_states[env_ids, 7:9] += self.push_robot_vel_buf[env_ids]
+        else:
+            max_vel = self.config.domain_rand.max_push_vel_xy
+            self.push_robot_vel_buf[env_ids] = torch_rand_float(-max_vel, max_vel, (len(env_ids), 2), device=str(self.device))  # lin vel x/y
+            self.record_push_robot_vel_buf[env_ids] = self.push_robot_vel_buf[env_ids].clone()
+            self.simulator.robot_root_states[env_ids, 7:9] = self.push_robot_vel_buf[env_ids]
         # self.gym.set_actor_root_state_tensor(self.sim, gymtorch.unwrap_tensor(self.simulator.all_root_states))
 
 

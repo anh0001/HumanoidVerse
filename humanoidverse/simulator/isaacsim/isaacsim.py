@@ -483,6 +483,15 @@ class IsaacSim(BaseSimulator):
         self.scene.clone_environments(copy_from_source=False)
         self.scene.filter_collisions(global_prim_paths=[terrain_config.prim_path])
 
+        # Optional: spawn low-friction patches to emulate wet/loose areas.
+        try:
+            patch_cfg = getattr(self.terrain_config, "patchy_friction", None)
+            if patch_cfg and getattr(patch_cfg, "enabled", False):
+                self._spawn_low_friction_patches(patch_cfg)
+        except Exception as e:
+            # Keep training robust even if the feature is unavailable on this stack
+            logger.warning(f"Skipping friction patches: {e}")
+
         # add lights
         # light_config = sim_utils.DomeLightCfg(intensity=2000.0, color=(0.98, 0.95, 0.88))
         # light_config.func("/World/Light", light_config)
@@ -509,6 +518,104 @@ class IsaacSim(BaseSimulator):
     
     def setup_terrain(self, mesh_type):
         pass
+
+    def _spawn_low_friction_patches(self, patch_cfg):
+        """Spawn thin static cuboids with low friction to create patchy zones.
+        Requires Omni Isaac Lab's RigidObject/Material APIs at runtime.
+        """
+        try:
+            from omni.isaac.lab.assets import RigidObject, RigidObjectCfg
+            import omni.isaac.lab.sim as sim_utils
+        except Exception as e:
+            raise RuntimeError("RigidObject API not available") from e
+
+        # Derive counts and sizes
+        cov_low, cov_high = float(patch_cfg["coverage_fraction"][0]), float(patch_cfg["coverage_fraction"][1])
+        size_x_rng = patch_cfg.get("patch_size_m", [1.0, 2.0])
+        low_mu = float(patch_cfg.get("low_mu", 0.2))
+
+        # Terrain footprint per env
+        L = float(self.terrain_config.terrain_length)
+        W = float(self.terrain_config.terrain_width)
+        area = L * W
+        # Choose total area to cover per env
+        coverage = np.random.uniform(cov_low, cov_high)
+        target_area = coverage * area
+
+        # Per-env patches under /World/envs/env_*/
+        for env_id in range(self.scene.cfg.num_envs):
+            placed_area = 0.0
+            patch_idx = 0
+            while placed_area < target_area and patch_idx < 16:
+                sx = float(np.random.uniform(size_x_rng[0], size_x_rng[1]))
+                sy = float(np.random.uniform(size_x_rng[0], size_x_rng[1]))
+                sz = 0.02  # thin slab
+
+                # random position within env tile (centered at (0,0) in each env frame)
+                x = float(np.random.uniform(-0.5 * L + 0.5 * sx, 0.5 * L - 0.5 * sx))
+                y = float(np.random.uniform(-0.5 * W + 0.5 * sy, 0.5 * W - 0.5 * sy))
+                z = 0.0
+
+                # physics material for the patch
+                mat = sim_utils.RigidBodyMaterialCfg(
+                    friction_combine_mode="multiply",
+                    restitution_combine_mode="multiply",
+                    static_friction=low_mu,
+                    dynamic_friction=low_mu,
+                    restitution=0.0,
+                )
+
+                spawn = sim_utils.CuboidCfg(
+                    size=(sx, sy, sz),
+                    physics_material=mat,
+                    rigid_props=sim_utils.RigidBodyPropertiesCfg(kinematic_enabled=True),
+                    visual_material=sim_utils.MdlFileCfg(
+                        mdl_path="{NVIDIA_NUCLEUS_DIR}/Materials/Basic/Plastic_PVC.mdl", project_uvw=True
+                    ),
+                )
+
+                obj_cfg = RigidObjectCfg(
+                    # Note: These prim paths are environment-replicated by InteractiveScene
+                    prim_path=f"/World/envs/env_{env_id}/friction_patch_{patch_idx}",
+                    spawn=spawn,
+                )
+                obj = RigidObject(obj_cfg)
+                # place into scene
+                self.scene.rigid_objects[f"patch_{env_id}_{patch_idx}"] = obj
+                # initial pose
+                obj.set_world_pose(position=np.array([x, y, z]))
+
+                placed_area += sx * sy
+                patch_idx += 1
+
+            # Optional single surprise patch
+            surprise = patch_cfg.get("surprise_patches", None)
+            if surprise and surprise.get("enabled", False):
+                sx, sy = [float(v) for v in surprise.get("size_m", [2.0, 2.0])]
+                sz = 0.02
+                x = float(np.random.uniform(-0.5 * L + 0.5 * sx, 0.5 * L - 0.5 * sx))
+                y = float(np.random.uniform(-0.5 * W + 0.5 * sy, 0.5 * W - 0.5 * sy))
+                z = 0.0
+                low_mu_surprise = float(surprise.get("low_mu", 0.2))
+                mat = sim_utils.RigidBodyMaterialCfg(
+                    friction_combine_mode="multiply",
+                    restitution_combine_mode="multiply",
+                    static_friction=low_mu_surprise,
+                    dynamic_friction=low_mu_surprise,
+                    restitution=0.0,
+                )
+                spawn = sim_utils.CuboidCfg(
+                    size=(sx, sy, sz),
+                    physics_material=mat,
+                    rigid_props=sim_utils.RigidBodyPropertiesCfg(kinematic_enabled=True),
+                )
+                obj_cfg = RigidObjectCfg(
+                    prim_path=f"/World/envs/env_{env_id}/friction_patch_surprise",
+                    spawn=spawn,
+                )
+                obj = RigidObject(obj_cfg)
+                self.scene.rigid_objects[f"patch_surprise_{env_id}"] = obj
+                obj.set_world_pose(position=np.array([x, y, z]))
 
 
     def load_assets(self):
