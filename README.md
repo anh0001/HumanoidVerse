@@ -1,6 +1,4 @@
-<h1 align="center"> HumanoidVerse: A Multi-Simulator Framework for 
-    
-Humanoid Robot Sim-to-Real Learning. </h1>
+<h1 align="center"> HumanoidVerse: Hunter Robot Training in IsaacSim </h1>
 
 <div align="center">
 <p align="center">
@@ -17,128 +15,246 @@ Humanoid Robot Sim-to-Real Learning. </h1>
 
 </div>
 
-# What is HumanoidVerse?
-HumanoidVerse supports multiple simulators and tasks for humanoid robot sim-to-real learning. A key design logic is the separation and modularization of simulators, tasks, and algorithms, allowing for conviniently switching between simulators and tasks, and develop new ones with minimal efforts.
+# Hunter Robot Locomotion Training
+This repository provides a complete training pipeline for the Hunter humanoid robot using IsaacSim/IsaacLab. The framework implements a progressive 3-stage curriculum learning approach that enables robust locomotion policies across diverse terrains, from simple planes to challenging soil conditions.</div>
 
-We compared the scope of HumanoidVerse with other sim-to-real frameworks and summarized the differences in supported features in the following table:
-
-<div align="center">
-
-| Framework | Multi Simulators | Sim2Sim & Sim2Real |
-| --- | --- | --- |
-| HumanoidVerse | :white_check_mark: | :white_check_mark: |
-| [Mujoco Playground](https://playground.mujoco.org/#) | :x: | :white_check_mark: |
-| [ProtoMotions](https://github.com/NVlabs/ProtoMotions) | :white_check_mark: | :x: |
-| [Humanoid Gym](https://github.com/roboterax/humanoid-gym) | :x: | :white_check_mark: |
-| [Unitree RL Gym](https://github.com/unitreerobotics/unitree_rl_gym) | :x: | :white_check_mark: |
-| [Legged Gym](https://github.com/leggedrobotics/legged_gym) | :x: | :x: |
-
-</div>
-
-## TODO
-- [x] Support for IsaacSim simulator.
-- [x] Support for multiple embodiments: (Currently) Unitree Humanoid H1-10DoF, H1-19DoF, G1-12DoF, G1-23DoF.
-- [ ] Sim-to-Sim and Sim-to-Real pipelines.
-- [ ] Motion tracking tasks.
-
-# News
-
-- 2025-02-04: :tada: Initial Public Release! We have released the locomotion training pipeline for humanoid robots in IsaacSim.
+## Features
+- **3-Stage Curriculum Learning**: Progressive training from plane terrain → soft soil → full randomization
+- **Hunter Robot Support**: Optimized for Hunter humanoid robot with complete locomotion pipeline
+- **IsaacSim/IsaacLab Integration**: Built on NVIDIA's Isaac simulation platform
+- **Robust Evaluation**: Multiple terrain scenarios including soil conditions and external perturbations
+- **Complete Training Pipeline**: From basic locomotion to advanced terrain navigation
 
 
-# Installation
+# Environment Setup
+
+## Prerequisites
+- NVIDIA GPU with CUDA support
+- Linux Ubuntu 22.04 or later
+- Miniconda or Anaconda
+- IsaacSim 4.2.0
+- IsaacLab 1.4.1
+
+## Quick Setup
+```bash
+# 1. Activate IsaacLab conda environment
+source ~/miniconda3/bin/activate isaaclab
+
+# 2. Install HumanoidVerse dependencies
+pip install -e .
+
+# 3. Verify IsaacSim integration
+python -c "import isaacsim; print('IsaacSim imported successfully')"
+```
 
 For detailed installation instructions, please refer to the [Installation Guide](docs/installation_guide.md).
 
 
 
-# Training & Evaluation
-We support training & evaluating in IsaacSim simulator.
-## Policy Training
-To train your policy, follow this command format:
-```bash
-python humanoidverse/train_agent.py \
-+simulator=isaacsim \
-+exp=<task_name> \
-+domain_rand=<domain_randomization> \
-+rewards=<reward_function> \
-+robot=<robot_name> \
-+terrain=<terrain_name> \
-+obs=<observation_name> \
-num_envs=<num_envs> \
-project_name=<project_name> \
-experiment_name=<experiment_name> \
-headless=<headless_mode>
-```
-<details>
-<summary>(Optional) By default, the training process is logged by tensorboard. You can also use `wandb` for logging.</summary>
+# Curriculum Training Pipeline
 
-If you want to use `wandb` for logging, you can add `+opt=wandb` in the command.
+The Hunter robot training follows a 3-stage curriculum learning approach for robust locomotion across diverse terrains.
+
+## Stage 0: Foundation Training (Plane Terrain)
+Build basic locomotion skills on flat terrain:
 
 ```bash
+# Test training (small scale)
 python humanoidverse/train_agent.py \
++curriculum=stage0_plane \
++robot=hunter/hunter \
 +simulator=isaacsim \
 +exp=locomotion \
-+domain_rand=NO_domain_rand \
-+rewards=loco/reward_hunter_locomotion \
-+robot=hunter/hunter \
-+terrain=terrain_locomotion_plane \
 +obs=loco/leggedloco_obs_singlestep_withlinvel \
-num_envs=4096 \
-project_name=HumanoidLocomotion \
-experiment_name=Hunter_loco_IsaacSim \
-headless=True \
-+opt=wandb
-```
-</details>
+num_envs=16 \
+project_name=CurriculumStage0Test \
+experiment_name=Hunter_Stage0_Plane \
+headless=False
 
-## Policy Evaluation
-
-After running the training command, you can find the checkpoints and log files in the `logs/<project_name>/<timestamp>-_<experiment_name>-<exp_type>-<robot_type>` directory.
-
-To evaluate the policy, follow this command format:
-
-```bash
-python humanoidverse/eval_agent.py +checkpoint=logs/xxx/../xx.pt
-```
-
-`logs/xxx/../xx.pt` is the relative path to the checkpoint file. You only need to run this command, our script will automatically find and load the training config.
-
-<details>
-<summary>If you want to override some of the training config, you can use `+` to override the configs.</summary>
-
-```bash
-python humanoidverse/eval_agent.py +checkpoint=logs/xxx/../xx.pt \
-+domain_rand.push_robots=True \
-+simulator=isaacsim
-```
-</details>
-
-# Start Training Your Humanoids!
-
-Here is the command to train & evaluate the locomotion policy on Hunter Humanoid Robot in IsaacSim.
-
-## IsaacSim
-<details>
-<summary>Training Command</summary>
-
-```bash
+# Full training
 python humanoidverse/train_agent.py \
++curriculum=stage0_plane \
++robot=hunter/hunter \
 +simulator=isaacsim \
 +exp=locomotion \
-+domain_rand=NO_domain_rand \
-+rewards=loco/reward_hunter_locomotion \
-+robot=hunter/hunter \
-+terrain=terrain_locomotion_plane \
 +obs=loco/leggedloco_obs_singlestep_withlinvel \
 num_envs=4096 \
-project_name=HumanoidLocomotion \
-experiment_name=Hunter_loco_IsaacSim \
+project_name=CurriculumStage0 \
+experiment_name=Hunter_Stage0_Plane \
 headless=True
 ```
-</details>
 
-After around 3000 epochs, evaluating in IsaacSim:
+## Stage 1: Soil Adaptation Training
+Continue from Stage 0 model with soft soil terrain:
+
+```bash
+# Continue from Stage 0 (recommended)
+python humanoidverse/train_agent.py \
++curriculum=stage1_soft_soil \
++robot=hunter/hunter \
++simulator=isaacsim \
++exp=locomotion_soil \
++obs=loco/leggedloco_obs_singlestep_withlinvel \
+++simulator.config.scene.env_spacing=4.0 \
++checkpoint=logs/CurriculumStage0/latest/model.pt \
+num_envs=2048 \
+project_name=CurriculumStage1Continue \
+experiment_name=Hunter_Stage1_FromStage0 \
+headless=True
+```
+
+## Stage 2: Full Randomization Training
+Final stage with complete domain randomization:
+
+```bash
+# Continue from Stage 1 (recommended)
+python humanoidverse/train_agent.py \
++curriculum=stage2_full_rand \
++robot=hunter/hunter \
++simulator=isaacsim \
++exp=locomotion_soil_advanced \
++obs=loco/leggedloco_obs_singlestep_withlinvel \
+++simulator.config.scene.env_spacing=4.0 \
++checkpoint=logs/CurriculumStage1/latest/model.pt \
+num_envs=2048 \
+project_name=CurriculumStage2Continue \
+experiment_name=Hunter_Stage2_FromStage1 \
+headless=True
+```
+
+# Evaluation Scenarios
+
+After training, evaluate your models across different scenarios to assess robustness and performance.
+
+## Basic Policy Evaluation
+```bash
+# Evaluate any trained model
+python humanoidverse/eval_agent.py +checkpoint=logs/your_project/your_experiment/model_xxxx.pt
+```
+
+## Stage-Specific Evaluation
+Evaluate models on their respective terrains:
+
+```bash
+# Stage 0: Plane terrain evaluation
+python humanoidverse/eval_agent.py \
++curriculum=stage0_plane \
++robot=hunter/hunter \
++checkpoint=logs/CurriculumStage0/latest/model.pt \
++simulator=isaacsim \
++exp=locomotion \
+++env.config.max_episode_length_s=10000 \
+++env.config.locomotion_command_resampling_time=10000
+
+# Stage 1: Soil terrain evaluation
+python humanoidverse/eval_agent.py \
++curriculum=stage1_soft_soil \
++robot=hunter/hunter \
++checkpoint=logs/CurriculumStage1/latest/model.pt \
++simulator=isaacsim \
++exp=locomotion \
+++env.config.max_episode_length_s=10000 \
+++env.config.locomotion_command_resampling_time=10000
+
+# Stage 2: Full randomization evaluation
+python humanoidverse/eval_agent.py \
++curriculum=stage2_full_rand \
++robot=hunter/hunter \
++checkpoint=logs/CurriculumStage2/latest/model.pt \
++simulator=isaacsim \
++exp=locomotion \
+++simulator.config.scene.env_spacing=4.0 \
+++env.config.max_episode_length_s=10000 \
+++env.config.locomotion_command_resampling_time=10000
+```
+
+## Robustness Testing
+
+### External Perturbations
+Test locomotion stability with lateral pushes:
+```bash
+python humanoidverse/eval_agent.py \
++checkpoint=logs/your_model/model.pt \
++simulator=isaacsim \
++domain_rand.push_robots=True \
++domain_rand.max_push_vel_xy=0.7 \
++domain_rand.push_interval_s=[3,8]
+```
+
+### Forward Locomotion Scenario
+Test sustained forward walking:
+```bash
+python humanoidverse/eval_agent.py \
++checkpoint=logs/your_model/model.pt \
++simulator=isaacsim \
++exp=locomotion \
+++env.config.max_episode_length_s=60 \
++env.config.locomotion_command_ranges.lin_vel_x=[0.5,0.5] \
++env.config.locomotion_command_ranges.lin_vel_y=[0.0,0.0] \
++env.config.locomotion_command_ranges.ang_vel_yaw=[0.0,0.0] \
+++env.config.locomotion_command_resampling_time=1000.0
+```
+
+### Soil Terrain Evaluation
+Test on different soil conditions:
+```bash
+# Rigid soil (easier)
+python humanoidverse/sample_eps.py \
++simulator=isaacsim \
++terrain=terrain_soil_rigid_reference \
++domain_rand=DR_soil_rigid \
++exp=locomotion \
+num_envs=100 \
+num_episodes=100 \
+headless=True
+
+# Moderate tilled soil (medium)
+python humanoidverse/sample_eps.py \
++simulator=isaacsim \
++terrain=terrain_soil_moderate_tilled \
++domain_rand=DR_soil_moderate \
++exp=locomotion \
+num_envs=100 \
+num_episodes=100 \
+headless=True
+
+# Challenging wet/loose soil (hard)
+python humanoidverse/sample_eps.py \
++simulator=isaacsim \
++terrain=terrain_soil_challenging_wet \
++domain_rand=DR_soil_challenging \
++exp=locomotion \
+num_envs=100 \
+num_episodes=100 \
+headless=True
+```
+
+# Monitoring Training Progress
+
+## TensorBoard Logging
+Monitor training progress in real-time:
+```bash
+tensorboard --bind_all --port=7777 --logdir logs
+```
+
+## Training Logs
+- Training logs: `logs/<project_name>/<timestamp>-<experiment_name>/`
+- Model checkpoints: `logs/<project_name>/<timestamp>-<experiment_name>/model_<iteration>.pt`
+- Configuration files: `logs/<project_name>/<timestamp>-<experiment_name>/config.yaml`
+
+## Wandb Integration (Optional)
+Add `+opt=wandb` to any training command for advanced experiment tracking:
+```bash
+python humanoidverse/train_agent.py \
++curriculum=stage0_plane \
++robot=hunter/hunter \
+... \
++opt=wandb
+```
+
+# Training Results
+
+After completing the 3-stage curriculum (approximately 3000-5000 epochs total), the Hunter robot achieves robust locomotion across diverse terrains:
 
 <div align="center">
   <img src="assets/isaacsim_isaacsim.gif" width="800px"/>
@@ -146,37 +262,15 @@ After around 3000 epochs, evaluating in IsaacSim:
 
 # References and Acknowledgements
 
-This project is inspired by the following projects:
+This Hunter robot training pipeline is built upon HumanoidVerse, a multi-simulator framework for humanoid robot learning. Key inspirations:
 
-- [ProtoMotions](https://github.com/NVlabs/ProtoMotions) inspired us to use `hydra` for configuration management and influenced the overall structure of the codebase.
-- [Legged Gym](https://github.com/leggedrobotics/legged_gym) provided the reference code for training locomotion tasks, handling domain randomizations, and designing reward functions. The starting point of our codebase is `git clone git@github.com:leggedrobotics/legged_gym.git`.
-- [RSL RL](https://github.com/leggedrobotics/rsl_rl) provided an example for the implementation of the PPO algorithm.
+- **[Legged Gym](https://github.com/leggedrobotics/legged_gym)**: Foundation for locomotion training and domain randomization
+- **[ProtoMotions](https://github.com/NVlabs/ProtoMotions)**: Hydra configuration management and codebase structure  
+- **[RSL RL](https://github.com/leggedrobotics/rsl_rl)**: PPO algorithm implementation reference
 
-This project is made possible thanks to our amazing team members at [LeCAR Lab](https://lecar-lab.github.io/):
-- [Gao Jiawei](https://gao-jiawei.com/) led the development of this project, designed the overall architecture, and implemented the core components, including the simulators, robots, tasks, and the training and evaluation framework. 
-- [Tairan He](https://tairanhe.com/) implemented the design of domain randomizations, integrated the IsaacSim simulator (together with Zi Wang), and helped significantly with debugging in the early stages of the project.
-- [Wenli Xiao](https://wenlixiao-cs.github.io/) implemented the design of the observation dictionary, proprioception configuration, and history handlers, designed the actor-critic network architecture in PPO, and also helped greatly with debugging in the early stages of the project.
-- [Yuanhang Zhang](https://hang0610.github.io/) contributed significantly to the sim-to-sim and sim-to-real pipelines and helped with debugging our PPO implementation.
-- [Zi Wang](https://www.linkedin.com/in/zi-wang-b675aa236/) integrated the IsaacSim simulator into HumanoidVerse.
-- [Ziyan Xiong](https://ziyanx02.github.io/) integrated the Genesis simulator into HumanoidVerse.
-- [Haotian Lin](https://www.linkedin.com/in/haotian-lin-9b29b7324/) implemented MPPI in HumanoidVerse (to be released soon).
-- [Zeji Yi](https://iscoyizj.github.io/) and [Chaoyi Pan](https://panchaoyi.com/) provided crucial help with our sim-to-sim pipeline in the early stages of the project.
+**LeCAR Lab Contributors**: [Gao Jiawei](https://gao-jiawei.com/), [Tairan He](https://tairanhe.com/), [Wenli Xiao](https://wenlixiao-cs.github.io/), [Yuanhang Zhang](https://hang0610.github.io/), [Zi Wang](https://www.linkedin.com/in/zi-wang-b675aa236/), and the full [LeCAR Lab](https://lecar-lab.github.io/) team.
 
-Special thanks to [Guanya Shi](https://www.gshi.me/) for his invaluable support and unwavering guidance throughout the project.
-
-# Citation
-Please use the following bibtex if you find this repo helpful and would like to cite:
-
-```bibtex
-@misc{HumanoidVerse,
-  author = {CMU LeCAR Lab},
-  title = {HumanoidVerse: A Multi-Simulator Framework for Humanoid Robot Sim-to-Real Learning},
-  year = {2025},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/LeCAR-Lab/HumanoidVerse}},
-}
-```
+Special thanks to [Guanya Shi](https://www.gshi.me/) for project guidance and support.
 
 # License
 
