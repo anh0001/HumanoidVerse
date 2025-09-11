@@ -43,6 +43,7 @@ from omni.isaac.lab.managers import EventTermCfg as EventTerm
 from omni.isaac.lab.managers import SceneEntityCfg
 import omni.isaac.lab.envs.mdp as mdp
 from humanoidverse.simulator.isaacsim.events import randomize_body_com
+from humanoidverse.simulator.isaacsim.furrow_terrain import HfFurrowsTerrainCfg
 
 class IsaacSim(BaseSimulator):
     def __init__(self, config, device):
@@ -444,6 +445,22 @@ class IsaacSim(BaseSimulator):
                                 noise_range=(noise_low, noise_high),
                                 noise_step=noise_step,
                                 border_width=0.0,
+                            )
+                        }
+                    elif ttype == "furrows":
+                        # Map our YAML kwargs to a custom HF terrain that draws parallel grooves
+                        depth_rng = tkwargs.get("depth_range_m", [0.05, 0.15])
+                        spacing_rng = tkwargs.get("spacing_range_m", [0.8, 1.2])
+                        orient_rng = tkwargs.get("orientation_deg", [-10.0, 10.0])
+                        crest_offset = float(tkwargs.get("crest_offset_m", 0.0))
+                        sub_terrains = {
+                            "flat": HfFurrowsTerrainCfg(
+                                proportion=1.0,
+                                border_width=0.0,
+                                depth_range=(float(depth_rng[0]), float(depth_rng[1])),
+                                spacing_range=(float(spacing_rng[0]), float(spacing_rng[1])),
+                                orientation_range_deg=(float(orient_rng[0]), float(orient_rng[1])),
+                                crest_offset_m=crest_offset,
                             )
                         }
             except Exception as e:

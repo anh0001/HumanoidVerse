@@ -28,6 +28,5 @@ Evaluation
   - Challenging: same but with `terrain_soil_challenging_wet` and `DR_soil_challenging`
 
 Notes
-- In Isaac Gym, terrain furrows are generated through `humanoidverse/utils/terrain.py` (procedural heightfields). In Isaac Sim, we approximate with the terrain generator and optional static patches when enabled.
+- Furrows: In Isaac Gym, furrows come from `humanoidverse/utils/terrain.py`. In Isaac Sim, real furrows are now supported via a custom height‑field generator (`humanoidverse/simulator/isaacsim/furrow_terrain.py`) that maps `terrain_kwargs.type=furrows` to parallel grooves with configurable depth/spacing/orientation. Optional red patches still indicate low‑friction zones when `terrain.patchy_friction.enabled=True`.
 - If total robot mass isn’t available from the simulator, the push logic falls back to a conservative 60 kg to avoid unrealistic impulses. You can specify `+robot.mass_kg=XX` to calibrate.
-

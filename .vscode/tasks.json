@@ -401,7 +401,7 @@
     {
       "label": "Train Stage 1: Hunter on Rigid Soil (No DR) - Full",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil +algo=ppo_soil +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_soil_rigid_reference +domain_rand=NO_domain_rand ++simulator.config.scene.env_spacing=4.0 num_envs=4096 project_name=SoilStage1 experiment_name=Hunter_Stage1_Rigid_NoDR headless=True\" > stage1_rigid_full.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil +algo=ppo_soil +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_soil_rigid_reference +domain_rand=NO_domain_rand terrain.num_rows=45 terrain.num_cols=45 ++simulator.config.scene.env_spacing=4.0 num_envs=2048 project_name=SoilStage1 experiment_name=Hunter_Stage1_Rigid_NoDR headless=True\" > stage1_rigid_full.log 2>&1 &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
@@ -409,7 +409,7 @@
     {
       "label": "Train Stage 2: Moderate Tilled Soil (DR) - Test",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil_advanced +algo=ppo_soil +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_soil_moderate_tilled +domain_rand=DR_soil_moderate ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/SoilStage1/latest/model.pt num_envs=16 project_name=SoilStage2 experiment_name=Hunter_Stage2_Moderate_DR headless=False > stage2_moderate_test.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil_advanced +algo=ppo_soil +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_soil_moderate_tilled +domain_rand=DR_soil_moderate terrain.num_rows=4 terrain.num_cols=4 ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/CurriculumStage2/model_910050.pt num_envs=16 project_name=SoilStage2 experiment_name=Hunter_Stage2_Moderate_DR headless=False > stage2_moderate_test.log 2>&1\" &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
@@ -417,7 +417,7 @@
     {
       "label": "Train Stage 2: Moderate Tilled Soil (DR) - Full",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil_advanced +algo=ppo_soil +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_soil_moderate_tilled +domain_rand=DR_soil_moderate ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/SoilStage1/latest/model.pt num_envs=4096 project_name=SoilStage2 experiment_name=Hunter_Stage2_Moderate_DR headless=True\" > stage2_moderate_full.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil_advanced +algo=ppo_soil +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_soil_moderate_tilled +domain_rand=DR_soil_moderate terrain.num_rows=45 terrain.num_cols=45 ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/CurriculumStage2/model_910050.pt num_envs=4096 project_name=SoilStage2 experiment_name=Hunter_Stage2_Moderate_DR headless=True\" > stage2_moderate_full.log 2>&1 &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []

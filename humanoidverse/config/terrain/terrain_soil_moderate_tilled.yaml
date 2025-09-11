@@ -26,9 +26,12 @@ defaults:
 terrain:
   # ---- Geometry representation ------------------------------------------------
   mesh_type: 'heightfield'              # height-field for terrain surface generation
+  # Required by BaseTask even when curriculum is disabled
+  # With a single row layout, 0 is the only valid starting level
+  max_init_terrain_level: 0
   horizontal_scale: 0.10                # 10 cm per grid cell captures foot-scale features
-  vertical_scale: 0.005                 # 5 mm vertical resolution for smooth contact
-  border_size: 40                       # metre padding around environment boundaries
+  vertical_scale: 0.002                 # 2 mm vertical resolution for smooth contact
+  border_size: 5                        # metre padding around environment boundaries
 
   # ---- Soil regime (Moderate Tilled – freshly tilled with moderate moisture) ---
   # Material properties based on agricultural soil mechanics
@@ -43,8 +46,8 @@ terrain:
   curriculum: False                     # uniform difficulty across environment
   selected: True                       # use custom terrain generation
   terrain_kwargs:
-    type: 'furrows'                    # agricultural furrow pattern generation
-    depth_range_m: [0.05, 0.15]       # furrow depth 5-15 cm for realistic tilling
+    type: 'furrows'                   # agricultural furrow pattern generation
+    depth_range_m: [0.2, 0.3]         # furrow depth 20-30 cm for realistic tilling
     spacing_range_m: [0.8, 1.2]       # spacing 0.8-1.2 m typical for farming equipment
     orientation_deg: [-10.0, 10.0]    # slight randomization in furrow direction
 
@@ -63,7 +66,7 @@ terrain:
   # ---- Variable friction modeling (soil heterogeneity) ----------------------
   # Models natural variation in soil compaction and moisture
   patchy_friction:
-    enabled: True                      # enable realistic soil variation
+    enabled: False                      # enable realistic soil variation
     coverage_fraction: [0.10, 0.30]   # 10-30% of surface has different friction
     patch_size_m: [1.0, 2.0]          # meter-scale patches for equipment tracks
     low_mu: 0.20                      # reduced friction in soft/wet patches
@@ -71,4 +74,3 @@ terrain:
       enabled: True                    # enable challenging slip zones
       size_m: [2.0, 2.0]              # 2x2 meter surprise patches
       low_mu: 0.20                    # significantly reduced friction
-
