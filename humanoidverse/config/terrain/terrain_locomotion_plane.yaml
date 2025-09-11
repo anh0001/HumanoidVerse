@@ -1,30 +1,57 @@
 # @package _global_
+## ---------------------------------------------------------------------------
+#  Plane terrain preset for basic locomotion training and evaluation
+#  – Simple flat surface with high friction for stable baseline performance
+#  – Used for initial policy training before progressing to complex terrains
+## ---------------------------------------------------------------------------
+#
+# How to use:
+#   1. Default terrain for basic locomotion tasks
+#   2. Use in your launch script with +terrain=terrain_locomotion_plane
+#   3. Provides stable platform for:
+#      - Initial policy training
+#      - Baseline performance evaluation
+#      - Debugging locomotion algorithms
+#
+# This preset creates a simple plane mesh with high friction coefficients
+# suitable for learning basic walking gaits before introducing terrain complexity.
+## ---------------------------------------------------------------------------
 
 defaults:
   - terrain_base
 
 terrain:
-  mesh_type : 'plane' # "heightfield" # none, plane, heightfield or trimesh
-  horizontal_scale : 0.1 # [m]
-  vertical_scale : 0.005 # [m]
-  border_size : 40 # [m]
-  curriculum : False
-  # curriculum : False
-  static_friction: 1.0
-  dynamic_friction: 1.0
-  restitution: 0.0
-  # rough terrain only:
-  measure_heights : False # keep it False
-  measured_points_x : [ 0.] # 1mx1.6m rectangle (without center line)
-  measured_points_y : [ 0.]
-  selected : False # select a unique terrain type and pass all arguments
-  terrain_kwargs : null # Dict of arguments for selected terrain
-  max_init_terrain_level : 9 # starting curriculum state
-  terrain_length : 8.
-  terrain_width : 8.
-  num_rows: 10 # number of terrain rows (levels)
-  num_cols : 20 # number of terrain cols (types)
-  terrain_types : ['flat', 'rough', 'low_obst', 'smooth_slope', 'rough_slope']  # do not duplicate!
-  terrain_proportions : [0.2, 0.6, 0.2, 0.0, 0.0]
-  # trimesh only:
-  slope_treshold : 0.75 # slopes above this threshold will be corrected to vertical surfaces
+  # ---- Geometry representation ------------------------------------------------
+  mesh_type : 'plane'                   # simple plane geometry for fastest simulation
+  horizontal_scale : 0.1                # [m] grid resolution (not used for plane)
+  vertical_scale : 0.005                # [m] height resolution (not used for plane)
+  border_size : 40                      # [m] safety padding around terrain
+
+  # ---- Material mechanics -----------------------------------------------------
+  # High friction for stable baseline - prevents slipping during initial training
+  static_friction: 1.0                  # maximum grip before slip initiation
+  dynamic_friction: 1.0                 # friction during sliding motion
+  restitution: 0.0                      # perfectly inelastic - no bouncing
+
+  # ---- Curriculum and layout --------------------------------------------------
+  curriculum : False                    # uniform difficulty - no progression
+  max_init_terrain_level : 9            # starting curriculum state (even if disabled)
+  
+  # ---- Terrain generation parameters -----------------------------------------
+  # These apply when using terrain generators (not for simple plane)
+  selected : False                      # don't use custom terrain generation
+  terrain_kwargs : null                 # no special terrain arguments needed
+  measure_heights : False               # robot doesn't need height sensing for flat terrain
+  measured_points_x : [ 0.]             # measurement grid x-coordinates
+  measured_points_y : [ 0.]             # measurement grid y-coordinates
+
+  # ---- Environment layout -----------------------------------------------------
+  terrain_length : 8.                  # [m] individual environment size
+  terrain_width : 8.                   # [m] individual environment size
+  num_rows: 10                         # number of terrain difficulty levels
+  num_cols : 20                        # number of terrain variation types
+  terrain_types : ['flat', 'rough', 'low_obst', 'smooth_slope', 'rough_slope']
+  terrain_proportions : [0.2, 0.6, 0.2, 0.0, 0.0]  # distribution of terrain types
+
+  # ---- Trimesh-specific settings ---------------------------------------------
+  slope_treshold : 0.75                 # slopes above this become vertical walls

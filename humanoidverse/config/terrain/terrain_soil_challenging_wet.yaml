@@ -1,48 +1,74 @@
 # @package _global_
+## ---------------------------------------------------------------------------
+#  Challenging wet soil terrain preset for Hunter biped evaluation
+#  – Wet, loose agricultural soil with reduced traction and stability
+#  – Simulates difficult field conditions after rain or over-irrigation
+#  – Advanced training scenario for robust locomotion policy development
+## ---------------------------------------------------------------------------
+#
+# How to use:
+#   1. Save the file alongside your other terrain presets
+#   2. In your launch script or tasks.json, use +terrain=terrain_soil_challenging_wet
+#   3. Adjust wetness/looseness via CLI overrides:
+#
+#      +terrain.static_friction=0.50 +terrain.contact_stiffness=5.0e3   # less challenging
+#      +terrain.static_friction=0.30 +terrain.contact_stiffness=1.0e3   # maximum challenge
+#
+#      Lower stiffness and friction simulate saturated, muddy conditions.
+#
+# This preset represents the most challenging soil conditions with high slip risk,
+# requiring careful balance and gait adaptation for successful locomotion.
+## ---------------------------------------------------------------------------
 
 defaults:
   - terrain_base
 
 terrain:
-  # Representation
-  mesh_type: 'heightfield'
-  horizontal_scale: 0.10
-  vertical_scale: 0.005
-  border_size: 40
+  # ---- Geometry representation ------------------------------------------------
+  mesh_type: 'heightfield'              # height-field for deformable surface modeling
+  horizontal_scale: 0.10                # 10 cm resolution captures foot-terrain interaction
+  vertical_scale: 0.005                 # 5 mm precision for subtle surface variations
+  border_size: 40                       # metre safety boundary around environments
 
-  # Soil regime (Challenging Wet/Loose)
-  static_friction: 0.40      # target range [0.3, 0.5]
-  dynamic_friction: 0.30
-  restitution: 0.02
-  contact_stiffness: 3.0e3   # N/m (in [1e3, 5e3])
-  contact_damping: 8.0e2
+  # ---- Soil regime (Challenging Wet/Loose) -----------------------------------
+  # Represents saturated, recently disturbed agricultural soil
+  static_friction: 0.40                 # reduced grip [0.3, 0.5] - high slip risk
+  dynamic_friction: 0.30                # low sliding resistance - muddy conditions
+  restitution: 0.02                     # soil absorbs impact energy
+  contact_stiffness: 3.0e3              # N/m low stiffness [1e3, 5e3] - soft, yielding
+  contact_damping: 8.0e2                # N·s/m reduced damping for wet soil behavior
 
-  # Geometry features for soil realism
-  curriculum: False
-  selected: True
+  # ---- Topography and surface disruption ------------------------------------
+  # Enhanced furrow irregularity simulating wet field damage
+  curriculum: False                     # consistent high difficulty
+  selected: True                       # enable custom terrain generation
   terrain_kwargs:
-    type: 'furrows'
-    depth_range_m: [0.05, 0.15]
-    spacing_range_m: [0.8, 1.2]
-    orientation_deg: [-15.0, 15.0]
+    type: 'furrows'                    # disturbed furrow patterns from wet conditions
+    depth_range_m: [0.05, 0.15]       # standard agricultural furrow depth
+    spacing_range_m: [0.8, 1.2]       # typical equipment spacing
+    orientation_deg: [-15.0, 15.0]    # increased variation - field machinery struggles
 
-  terrain_length: 12.0
-  terrain_width:  12.0
-  num_rows: 1
-  num_cols: 1
-  terrain_types: ['flat']
-  terrain_proportions: [1.0]
+  # ---- Environment layout ----------------------------------------------------
+  terrain_length: 12.0                 # [m] full field scale for realistic challenge
+  terrain_width:  12.0                 # [m] square field configuration
+  num_rows: 1                          # single high-difficulty level
+  num_cols: 1                          # uniform challenging conditions
+  terrain_types: ['flat']              # base before furrow/mud modification
+  terrain_proportions: [1.0]           # 100% challenging terrain
 
-  slope_treshold: 0.75
-  measure_heights: False
+  # ---- Mesh processing parameters -------------------------------------------
+  slope_treshold: 0.75                 # maintain slope processing standards
+  measure_heights: False               # focus on locomotion, not height sensing
 
+  # ---- Enhanced friction heterogeneity (wet soil patchiness) ----------------
+  # Models muddy patches, standing water, and equipment ruts
   patchy_friction:
-    enabled: True
-    coverage_fraction: [0.10, 0.30]
-    patch_size_m: [1.0, 2.0]
-    low_mu: 0.20
-    surprise_patches:
-      enabled: True
-      size_m: [2.0, 2.0]
-      low_mu: 0.20
+    enabled: True                      # critical for wet soil realism
+    coverage_fraction: [0.10, 0.30]   # 10-30% extremely low traction zones
+    patch_size_m: [1.0, 2.0]          # meter-scale wet patches and ruts
+    low_mu: 0.20                      # severe traction loss in muddy areas
+    surprise_patches:                  # hidden mud holes and water pooling
+      enabled: True                    # unexpected slip hazards
+      size_m: [2.0, 2.0]              # 2x2 meter mud zones
+      low_mu: 0.20                    # near-zero traction - maximum challenge
 

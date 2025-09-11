@@ -1,39 +1,58 @@
 # @package _global_
+## ---------------------------------------------------------------------------
+#  Rigid reference soil terrain preset for Hunter biped evaluation
+#  – Hard-packed soil or concrete-like surface for baseline comparison
+#  – Provides maximum stability and predictable contact behavior
+#  – Reference standard for comparing against deformable soil terrains
+## ---------------------------------------------------------------------------
+#
+# How to use:
+#   1. Save the file alongside your other terrain presets
+#   2. In your launch script or tasks.json, use +terrain=terrain_soil_rigid_reference
+#   3. Adjust surface hardness via CLI overrides:
+#
+#      +terrain.contact_stiffness=5.0e5 +terrain.static_friction=0.70   # softer reference
+#      +terrain.contact_stiffness=2.0e6 +terrain.static_friction=0.90   # maximum rigidity
+#
+# This preset represents the firmest terrain condition - effectively non-deformable
+# surface that provides stable baseline for comparison with soil simulation results.
+## ---------------------------------------------------------------------------
 
 defaults:
   - terrain_base
 
 terrain:
-  # Representation
-  mesh_type: 'heightfield'
-  horizontal_scale: 0.10
-  vertical_scale: 0.005
-  border_size: 40
+  # ---- Geometry representation ------------------------------------------------
+  mesh_type: 'heightfield'              # height-field with minimal surface variation
+  horizontal_scale: 0.10                # standard 10 cm grid resolution
+  vertical_scale: 0.002                 # 2 mm precision for micro-roughness
+  border_size: 5                        # standard metre boundary padding
 
-  # Soil regime (Rigid Reference)
-  # concrete / packed soil
-  static_friction: 0.80      # target in [0.7, 0.9]
-  dynamic_friction: 0.75
-  restitution: 0.02
-  contact_stiffness: 1.0e6   # N/m (k_contact)
-  contact_damping: 1.0e3
+  # ---- Soil regime (Rigid Reference) -----------------------------------------
+  # Represents concrete pavement or heavily compacted clay
+  static_friction: 0.80                 # high friction [0.7, 0.9] - excellent grip
+  dynamic_friction: 0.75                # consistent sliding resistance
+  restitution: 0.02                     # minimal bounce - energy absorbed
+  contact_stiffness: 1.0e6              # N/m very high stiffness - virtually rigid
+  contact_damping: 1.0e3                # N·s/m standard damping for contact stability
 
-  # Layout: flat field with optional subtle perlin to avoid perfectly flatness
-  curriculum: False
-  selected: True
+  # ---- Topography (minimal variation for reference baseline) ----------------
+  curriculum: False                     # no progression - uniform reference conditions
+  max_init_terrain_level: 0            # starting level (required even when curriculum disabled)
+  selected: True                       # enable subtle surface texturing
   terrain_kwargs:
-    type: 'perlin'
-    amplitude: 0.005         # ~5 mm micro-roughness
-    frequency: 8.0
+    type: 'perlin'                     # minimal Perlin noise for micro-roughness
+    amplitude: 0.004                   # ~4 mm surface variation - prevents perfect flatness
+    frequency: 20.0                    # fine-scale texture for realistic contact
 
-  terrain_length: 10.0
-  terrain_width:  10.0
-  num_rows: 1
-  num_cols: 1
-  terrain_types: ['flat']
-  terrain_proportions: [1.0]
+  # ---- Environment layout ----------------------------------------------------
+  terrain_length: 10.0                 # [m] compact reference environment
+  terrain_width:  10.0                 # [m] square layout for consistent evaluation
+  num_rows: 1                          # single reference condition
+  num_cols: 1                          # uniform across environment
+  terrain_types: ['flat']              # base flat terrain with Perlin overlay
+  terrain_proportions: [1.0]           # 100% uniform reference surface
 
-  # Used by IsaacSim generator
-  slope_treshold: 0.75
-  measure_heights: False
-
+  # ---- Mesh processing parameters -------------------------------------------
+  slope_treshold: 0.75                 # standard slope handling for generator compatibility
+  measure_heights: False               # disable height sensing - focus on locomotion

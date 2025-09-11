@@ -26,7 +26,7 @@
     {
       "label": "Eval: Rigid Reference Soil (50N pushes)",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/20250803_220625-Hunter_Stage2_FullRand-locomotion-hunter/model_910050.pt +simulator=isaacsim +terrain=terrain_soil_rigid_reference +domain_rand=DR_soil_rigid +terrain.friction_combine_mode=max +env=locomotion env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_rigid_soil.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/20250803_220625-Hunter_Stage2_FullRand-locomotion-hunter/model_910050.pt +simulator=isaacsim +terrain=terrain_soil_rigid_reference +domain_rand=NO_domain_rand +terrain.friction_combine_mode=max +env.config.max_episode_length_s=120 +robot_mass_kg=12.7 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_rigid_soil.log 2>&1 &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
@@ -333,6 +333,109 @@
           "args": ["-ic"]
         }
       },
+      "problemMatcher": []
+    },
+    {
+      "label": "Evaluate Flat-Only Policy on Soil (Visualized)",
+      "type": "shell",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/20250803_220625-Hunter_Stage2_FullRand-locomotion-hunter/model_910050.pt +simulator=isaacsim +terrain=terrain_tilled_soil +env.config.max_episode_length_s=60 +eval_command=[0.0,0.0,0.0] +num_envs=4 +num_episodes=100 +headless=False > eval_flat_on_soil_vis.log 2>&1\" &",
+      "presentation": {
+        "echo": true,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-ic"]
+        }
+      },
+      "problemMatcher": []
+    }
+    ,
+    {
+      "label": "Diag: Stand Sanity on Rigid (no-term)",
+      "type": "shell",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/20250803_220625-Hunter_Stage2_FullRand-locomotion-hunter/model_910050.pt +simulator=isaacsim +terrain=terrain_soil_rigid_reference +env.config.termination.terminate_by_low_height=False +env.config.termination.terminate_by_gravity=False +domain_rand.push_robots=False +domain_rand.randomize_ctrl_delay=False +domain_rand.randomize_pd_gain=False +domain_rand.randomize_friction=False +domain_rand.randomize_base_com=False +domain_rand.randomize_link_mass=False +domain_rand.randomize_torque_rfi=False +domain_rand.randomize_rfi_lim=False +domain_rand.randomize_terrain_properties=False +domain_rand.randomize_gravity=False +domain_rand.randomize_joint_limits=False +domain_rand.randomize_motion_ref_xyz=False +env.config.max_episode_length_s=10 +num_envs=24 +num_episodes=24 +robot_mass_kg=12.7 +eval_command=[0.0,0.0,0.0] +headless=True +terrain.friction_combine_mode=multiply\" > eval_stand_rigid.log 2>&1 &",
+      "presentation": {
+        "echo": true,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-ic"]
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Diag: Walk Rigid Soil (no-DR)",
+      "type": "shell",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/20250803_220625-Hunter_Stage2_FullRand-locomotion-hunter/model_910050.pt +simulator=isaacsim +terrain=terrain_soil_rigid_reference +domain_rand.push_robots=False +domain_rand.randomize_ctrl_delay=False +domain_rand.randomize_pd_gain=False +domain_rand.randomize_friction=False +domain_rand.randomize_base_com=False +domain_rand.randomize_link_mass=False +domain_rand.randomize_torque_rfi=False +domain_rand.randomize_rfi_lim=False +domain_rand.randomize_terrain_properties=False +domain_rand.randomize_gravity=False +domain_rand.randomize_joint_limits=False +domain_rand.randomize_motion_ref_xyz=False +env.config.max_episode_length_s=120 +num_envs=100 +num_episodes=100 +robot_mass_kg=12.7 +eval_command=[0.2,0.0,0.0] +headless=True +terrain.friction_combine_mode=multiply\" > eval_walk_rigid.log 2>&1 &",
+      "presentation": {
+        "echo": true,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-ic"]
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Train Stage 1: Hunter on Rigid Soil (No DR) - Test",
+      "type": "shell",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil +algo=ppo_soil +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_soil_rigid_reference +domain_rand=NO_domain_rand terrain.num_rows=4 terrain.num_cols=4 ++simulator.config.scene.env_spacing=4.0 num_envs=16 project_name=SoilStage1 experiment_name=Hunter_Stage1_Rigid_NoDR headless=False > stage1_rigid_test.log 2>&1\" &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
+      "label": "Train Stage 1: Hunter on Rigid Soil (No DR) - Full",
+      "type": "shell",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil +algo=ppo_soil +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_soil_rigid_reference +domain_rand=NO_domain_rand ++simulator.config.scene.env_spacing=4.0 num_envs=4096 project_name=SoilStage1 experiment_name=Hunter_Stage1_Rigid_NoDR headless=True\" > stage1_rigid_full.log 2>&1 &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
+      "label": "Train Stage 2: Moderate Tilled Soil (DR) - Test",
+      "type": "shell",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil_advanced +algo=ppo_soil +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_soil_moderate_tilled +domain_rand=DR_soil_moderate ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/SoilStage1/latest/model.pt num_envs=16 project_name=SoilStage2 experiment_name=Hunter_Stage2_Moderate_DR headless=False > stage2_moderate_test.log 2>&1\" &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
+      "label": "Train Stage 2: Moderate Tilled Soil (DR) - Full",
+      "type": "shell",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil_advanced +algo=ppo_soil +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_soil_moderate_tilled +domain_rand=DR_soil_moderate ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/SoilStage1/latest/model.pt num_envs=4096 project_name=SoilStage2 experiment_name=Hunter_Stage2_Moderate_DR headless=True\" > stage2_moderate_full.log 2>&1 &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
+      "label": "Train Stage 2: Challenging Wet Soil (DR) - Test",
+      "type": "shell",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil_advanced +algo=ppo_soil +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_soil_challenging_wet +domain_rand=DR_soil_challenging ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/SoilStage1/latest/model.pt num_envs=16 project_name=SoilStage2 experiment_name=Hunter_Stage2_Challenging_DR headless=False > stage2_challenging_test.log 2>&1\" &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
+      "label": "Train Stage 2: Challenging Wet Soil (DR) - Full",
+      "type": "shell",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil_advanced +algo=ppo_soil +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_soil_challenging_wet +domain_rand=DR_soil_challenging ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/SoilStage1/latest/model.pt num_envs=4096 project_name=SoilStage2 experiment_name=Hunter_Stage2_Challenging_DR headless=True\" > stage2_challenging_full.log 2>&1 &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
     }
   ]

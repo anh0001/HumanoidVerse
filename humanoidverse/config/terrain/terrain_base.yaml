@@ -1,6 +1,24 @@
 # @package _global_
+## ---------------------------------------------------------------------------
+#  Base terrain configuration - default material properties
+#  – Provides common default values inherited by all terrain presets
+#  – Override these values in specific terrain configurations as needed
+## ---------------------------------------------------------------------------
+#
+# How to use:
+#   1. This file is automatically inherited by all terrain configurations
+#   2. Defines default material mechanics that work across most scenarios
+#   3. Override any of these values in specific terrain files
+#
+# Default values provide:
+#   - High friction for stable locomotion
+#   - Inelastic contact behavior (no bouncing)
+#   - Standard physics material properties
+## ---------------------------------------------------------------------------
 
 terrain:
-  static_friction: 1.0
-  dynamic_friction: 1.0
-  restitution: 0.0
+  # ---- Default material mechanics --------------------------------------------
+  # These values provide stable, predictable contact behavior
+  static_friction: 1.0                  # default high friction prevents slipping
+  dynamic_friction: 1.0                 # consistent friction during motion
+  restitution: 0.0                      # inelastic contact - no energy return

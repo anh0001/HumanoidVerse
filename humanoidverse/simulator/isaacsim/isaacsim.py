@@ -518,7 +518,28 @@ class IsaacSim(BaseSimulator):
         
         self.terrain = terrain_config.class_type(terrain_config)
         self.terrain.env_origins = self.terrain.terrain_origins
-        
+
+        # Align scene replication origins to the generated terrain grid so all
+        # environments land on the terrain (not outside the patch).
+        try:
+            terrain_origins = self.terrain.terrain_origins
+            if isinstance(terrain_origins, np.ndarray):
+                terrain_origins = torch.from_numpy(terrain_origins)
+            terrain_origins = terrain_origins.to(torch.float)
+            # flatten (num_rows, num_cols, 3) -> (num_tiles, 3)
+            terrain_origins = terrain_origins.reshape(-1, 3)
+            num_envs = self.scene.cfg.num_envs
+            if terrain_origins.shape[0] >= num_envs:
+                chosen_origins = terrain_origins[:num_envs]
+            else:
+                # Repeat tiles if there are fewer tiles than envs
+                reps = int(np.ceil(num_envs / float(terrain_origins.shape[0])))
+                chosen_origins = terrain_origins.repeat(reps, 1)[:num_envs]
+            # Set scene origins before cloning environments
+            self.scene.env_origins = chosen_origins
+        except Exception as e:
+            logger.warning(f"Could not align env origins to terrain: {e}")
+
         # import ipdb; ipdb.set_trace()
 
         # clone, filter, and replicate

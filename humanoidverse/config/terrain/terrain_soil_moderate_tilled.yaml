@@ -1,50 +1,74 @@
 # @package _global_
+## ---------------------------------------------------------------------------
+#  Moderate tilled soil terrain preset for Hunter biped evaluation
+#  – Freshly tilled agricultural soil with moderate moisture content
+#  – Balanced between stable traction and realistic soil deformation
+#  – Recommended for intermediate training between rigid and challenging soils
+## ---------------------------------------------------------------------------
+#
+# How to use:
+#   1. Save the file alongside your other terrain presets
+#   2. In your launch script or tasks.json, use +terrain=terrain_soil_moderate_tilled
+#   3. Adjust soil conditions via CLI overrides:
+#
+#      +terrain.static_friction=0.70 +terrain.contact_stiffness=5.0e4   # firmer soil
+#      +terrain.static_friction=0.50 +terrain.contact_stiffness=1.0e4   # softer soil
+#
+#      Dynamic friction should track static friction - 0.10 for realism.
+#
+# This preset represents freshly tilled soil with moderate moisture content,
+# providing balanced challenge for locomotion training with realistic furrow patterns.
+## ---------------------------------------------------------------------------
 
 defaults:
   - terrain_base
 
 terrain:
-  # Representation
-  mesh_type: 'heightfield'
-  horizontal_scale: 0.10
-  vertical_scale: 0.005
-  border_size: 40
+  # ---- Geometry representation ------------------------------------------------
+  mesh_type: 'heightfield'              # height-field for terrain surface generation
+  horizontal_scale: 0.10                # 10 cm per grid cell captures foot-scale features
+  vertical_scale: 0.005                 # 5 mm vertical resolution for smooth contact
+  border_size: 40                       # metre padding around environment boundaries
 
-  # Soil regime (Moderate Tilled – freshly tilled with moderate moisture)
-  static_friction: 0.60      # target range [0.5, 0.7]
-  dynamic_friction: 0.50
-  restitution: 0.02
-  contact_stiffness: 3.0e4   # N/m (in [1e4, 5e4])
-  contact_damping: 1.0e3
+  # ---- Soil regime (Moderate Tilled – freshly tilled with moderate moisture) ---
+  # Material properties based on agricultural soil mechanics
+  static_friction: 0.60                 # target range [0.5, 0.7] - moderate grip
+  dynamic_friction: 0.50                # sliding friction during motion
+  restitution: 0.02                     # minimal bounce - soil absorbs impact energy
+  contact_stiffness: 3.0e4              # N/m stiffness in [1e4, 5e4] - moderate firmness
+  contact_damping: 1.0e3                # N·s/m damping for realistic soil response
 
-  # Geometry features for soil realism
-  curriculum: False
-  selected: True
+  # ---- Topography and surface features ---------------------------------------
+  # Generate realistic agricultural furrow patterns
+  curriculum: False                     # uniform difficulty across environment
+  selected: True                       # use custom terrain generation
   terrain_kwargs:
-    type: 'furrows'          # implemented in utils/terrain.py for IsaacGym; for IsaacSim we approximate with generator
-    depth_range_m: [0.05, 0.15]
-    spacing_range_m: [0.8, 1.2]
-    orientation_deg: [-10.0, 10.0]
+    type: 'furrows'                    # agricultural furrow pattern generation
+    depth_range_m: [0.05, 0.15]       # furrow depth 5-15 cm for realistic tilling
+    spacing_range_m: [0.8, 1.2]       # spacing 0.8-1.2 m typical for farming equipment
+    orientation_deg: [-10.0, 10.0]    # slight randomization in furrow direction
 
-  terrain_length: 12.0
-  terrain_width:  12.0
-  num_rows: 1
-  num_cols: 1
-  terrain_types: ['flat']
-  terrain_proportions: [1.0]
+  # ---- Environment layout ----------------------------------------------------
+  terrain_length: 12.0                 # [m] larger field size for agricultural simulation
+  terrain_width:  12.0                 # [m] square field layout
+  num_rows: 1                          # single difficulty level
+  num_cols: 1                          # single terrain type
+  terrain_types: ['flat']              # base terrain before furrow modification
+  terrain_proportions: [1.0]           # 100% uniform terrain
 
-  # For IsaacSim generator
-  slope_treshold: 0.75
-  measure_heights: False
+  # ---- Mesh processing parameters -------------------------------------------
+  slope_treshold: 0.75                 # slopes above this become vertical faces
+  measure_heights: False               # disable height sensing for locomotion focus
 
-  # Optional friction patches (used by IsaacSim helper if available)
+  # ---- Variable friction modeling (soil heterogeneity) ----------------------
+  # Models natural variation in soil compaction and moisture
   patchy_friction:
-    enabled: True
-    coverage_fraction: [0.10, 0.30]
-    patch_size_m: [1.0, 2.0]
-    low_mu: 0.20
-    surprise_patches:
-      enabled: True
-      size_m: [2.0, 2.0]
-      low_mu: 0.20
+    enabled: True                      # enable realistic soil variation
+    coverage_fraction: [0.10, 0.30]   # 10-30% of surface has different friction
+    patch_size_m: [1.0, 2.0]          # meter-scale patches for equipment tracks
+    low_mu: 0.20                      # reduced friction in soft/wet patches
+    surprise_patches:                  # unexpected low-friction zones
+      enabled: True                    # enable challenging slip zones
+      size_m: [2.0, 2.0]              # 2x2 meter surprise patches
+      low_mu: 0.20                    # significantly reduced friction
 

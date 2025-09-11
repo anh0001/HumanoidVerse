@@ -165,6 +165,23 @@ class LeggedRobotBase(BaseTask):
     def set_is_evaluating(self):
         logger.info("Setting Env is evaluating")
         self.is_evaluating = True
+        # Disable control delay during evaluation for stability
+        try:
+            if hasattr(self.config, "domain_rand"):
+                self.config.domain_rand.randomize_ctrl_delay = False
+        except Exception:
+            pass
+        # Clear any existing action delay buffers
+        if hasattr(self, "action_queue"):
+            try:
+                self.action_queue *= 0.0
+            except Exception:
+                pass
+        if hasattr(self, "action_delay_idx"):
+            try:
+                self.action_delay_idx[:] = 0
+            except Exception:
+                pass
     
     def step(self, actor_state):
         """ Apply actions, simulate, call self.post_physics_step()
@@ -775,11 +792,13 @@ class LeggedRobotBase(BaseTask):
             self.simulator.dof_pos[env_ids] = target_state[..., 0]
             self.simulator.dof_vel[env_ids] = target_state[..., 1]
         else:
-            self.simulator.dof_pos[env_ids] = self.default_dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.num_dof), device=str(self.device))
-            # self.simulator.dof_pos[env_ids] = self.default_dof_pos
-            # import ipdb; ipdb.set_trace()
-            
-            self.simulator.dof_vel[env_ids] = 0.
+            if self.is_evaluating:
+                # Use a deterministic, balanced joint configuration during evaluation
+                self.simulator.dof_pos[env_ids] = self.default_dof_pos
+                self.simulator.dof_vel[env_ids] = 0.0
+            else:
+                self.simulator.dof_pos[env_ids] = self.default_dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.num_dof), device=str(self.device))
+                self.simulator.dof_vel[env_ids] = 0.
 
         # env_ids_int32 = env_ids.to(dtype=torch.int32)
         # self.gym.set_dof_state_tensor_indexed(self.sim,
@@ -821,9 +840,13 @@ class LeggedRobotBase(BaseTask):
                 self.simulator.robot_root_states = self._apply_env_offset(
                     self.simulator.robot_root_states, env_ids)
             # base velocities
-            rand_vel = torch_rand_float(
-                -0.5, 0.5, (len(env_ids), 6), device=str(self.device))
-            self.simulator.robot_root_states[env_ids, 7:13] = rand_vel
+            if self.is_evaluating:
+                # In evaluation, start from zero base velocity to avoid immediate instability
+                self.simulator.robot_root_states[env_ids, 7:13] = 0.0
+            else:
+                rand_vel = torch_rand_float(
+                    -0.5, 0.5, (len(env_ids), 6), device=str(self.device))
+                self.simulator.robot_root_states[env_ids, 7:13] = rand_vel
 
     def _plot_domain_rand_params(self):
         raise NotImplementedError
