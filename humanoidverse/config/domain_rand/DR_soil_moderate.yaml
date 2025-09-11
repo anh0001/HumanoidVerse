@@ -17,7 +17,6 @@ domain_rand:
   # Leave other DR broad for robustness
   randomize_base_com: True
   base_com_range:
-    x: [-0.12, 0.12]
-    y: [-0.12, 0.12]
-    z: [-0.12, 0.12]
-
+    x: [-0.08, 0.08]
+    y: [-0.08, 0.08]
+    z: [-0.08, 0.08]

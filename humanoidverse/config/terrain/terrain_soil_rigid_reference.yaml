@@ -56,3 +56,12 @@ terrain:
   # ---- Mesh processing parameters -------------------------------------------
   slope_treshold: 0.75                 # standard slope handling for generator compatibility
   measure_heights: False               # disable height sensing - focus on locomotion
+
+# For rigid reference surface, avoid soil-specific low-height termination and
+# aggressive reset randomization to reduce immediate falls at spawn.
+env:
+  config:
+    termination:
+      terminate_by_low_height: False
+    reset_randomization:
+      enable: False

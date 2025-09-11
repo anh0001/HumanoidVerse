@@ -67,3 +67,10 @@ domain_rand:
   born_heading_degree: 10
   born_heading_range: [0, 180]
   born_heading_level_degree: 0.00005
+
+# In no-DR runs, also disable reset-time pose/velocity randomization to align with
+# the expectation of deterministic, stable spawn states.
+env:
+  config:
+    reset_randomization:
+      enable: False

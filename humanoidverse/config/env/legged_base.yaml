@@ -16,6 +16,14 @@ env:
     env_spacing: 5.0
     max_episode_length_s: 20
 
+    # Reset-time randomization controls for DOF pose and base velocities.
+    # When disabled, resets use default joint targets and zero root velocity.
+    reset_randomization:
+      enable: True
+      dof_pos_scale_range: [0.5, 1.5]     # multiplicative range around default joint angles
+      root_lin_vel_range: [-0.5, 0.5]     # x,y,z linear velocity range at reset (m/s)
+      root_ang_vel_range: [-0.5, 0.5]     # x,y,z angular velocity range at reset (rad/s)
+
     normalization:
       clip_actions: 100.0
       clip_observations: 100.0

@@ -792,12 +792,29 @@ class LeggedRobotBase(BaseTask):
             self.simulator.dof_pos[env_ids] = target_state[..., 0]
             self.simulator.dof_vel[env_ids] = target_state[..., 1]
         else:
-            if self.is_evaluating:
-                # Use a deterministic, balanced joint configuration during evaluation
+            # Optional gating and ranges for reset randomization
+            reset_cfg = getattr(self.config, "reset_randomization", None)
+            reset_enabled = True
+            dof_scale_low, dof_scale_high = 0.5, 1.5
+            try:
+                if reset_cfg is not None:
+                    reset_enabled = bool(getattr(reset_cfg, "enable", True))
+                    if hasattr(reset_cfg, "dof_pos_scale_range"):
+                        rng = reset_cfg.dof_pos_scale_range
+                        dof_scale_low = float(rng[0])
+                        dof_scale_high = float(rng[1])
+            except Exception:
+                pass
+
+            if self.is_evaluating or not reset_enabled:
+                # Deterministic, balanced joint configuration
                 self.simulator.dof_pos[env_ids] = self.default_dof_pos
                 self.simulator.dof_vel[env_ids] = 0.0
             else:
-                self.simulator.dof_pos[env_ids] = self.default_dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.num_dof), device=str(self.device))
+                # Randomize around default joint targets with configurable range
+                self.simulator.dof_pos[env_ids] = self.default_dof_pos * torch_rand_float(
+                    dof_scale_low, dof_scale_high, (len(env_ids), self.num_dof), device=str(self.device)
+                )
                 self.simulator.dof_vel[env_ids] = 0.
 
         # env_ids_int32 = env_ids.to(dtype=torch.int32)
@@ -840,12 +857,30 @@ class LeggedRobotBase(BaseTask):
                 self.simulator.robot_root_states = self._apply_env_offset(
                     self.simulator.robot_root_states, env_ids)
             # base velocities
-            if self.is_evaluating:
-                # In evaluation, start from zero base velocity to avoid immediate instability
+            reset_cfg = getattr(self.config, "reset_randomization", None)
+            reset_enabled = True
+            lin_low, lin_high = -0.5, 0.5
+            ang_low, ang_high = -0.5, 0.5
+            try:
+                if reset_cfg is not None:
+                    reset_enabled = bool(getattr(reset_cfg, "enable", True))
+                    if hasattr(reset_cfg, "root_lin_vel_range"):
+                        lr = reset_cfg.root_lin_vel_range
+                        lin_low, lin_high = float(lr[0]), float(lr[1])
+                    if hasattr(reset_cfg, "root_ang_vel_range"):
+                        ar = reset_cfg.root_ang_vel_range
+                        ang_low, ang_high = float(ar[0]), float(ar[1])
+            except Exception:
+                pass
+
+            if self.is_evaluating or not reset_enabled:
+                # Start from zero velocity to avoid immediate instability
                 self.simulator.robot_root_states[env_ids, 7:13] = 0.0
             else:
-                rand_vel = torch_rand_float(
-                    -0.5, 0.5, (len(env_ids), 6), device=str(self.device))
+                # Sample linear and angular velocities from configured ranges
+                lin = torch_rand_float(lin_low, lin_high, (len(env_ids), 3), device=str(self.device))
+                ang = torch_rand_float(ang_low, ang_high, (len(env_ids), 3), device=str(self.device))
+                rand_vel = torch.cat([lin, ang], dim=1)
                 self.simulator.robot_root_states[env_ids, 7:13] = rand_vel
 
     def _plot_domain_rand_params(self):
