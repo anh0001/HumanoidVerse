@@ -26,7 +26,7 @@
     {
       "label": "Eval: Rigid Reference Soil (50N pushes)",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/20250803_220625-Hunter_Stage2_FullRand-locomotion-hunter/model_910050.pt +simulator=isaacsim +terrain=terrain_soil_rigid_reference +domain_rand=NO_domain_rand +terrain.friction_combine_mode=max +env.config.max_episode_length_s=120 +robot_mass_kg=12.7 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_rigid_soil.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/20250803_220625-Hunter_Stage2_FullRand-locomotion-hunter/model_910050.pt +simulator=isaacsim +terrain=terrain_soil_rigid_reference +env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_rigid_soil.log 2>&1 &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
@@ -302,7 +302,7 @@
     {
       "label": "Evaluate Flat-Only Policy on Soil",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/SmallerNetCurriculum/20250908_134008-Hunter_SmallerNet_3Stage-locomotion-hunter/model_4000.pt +simulator=isaacsim +terrain=terrain_tilled_soil +env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_flat_on_soil.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/model_910050.pt +simulator=isaacsim +terrain=terrain_tilled_soil +env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] +num_envs=100 +num_episodes=100 +headless=True\" > eval_flat_on_soil.log 2>&1 &",
       "presentation": {
         "echo": true,
         "reveal": "never",
@@ -338,7 +338,7 @@
     {
       "label": "Evaluate Flat-Only Policy on Soil (Visualized)",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/20250803_220625-Hunter_Stage2_FullRand-locomotion-hunter/model_910050.pt +simulator=isaacsim +terrain=terrain_tilled_soil +env.config.max_episode_length_s=60 +eval_command=[0.0,0.0,0.0] +num_envs=4 +num_episodes=100 +headless=False > eval_flat_on_soil_vis.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/CurriculumStage2/model_910050.pt +simulator=isaacsim +terrain=terrain_soil_moderate_tilled +env.config.max_episode_length_s=60 +eval_command=[0.2,0.0,0.0] +num_envs=4 +num_episodes=100 +headless=False > eval_flat_on_soil_vis.log 2>&1\" &",
       "presentation": {
         "echo": true,
         "reveal": "never",

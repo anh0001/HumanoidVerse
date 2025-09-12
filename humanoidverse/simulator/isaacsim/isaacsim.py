@@ -395,16 +395,6 @@ class IsaacSim(BaseSimulator):
             debug_vis=False,
             mesh_prim_paths=["/World/ground"],
         )
-        
-        # Ensure env spacing is at least the terrain tile size to avoid edge overlaps
-        try:
-            tile_L = float(self.terrain_config.terrain_length)
-            tile_W = float(self.terrain_config.terrain_width)
-            req_spacing = max(tile_L, tile_W)
-            if getattr(self.scene.cfg, "env_spacing", None) is not None:
-                self.scene.cfg.env_spacing = max(self.scene.cfg.env_spacing, req_spacing)
-        except Exception:
-            pass
 
         if (self.terrain_config.mesh_type == "heightfield") or (self.terrain_config.mesh_type == "trimesh"):
             sub_terrains = {}
@@ -439,30 +429,30 @@ class IsaacSim(BaseSimulator):
                         noise_low = max(0.0, 0.5 * amp)
                         noise_high = max(noise_low, amp)
                         noise_step = max(0.005, 1.0 / max(1e-6, freq))
-                        sub_terrains = {
-                            "flat": terrain_gen.HfRandomUniformTerrainCfg(
-                                proportion=1.0,
-                                noise_range=(noise_low, noise_high),
-                                noise_step=noise_step,
-                                border_width=0.0,
-                            )
-                        }
+                        # sub_terrains = {
+                        #     "flat": terrain_gen.HfRandomUniformTerrainCfg(
+                        #         proportion=1.0,
+                        #         noise_range=(noise_low, noise_high),
+                        #         noise_step=noise_step,
+                        #         border_width=0.0,
+                        #     )
+                        # }
                     elif ttype == "furrows":
                         # Map our YAML kwargs to a custom HF terrain that draws parallel grooves
                         depth_rng = tkwargs.get("depth_range_m", [0.05, 0.15])
                         spacing_rng = tkwargs.get("spacing_range_m", [0.8, 1.2])
                         orient_rng = tkwargs.get("orientation_deg", [-10.0, 10.0])
                         crest_offset = float(tkwargs.get("crest_offset_m", 0.0))
-                        sub_terrains = {
-                            "flat": HfFurrowsTerrainCfg(
-                                proportion=1.0,
-                                border_width=0.0,
-                                depth_range=(float(depth_rng[0]), float(depth_rng[1])),
-                                spacing_range=(float(spacing_rng[0]), float(spacing_rng[1])),
-                                orientation_range_deg=(float(orient_rng[0]), float(orient_rng[1])),
-                                crest_offset_m=crest_offset,
-                            )
-                        }
+                        # sub_terrains = {
+                        #     "flat": HfFurrowsTerrainCfg(
+                        #         proportion=1.0,
+                        #         border_width=0.0,
+                        #         depth_range=(float(depth_rng[0]), float(depth_rng[1])),
+                        #         spacing_range=(float(spacing_rng[0]), float(spacing_rng[1])),
+                        #         orientation_range_deg=(float(orient_rng[0]), float(orient_rng[1])),
+                        #         crest_offset_m=crest_offset,
+                        #     )
+                        # }
             except Exception as e:
                 logger.warning(f"Selected terrain kwargs not applied: {e}")
 
@@ -535,27 +525,6 @@ class IsaacSim(BaseSimulator):
         
         self.terrain = terrain_config.class_type(terrain_config)
         self.terrain.env_origins = self.terrain.terrain_origins
-
-        # Align scene replication origins to the generated terrain grid so all
-        # environments land on the terrain (not outside the patch).
-        try:
-            terrain_origins = self.terrain.terrain_origins
-            if isinstance(terrain_origins, np.ndarray):
-                terrain_origins = torch.from_numpy(terrain_origins)
-            terrain_origins = terrain_origins.to(torch.float)
-            # flatten (num_rows, num_cols, 3) -> (num_tiles, 3)
-            terrain_origins = terrain_origins.reshape(-1, 3)
-            num_envs = self.scene.cfg.num_envs
-            if terrain_origins.shape[0] >= num_envs:
-                chosen_origins = terrain_origins[:num_envs]
-            else:
-                # Repeat tiles if there are fewer tiles than envs
-                reps = int(np.ceil(num_envs / float(terrain_origins.shape[0])))
-                chosen_origins = terrain_origins.repeat(reps, 1)[:num_envs]
-            # Set scene origins before cloning environments
-            self.scene.env_origins = chosen_origins
-        except Exception as e:
-            logger.warning(f"Could not align env origins to terrain: {e}")
 
         # import ipdb; ipdb.set_trace()
 
