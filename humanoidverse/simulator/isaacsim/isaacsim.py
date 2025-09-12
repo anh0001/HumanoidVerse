@@ -443,16 +443,16 @@ class IsaacSim(BaseSimulator):
                         spacing_rng = tkwargs.get("spacing_range_m", [0.8, 1.2])
                         orient_rng = tkwargs.get("orientation_deg", [-10.0, 10.0])
                         crest_offset = float(tkwargs.get("crest_offset_m", 0.0))
-                        # sub_terrains = {
-                        #     "flat": HfFurrowsTerrainCfg(
-                        #         proportion=1.0,
-                        #         border_width=0.0,
-                        #         depth_range=(float(depth_rng[0]), float(depth_rng[1])),
-                        #         spacing_range=(float(spacing_rng[0]), float(spacing_rng[1])),
-                        #         orientation_range_deg=(float(orient_rng[0]), float(orient_rng[1])),
-                        #         crest_offset_m=crest_offset,
-                        #     )
-                        # }
+                        sub_terrains = {
+                            "flat": HfFurrowsTerrainCfg(
+                                proportion=1.0,
+                                border_width=0.0,
+                                depth_range=(float(depth_rng[0]), float(depth_rng[1])),
+                                spacing_range=(float(spacing_rng[0]), float(spacing_rng[1])),
+                                orientation_range_deg=(float(orient_rng[0]), float(orient_rng[1])),
+                                crest_offset_m=crest_offset,
+                            )
+                        }
             except Exception as e:
                 logger.warning(f"Selected terrain kwargs not applied: {e}")
 

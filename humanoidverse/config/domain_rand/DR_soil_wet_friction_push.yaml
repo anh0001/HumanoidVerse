@@ -1,0 +1,25 @@
+# @package _global_
+
+defaults:
+  - domain_rand_base
+
+domain_rand:
+  # Wet/loose soil friction window
+  randomize_friction: True
+  friction_range: [0.30, 0.90]
+
+  # Approximate compliance via control/CoM variations and lower friction
+  push_robots: True
+  push_force_N: 50
+  push_duration_s_range: [0.12, 0.20]
+  push_interval_s: [6, 10]
+
+  # Disable all other randomizations
+  randomize_base_com: False
+  randomize_link_mass: False
+  randomize_pd_gain: False
+  randomize_base_mass: False
+  randomize_torque_rfi: False
+  randomize_rfi_lim: False
+  randomize_ctrl_delay: False
+
