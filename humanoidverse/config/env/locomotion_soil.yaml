@@ -19,11 +19,11 @@ env:
     
     # CONSERVATIVE command ranges for soil training (Stage 1 curriculum)
     locomotion_command_ranges:
-      lin_vel_x: [-0.3, 0.3]  # Reduced from [-1.0, 1.0] for stable soil learning
-      lin_vel_y: [-0.3, 0.3]  # Reduced from [-1.0, 1.0] for stable soil learning  
-      ang_vel_yaw: [-0.3, 0.3]  # Reduced from [-1.0, 1.0] for stable soil learning
+      lin_vel_x: [-0.4, 0.4]  # slightly wider to promote motion on furrows
+      lin_vel_y: [-0.4, 0.4]
+      ang_vel_yaw: [-0.4, 0.4]
       heading: [-3.14, 3.14]
-    locomotion_command_resampling_time: 15.0  # Increased from 10.0 for more stable learning
+    locomotion_command_resampling_time: 6.0   # increase variety within short early episodes
 
     # SOIL-SPECIFIC termination conditions
     termination:
@@ -34,12 +34,35 @@ env:
       terminate_by_low_height: True  # ENABLED to prevent excessive soil sinkage
 
     termination_scales:
-      termination_min_base_height : 0.4  # Increased from 0.3 to account for soil settling
+      termination_min_base_height : 0.35  # allow trough dips without instant reset
       # termination_max_base_vel : 10.0
       # termination_max_base_ang_vel : 5.0
       termination_gravity_x : 0.8
       termination_gravity_y : 0.8
-      
+
+
+    # Lightweight time-based curriculum to ramp difficulty on furrows
+    furrow_curriculum:
+      enabled: True
+      # thresholds in environment steps (not physics substeps)
+      # dt ~= 0.02 s → 50_000 steps ≈ 1000 s of sim time
+      phases:
+        - step: 0
+          feet_height_target: 0.12
+          penalty_feet_height: 0.0
+          termination: -80.0
+        - step: 50000
+          feet_height_target: 0.10
+          penalty_feet_height: -0.5
+          termination: -100.0
+        - step: 150000
+          feet_height_target: 0.08
+          penalty_feet_height: -1.0
+          termination: -150.0
+        - step: 300000
+          feet_height_target: 0.06
+          penalty_feet_height: -1.0
+          termination: -200.0
 
 
 # Globally accessible parameters

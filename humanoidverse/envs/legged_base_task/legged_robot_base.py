@@ -106,6 +106,8 @@ class LeggedRobotBase(BaseTask):
         self.push_robot_counter[:] += 1
         self.push_robot_plot_counter[:] += 1
         self.command_counter[:] += 1
+        # Apply optional lightweight furrow curriculum each step
+        self._maybe_apply_furrow_curriculum()
 
     def _init_domain_rand_buffers(self):
         ######################################### DR related tensors #########################################
@@ -123,6 +125,57 @@ class LeggedRobotBase(BaseTask):
 
         self.last_contacts_filt = torch.zeros(self.num_envs, len(self.feet_indices), dtype=torch.bool, device=self.device, requires_grad=False)
         self.feet_air_max_height = torch.zeros(self.num_envs, self.feet_indices.shape[0], dtype=torch.float, device=self.device, requires_grad=False)
+        # curriculum state (for furrow schedule)
+        self._furrow_curriculum_phase = -1
+
+    def _maybe_apply_furrow_curriculum(self):
+        """Lightweight curriculum to ramp swing-height penalty and termination over time.
+        Adjusts reward scales/targets based on env steps. Terrain geometry is not rebuilt.
+        """
+        # Guard: curriculum block must exist under env.config
+        cur_cfg = getattr(self.config, "furrow_curriculum", None)
+        if cur_cfg is None or not getattr(cur_cfg, "enabled", False):
+            return
+        phases = getattr(cur_cfg, "phases", [])
+        if not phases:
+            return
+        step = int(self.common_step_counter)
+        active = -1
+        for idx, p in enumerate(phases):
+            try:
+                if step >= int(p.get("step", 0)):
+                    active = idx
+            except Exception:
+                continue
+        if active < 0 or active == self._furrow_curriculum_phase:
+            return
+        phase = phases[active]
+        # Update targets
+        if "feet_height_target" in phase:
+            try:
+                self.config.rewards.feet_height_target = float(phase["feet_height_target"])
+            except Exception:
+                pass
+        # Helper to set reward scales considering internal dt scaling
+        def _set_scale(name, raw_value):
+            try:
+                raw = float(raw_value)
+                self.config.rewards.reward_scales[name] = raw
+                # Update internal scaled value if present
+                if name in self.reward_scales:
+                    self.reward_scales[name] = raw * self.dt
+            except Exception:
+                pass
+        if "penalty_feet_height" in phase:
+            _set_scale("penalty_feet_height", phase["penalty_feet_height"])
+        if "termination" in phase:
+            _set_scale("termination", phase["termination"])
+        # Record
+        self._furrow_curriculum_phase = active
+        try:
+            self.log_dict["furrow_curr_phase"] = torch.tensor(active, dtype=torch.float, device=self.device)
+        except Exception:
+            pass
 
     def _prepare_reward_function(self):
         """ Prepares a list of reward functions, whcih will be called to compute the total reward.

@@ -60,15 +60,17 @@ terrain:
   selected: True                       # use custom terrain generation
   terrain_kwargs:
     type: 'furrows'                   # agricultural furrow pattern generation
-    depth_range_m: [0.2, 0.3]         # furrow depth 20-30 cm for realistic tilling
-    spacing_range_m: [1.5, 2.0]       # spacing 0.8-1.2 m typical for farming equipment
-    orientation_deg: [-5.0, 5.0]      # slight randomization in furrow direction
+    # Stage-1 easing: shallower grooves, wider spacing, aligned rows
+    depth_range_m: [0.10, 0.15]       # was [0.2, 0.3]
+    spacing_range_m: [2.0, 2.5]       # was [1.5, 2.0]
+    orientation_deg: [0.0, 0.0]       # start aligned; re-introduce jitter later
+    crest_offset_m: 0.05              # lift crests slightly to reduce initial trapping
 
   # ---- Curriculum / layout ----------------------------------------------------
-  curriculum: False                 # keep uniform surface; enable if progressive diff.
+  curriculum: True                  # enable progressive difficulty across rows
   terrain_length: 8.0               # m  (single env footprint)
   terrain_width:  8.0               # m
-  num_rows: 1                       # disable multi‑row auto‑generator
+  num_rows: 5                       # 5 levels (0 easy → 4 hard)
   num_cols: 1
   terrain_types: ['flat']           # placeholder – all detail comes from Perlin noise
   terrain_proportions: [1.0]

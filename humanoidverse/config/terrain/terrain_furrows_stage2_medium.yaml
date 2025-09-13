@@ -1,0 +1,43 @@
+# @package _global_
+## ---------------------------------------------------------------------------
+#  Furrows Terrain – Stage 2 (Medium)
+#  - Moderate groove depth, moderate spacing, mild orientation jitter
+## ---------------------------------------------------------------------------
+
+defaults:
+  - terrain_base
+
+terrain:
+  mesh_type: 'heightfield'
+  max_init_terrain_level: 0
+  horizontal_scale: 0.10
+  vertical_scale: 0.005
+  border_size: 40
+
+  # Material
+  static_friction: 0.60
+  dynamic_friction: 0.45
+  restitution: 0.02
+
+  # Geometry generator
+  selected: True
+  terrain_kwargs:
+    type: 'furrows'
+    depth_range_m: [0.15, 0.20]
+    spacing_range_m: [2.0, 2.5]
+    orientation_deg: [-3.0, 3.0]
+    crest_offset_m: 0.03
+
+  # Layout
+  curriculum: False
+  terrain_length: 8.0
+  terrain_width: 8.0
+  num_rows: 1
+  num_cols: 1
+  terrain_types: ['flat']
+  terrain_proportions: [1.0]
+
+  # Post-processing
+  slope_treshold: 0.75
+  measure_heights: False
+

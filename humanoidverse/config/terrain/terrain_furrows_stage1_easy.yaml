@@ -1,0 +1,44 @@
+# @package _global_
+## ---------------------------------------------------------------------------
+#  Furrows Terrain – Stage 1 (Easy)
+#  - Shallow grooves, wide spacing, aligned rows, small crest lift
+#  - Use for initial stabilization on furrowed fields
+## ---------------------------------------------------------------------------
+
+defaults:
+  - terrain_base
+
+terrain:
+  mesh_type: 'heightfield'
+  max_init_terrain_level: 0
+  horizontal_scale: 0.10
+  vertical_scale: 0.005
+  border_size: 40
+
+  # Material
+  static_friction: 0.60
+  dynamic_friction: 0.45
+  restitution: 0.02
+
+  # Geometry generator
+  selected: True
+  terrain_kwargs:
+    type: 'furrows'
+    depth_range_m: [0.10, 0.15]
+    spacing_range_m: [2.5, 3.0]
+    orientation_deg: [0.0, 0.0]
+    crest_offset_m: 0.05
+
+  # Layout
+  curriculum: False
+  terrain_length: 8.0
+  terrain_width: 8.0
+  num_rows: 1
+  num_cols: 1
+  terrain_types: ['flat']
+  terrain_proportions: [1.0]
+
+  # Post-processing
+  slope_treshold: 0.75
+  measure_heights: False
+
