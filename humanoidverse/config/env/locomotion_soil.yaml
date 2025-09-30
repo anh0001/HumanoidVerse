@@ -19,9 +19,9 @@ env:
     
     # CONSERVATIVE command ranges for soil training (Stage 1 curriculum)
     locomotion_command_ranges:
-      lin_vel_x: [-0.4, 0.4]  # slightly wider to promote motion on furrows
-      lin_vel_y: [-0.4, 0.4]
-      ang_vel_yaw: [-0.4, 0.4]
+      lin_vel_x: [-0.3, 0.3]  # slightly wider to promote motion on furrows
+      lin_vel_y: [-0.3, 0.3]
+      ang_vel_yaw: [-0.3, 0.3]
       heading: [-3.14, 3.14]
     locomotion_command_resampling_time: 6.0   # increase variety within short early episodes
 
@@ -63,6 +63,13 @@ env:
           feet_height_target: 0.06
           penalty_feet_height: -1.0
           termination: -200.0
+
+    # Gentle reset randomization to prevent immediate post-reset collapses on furrows
+    reset_randomization:
+      enable: True
+      dof_pos_scale_range: [0.8, 1.2]
+      root_lin_vel_range: [-0.15, 0.15]
+      root_ang_vel_range: [-0.10, 0.10]
 
 
 # Globally accessible parameters

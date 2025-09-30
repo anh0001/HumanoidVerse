@@ -15,9 +15,10 @@ terrain:
   border_size: 40
 
   # Material
-  static_friction: 0.60
-  dynamic_friction: 0.45
+  static_friction: 0.80
+  dynamic_friction: 0.60
   restitution: 0.02
+  friction_combine_mode: max
 
   # Geometry generator
   selected: True
@@ -40,4 +41,3 @@ terrain:
   # Post-processing
   slope_treshold: 0.75
   measure_heights: False
-

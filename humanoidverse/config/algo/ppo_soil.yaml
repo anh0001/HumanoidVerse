@@ -8,7 +8,7 @@ defaults:
 algo:
   config:
     # STABILIZED entropy management for soil terrain (reduced per post-mortem analysis)
-    entropy_coef: 0.01              # Reduced from 0.02 to prevent policy jumps
+    entropy_coef: 0.008             # Reduced from 0.02 to prevent policy jumps
     
     # Entropy annealing schedule - DISABLED to prevent cosine spikes
     # entropy_schedule: "cosine"     # DISABLED - was causing instability
@@ -38,7 +38,7 @@ algo:
     schedule: "adaptive"            # Keep adaptive learning rate schedule
     
     # Noise initialization for soil robustness
-    init_noise_std: 1.0             # Slightly increased from 0.8 for soil uncertainty
+    init_noise_std: 0.5             # Slightly increased from 0.8 for soil uncertainty
     
     # Training parameters
     num_learning_epochs: 5          # Keep standard number of epochs

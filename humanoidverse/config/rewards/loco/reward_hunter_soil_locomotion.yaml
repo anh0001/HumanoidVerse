@@ -38,9 +38,9 @@ rewards:
       # penalty_dof_vel: -0.0001 # Penalize high joint velocities (smoothness)
       # penalty_dof_acc: -3.5e-8   # Penalize high joint accelerations (smooth movements)
       # penalty_action_rate: -0.01 # Penalize rapid changes in control actions (stability)
-      penalty_feet_contact_forces: -0.05 # Penalize excessive contact forces on feet
+      penalty_feet_contact_forces: -0.02 # Penalize excessive contact forces on feet
       # penalty_stumble: -10.0    # Penalize feet hitting vertical surfaces (stumbling)
-      penalty_slippage: -0.5     # Reduced from -2.0 - soil naturally has some slip
+      penalty_slippage: -0.3     # Reduced from -2.0 - soil naturally has some slip
       penalty_feet_ori: -0.5     # Reduced from -3.0 - uneven terrain makes perfect foot placement impossible
       
       # LIMIT PENALTIES (Prevent reaching joint/actuator limits)
@@ -54,7 +54,7 @@ rewards:
       penalty_feet_height: 0.0   # Disable during Stage-1 on furrows to allow higher swing
       
       # TERMINATION AND STABILITY REWARDS
-      termination: -80.0         # Reduce dominance; still discourages falling
+      termination: -60.0         # Reduce dominance; still discourages falling
       # penalty_in_the_air: -100.0 # Penalize when both feet are off the ground
       # feet_max_height_for_this_air: -100.0 # Penalize excessive foot lift height
 
