@@ -32,15 +32,15 @@ rewards:
       # PENALTY REWARDS (Negative - discourage unwanted behavior)
       penalty_lin_vel_z: -2.0    # Penalize vertical velocity (bouncing up/down)
       penalty_ang_vel_xy: -1.0   # Penalize roll/pitch rotations (keep robot upright)
-      penalty_orientation: -2.0  # Penalize deviation from upright base orientation
+      penalty_orientation: -0.5  # Softer upright penalty to tolerate furrow-induced tilts
       penalty_torques: -0.00001  # Penalize high joint torques (energy efficiency)
       # penalty_torques: -0.0003   # Scaled up from -0.00001 due to realistic 23.7 Nm limits (was tuned for 300 Nm)
       # penalty_dof_vel: -0.0001 # Penalize high joint velocities (smoothness)
       penalty_dof_acc: -3.5e-8   # Penalize high joint accelerations (smooth movements)
       penalty_action_rate: -0.01 # Penalize rapid changes in control actions (stability)
-      # penalty_feet_contact_forces: -0.01 # Penalize excessive contact forces on feet
+      penalty_feet_contact_forces: -0.005 # Penalize excessive contact forces on feet
       # penalty_stumble: -10.0    # Penalize feet hitting vertical surfaces (stumbling)
-      # penalty_slippage: -1.0    # Penalize foot slippage when in contact with ground
+      penalty_slippage: -0.3     # Penalize foot slippage when in contact with ground (softer weight)
       penalty_feet_ori: -2.0     # Penalize feet orientation away from flat (proper foot placement)
       
       # LIMIT PENALTIES (Prevent reaching joint/actuator limits)
@@ -50,7 +50,7 @@ rewards:
       
       # GAIT AND LOCOMOTION REWARDS
       feet_air_time: 1.0         # Reward appropriate swing phase duration (natural gait)
-      base_height: -10.0         # Penalize deviation from target standing height (0.6m - correct for Hunter robot)
+      base_height: -5.0          # Penalize deviation from target standing height with reduced weight
       penalty_feet_height: -1.   # Penalize inappropriate feet height during swing phase
       
       # TERMINATION AND STABILITY REWARDS (Currently disabled)
@@ -104,4 +104,3 @@ rewards:
     "termination",                      # Termination penalties
     "feet_air_time",                    # Gait timing rewards
     "feet_max_height_for_this_air"]     # Foot height penalties
-

@@ -42,9 +42,9 @@ terrain:
 
   # ---- Material mechanics -----------------------------------------------------
   # Static / dynamic friction chosen from φ = 25‑30°  →  μ ≈ tanφ = 0.47‑0.58.
-  # Add ~15 % safety to cover compaction variations.
-  static_friction: 0.60             # upper‑range so stance foot “sticks” before slip
-  dynamic_friction: 0.45            # lower because sliding soil shears and polishes
+  # Add ~15 % safety to cover compaction variations; bumped higher for Stage‑1 traction.
+  static_friction: 0.90             # higher grip so stance foot “sticks” before slip
+  dynamic_friction: 0.70            # maintain differential yet reduce sliding losses
   restitution: 0.02                 # almost inelastic; matches <1 cm rebound drop test
 
   # These extra keys are passed straight to PhysX through the terrain importer

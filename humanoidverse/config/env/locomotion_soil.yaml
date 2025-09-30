@@ -31,14 +31,14 @@ env:
       # terminate_by_lin_vel: False
       # terminate_by_ang_vel: False
       terminate_by_gravity: True
-      terminate_by_low_height: True  # ENABLED to prevent excessive soil sinkage
+      terminate_by_low_height: False  # allow base dips while traversing furrows
 
     termination_scales:
-      termination_min_base_height : 0.35  # allow trough dips without instant reset
+      termination_min_base_height : 0.20  # lower threshold to avoid premature resets in furrows
       # termination_max_base_vel : 10.0
       # termination_max_base_ang_vel : 5.0
-      termination_gravity_x : 0.8
-      termination_gravity_y : 0.8
+      termination_gravity_x : 0.85
+      termination_gravity_y : 0.85
 
 
     # Lightweight time-based curriculum to ramp difficulty on furrows

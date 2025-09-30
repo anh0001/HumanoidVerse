@@ -44,7 +44,7 @@ robot:
   dof_pos_lower_limit_list: [-0.5,  -0.2,  -0.8,   0.0,  -1.1,        -0.5,  -0.2,  -0.8,   0.0,  -1.1]
   dof_pos_upper_limit_list: [ 1.0,   0.5,   1.2,   1.5,   1.1,         1.0,   0.5,   1.2,   1.5,   1.1,     ]
   dof_vel_limit_list:       [30.1,  30.1,  30.1,  30.1,  30.1,        30.1,  30.1,  30.1,  30.1,  30.1,     ]
-  dof_effort_limit_list:    [23.7,  23.7,  23.7,  23.7,  23.7,        23.7,  23.7,  23.7,  23.7,  23.7,     ]
+  dof_effort_limit_list:    [30.0,  30.0,  30.0,  30.0,  30.0,        30.0,  30.0,  30.0,  30.0,  30.0,     ]
   dof_armature_list: [0.1, 0.1, 0.1, 0.1, 0.1,
                       0.1, 0.1, 0.1, 0.1, 0.1]
   dof_joint_friction_list: [0.00, 0.00, 0.00, 0.00, 0.00, 
@@ -82,30 +82,29 @@ robot:
 
   control:
     control_type: P
-    # PD Drive parameters TUNED FOR SOIL TERRAIN (increased by ~1.7x for compliance):
-    # Higher gains needed to counteract soil sinkage and prevent pogo behavior
+    # PD Drive parameters adjusted for softer soil contact: lower stiffness, higher damping
     stiffness: # [N*m/rad]
-      hip_yaw: 76    # 45 * 1.7 = 76.5
-      hip_roll: 76   # 45 * 1.7 = 76.5
-      hip_pitch: 76  # 45 * 1.7 = 76.5
-      knee: 80       # 47 * 1.7 = 79.9
-      ankle: 60      # 35 * 1.7 = 59.5
-      torso: 76      # 45 * 1.7 = 76.5
-      shoulder: 76   # 45 * 1.7 = 76.5
-      elbow : 76     # 45 * 1.7 = 76.5 [N*m/rad]
+      hip_yaw: 60    # softened ~20% to improve ground compliance
+      hip_roll: 60
+      hip_pitch: 60
+      knee: 64
+      ankle: 48
+      torso: 60
+      shoulder: 60
+      elbow : 60     # reduced to limit oscillations on soft footing
 
     damping :
-      hip_yaw: 2.6   # 1.5 * 1.7 = 2.55
-      hip_roll: 2.6  # 1.5 * 1.7 = 2.55
-      hip_pitch: 2.6 # 1.5 * 1.7 = 2.55
-      knee: 2.7      # 1.6 * 1.7 = 2.72
-      ankle: 2.0     # 1.2 * 1.7 = 2.04
-      torso: 2.6     # 1.5 * 1.7 = 2.55
-      shoulder: 3.4  # 2.0 * 1.7 = 3.4
-      elbow: 3.4     # 2.0 * 1.7 = 3.4 [N*m*s/rad]
+      hip_yaw: 3.2   # increased damping to absorb furrow impacts
+      hip_roll: 3.2
+      hip_pitch: 3.2
+      knee: 3.3
+      ankle: 2.5
+      torso: 3.2
+      shoulder: 4.0
+      elbow: 4.0     # higher damping avoids rebounds in compliant terrain
 
     # action scale: target angle = actionScale * action + defaultAngle
-    action_scale: 0.35
+    action_scale: 0.70
     action_clip_value: 100.0
     clip_torques: True
 
@@ -286,4 +285,3 @@ robot:
 #         fps: 200 # 1/dt , dt = 0.005
 #         control_freq_inv: 4  # decimation
 #         substeps: 1
-
