@@ -195,10 +195,16 @@ class LeggedRobotLocomotion(LeggedRobotBase):
         return torch.sum(torch.square(left_gravity[:, :2]), dim=1)**0.5 + torch.sum(torch.square(right_gravity[:, :2]), dim=1)**0.5 
 
     def _reward_base_height(self):
-        # Penalize base height away from target
-
+        # Penalize base height away from target. Use a relative height computed
+        # against the local ground (approximated by the lowest foot height).
+        # Using absolute world-Z on height-field terrains (e.g., furrows) can
+        # produce very large errors because the terrain origin varies across the
+        # tile. The relative metric is robust to local undulations.
         base_height = self.simulator.robot_root_states[:, 2]
-        return torch.square(base_height - self.config.rewards.desired_base_height)
+        feet_z = self.simulator._rigid_body_pos[:, self.feet_indices, 2]
+        ground_z = torch.min(feet_z, dim=1).values
+        rel_height = base_height - ground_z
+        return torch.square(rel_height - self.config.rewards.desired_base_height)
 
     def _reward_penalty_hip_pos(self):
         # Penalize the hip joints (only roll and yaw)

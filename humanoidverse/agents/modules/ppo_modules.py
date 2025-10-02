@@ -61,7 +61,10 @@ class PPOActor(nn.Module):
 
     def update_distribution(self, actor_obs):
         mean = self.actor(actor_obs)
-        self.distribution = Normal(mean, mean*0. + self.std)
+        # Clamp learned std to a sane range to avoid explosive actions
+        # that we observed on compliant terrains (furrows/soil).
+        sigma = torch.clamp(self.std, 0.05, 2.0)
+        self.distribution = Normal(mean, mean * 0.0 + sigma)
 
     def act(self, actor_obs, **kwargs):
         self.update_distribution(actor_obs)

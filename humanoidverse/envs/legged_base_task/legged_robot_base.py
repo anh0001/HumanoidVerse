@@ -971,6 +971,28 @@ class LeggedRobotBase(BaseTask):
                     self.simulator.robot_root_states, env_ids)
                 rand_xy = torch_rand_float(
                     -1., 1., (len(env_ids), 2), device=str(self.device))
+                # If running on furrow terrains with near-zero orientation jitter,
+                # avoid randomizing across the furrow direction (x-axis when
+                # orientation≈0). Dropping the robot into a deep trench at reset
+                # frequently causes immediate tumbling and very short episodes.
+                try:
+                    tcfg = getattr(self.config, "terrain", None)
+                    tkwargs = getattr(tcfg, "terrain_kwargs", None) if tcfg is not None else None
+                    ttype = None
+                    if tkwargs is not None:
+                        ttype = (getattr(tkwargs, "type", None) or (isinstance(tkwargs, dict) and tkwargs.get("type")))
+                        orient = (getattr(tkwargs, "orientation_deg", None)
+                                  or (isinstance(tkwargs, dict) and tkwargs.get("orientation_deg")))
+                        if (isinstance(ttype, str) and ttype.lower() == "furrows"):
+                            try:
+                                max_abs_orient = max(abs(float(orient[0])), abs(float(orient[1]))) if orient is not None else 0.0
+                            except Exception:
+                                max_abs_orient = 0.0
+                            if max_abs_orient <= 10.0:
+                                # keep variety along the rows only
+                                rand_xy[:, 0] = 0.0
+                except Exception:
+                    pass
                 self.simulator.robot_root_states[env_ids, :2] += rand_xy
             else:
                 self.simulator.robot_root_states[env_ids] = \
