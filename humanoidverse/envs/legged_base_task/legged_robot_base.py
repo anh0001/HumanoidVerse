@@ -161,9 +161,9 @@ class LeggedRobotBase(BaseTask):
             try:
                 raw = float(raw_value)
                 self.config.rewards.reward_scales[name] = raw
-                # Update internal scaled value if present
+                # Update internal scaled value if present; do not scale one-off 'termination'
                 if name in self.reward_scales:
-                    self.reward_scales[name] = raw * self.dt
+                    self.reward_scales[name] = raw if name == "termination" else raw * self.dt
             except Exception:
                 pass
         if "penalty_feet_height" in phase:
@@ -184,14 +184,15 @@ class LeggedRobotBase(BaseTask):
         logger.info(colored(f"{self.config.rewards.set_reward} set reward on {self.config.rewards.set_reward_date}", "green"))
         
         self.reward_scales = self.config.rewards.reward_scales
-        # remove zero scales + multiply non-zero ones by dt
+        # remove zero scales + multiply per-step terms by dt (not 'termination')
         for key in list(self.reward_scales.keys()):
             logger.info(f"Scale: {key} = {self.reward_scales[key]}")
             scale = self.reward_scales[key]
-            if scale==0:
-                self.reward_scales.pop(key) 
+            if scale == 0:
+                self.reward_scales.pop(key)
             else:
-                self.reward_scales[key] *= self.dt
+                if key != "termination":
+                    self.reward_scales[key] *= self.dt
 
         self.use_reward_penalty_curriculum = self.config.rewards.reward_penalty_curriculum
         if self.use_reward_penalty_curriculum:
@@ -257,8 +258,15 @@ class LeggedRobotBase(BaseTask):
         self.actions = torch.clip(actions, -clip_action_limit, clip_action_limit).to(self.device)
 
         self.log_dict["action_clip_frac"] = (
-                self.actions.abs() == clip_action_limit
-            ).sum() / self.actions.numel()
+            (self.actions.abs() == clip_action_limit).float().sum() / float(self.actions.numel())
+        )
+        # Fraction of action elements near saturation (useful when clip limit is very large)
+        try:
+            self.log_dict["action_satur_frac"] = (
+                (self.actions.abs() > 0.95).float().sum() / float(self.actions.numel())
+            )
+        except Exception:
+            pass
 
         if self.config.domain_rand.randomize_ctrl_delay:
             self.action_queue[:, 1:] = self.action_queue[:, :-1].clone()
@@ -310,6 +318,34 @@ class LeggedRobotBase(BaseTask):
         self._compute_observations() # in some cases a simulation step might be required to refresh some obs (for example body positions)
         
         self._post_compute_observations_callback()
+
+        # --- Lightweight stability diagnostics ---
+        try:
+            # Torque clipping fraction across all joints/envs
+            self.log_dict["torque_clip_frac"] = (
+                (torch.abs(self.torques) >= self.torque_limits).float().sum() / float(self.torques.numel())
+            )
+        except Exception:
+            pass
+        try:
+            # Peak foot contact force (N) and ratio to configured threshold
+            foot_forces = torch.norm(self.simulator.contact_forces[:, self.feet_indices, :], dim=-1)
+            self.log_dict["foot_contact_force_max"] = foot_forces.max()
+            if hasattr(self.config.rewards, "locomotion_max_contact_force"):
+                self.log_dict["foot_contact_force_max_ratio"] = (
+                    foot_forces.max() / max(1e-6, float(self.config.rewards.locomotion_max_contact_force))
+                )
+        except Exception:
+            pass
+        try:
+            # Base height error and roll/pitch rates (rad/s)
+            base_height = self.simulator.robot_root_states[:, 2]
+            self.log_dict["base_height_err_mean"] = torch.mean(
+                torch.abs(base_height - float(self.config.rewards.desired_base_height))
+            )
+            self.log_dict["roll_pitch_rate_mean"] = torch.mean(torch.norm(self.base_ang_vel[:, :2], dim=-1))
+        except Exception:
+            pass
 
         # return clipped obs, clipped states (None), rewards, dones and infos
         clip_obs = self.config.normalization.clip_observations
@@ -377,12 +413,24 @@ class LeggedRobotBase(BaseTask):
         self.reset_buf |= self.time_out_buf
 
     def _update_reset_buf(self):
+        # Track condition flags for logging (counts of envs exceeding thresholds)
+        term_contact_flag = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        term_gravity_flag = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        term_low_height_flag = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        term_dof_pos_flag = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        term_dof_vel_flag = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        term_torque_flag = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+
         if self.config.termination.terminate_by_contact:
             # print("self.termination_contact_indices", self.termination_contact_indices)
             # print("self.simulator.contact_forces[:, self.termination_contact_indices, :]", self.simulator.contact_forces[:, self.termination_contact_indices, :])
             # import ipdb; ipdb.set_trace()
             # print("feet contact forces", self.simulator.contact_forces[:, self.termination_contact_indices, :])
-            self.reset_buf |= torch.any(torch.norm(self.simulator.contact_forces[:, self.termination_contact_indices, :], dim=-1) > 1., dim=1)
+            term_contact_flag = torch.any(
+                torch.norm(self.simulator.contact_forces[:, self.termination_contact_indices, :], dim=-1) > 1.,
+                dim=1,
+            )
+            self.reset_buf |= term_contact_flag
 
             # the name of the contact indiecs can be found by self.simulator.dof_names[self.termination_contact_indices]
                 
@@ -404,35 +452,55 @@ class LeggedRobotBase(BaseTask):
         # if self.config.termination.terminate_by_ang_vel:
         #     self.reset_buf |= torch.any(torch.norm(self.base_ang_vel, dim=-1, keepdim=True) > self.config.termination_scales.termination_max_base_ang_vel, dim=1)
         if self.config.termination.terminate_by_gravity:
-            # print(self.projected_gravity)
-            self.reset_buf |= torch.any(torch.abs(self.projected_gravity[:, 0:1]) > self.config.termination_scales.termination_gravity_x, dim=1)
-            self.reset_buf |= torch.any(torch.abs(self.projected_gravity[:, 1:2]) > self.config.termination_scales.termination_gravity_y, dim=1)
+            term_gravity_flag |= torch.any(
+                torch.abs(self.projected_gravity[:, 0:1]) > self.config.termination_scales.termination_gravity_x,
+                dim=1,
+            )
+            term_gravity_flag |= torch.any(
+                torch.abs(self.projected_gravity[:, 1:2]) > self.config.termination_scales.termination_gravity_y,
+                dim=1,
+            )
+            self.reset_buf |= term_gravity_flag
         if self.config.termination.terminate_by_low_height:
-            # import ipdb; ipdb.set_trace()
-            self.reset_buf |= torch.any(self.simulator.robot_root_states[:, 2:3] < self.config.termination_scales.termination_min_base_height, dim=1)
+            term_low_height_flag = torch.any(
+                self.simulator.robot_root_states[:, 2:3] < self.config.termination_scales.termination_min_base_height,
+                dim=1,
+            )
+            self.reset_buf |= term_low_height_flag
 
         if self.config.termination.terminate_when_close_to_dof_pos_limit:
             out_of_dof_pos_limits = -(self.simulator.dof_pos - self.simulator.dof_pos_limits_termination[:, 0]).clip(max=0.) # lower limit
             out_of_dof_pos_limits += (self.simulator.dof_pos - self.simulator.dof_pos_limits_termination[:, 1]).clip(min=0.)
             
             out_of_dof_pos_limits = torch.sum(out_of_dof_pos_limits, dim=1)
+            term_dof_pos_flag = out_of_dof_pos_limits > 0.
             # get random number between 0 and 1, if it is smaller than self.config.termination_probality.terminate_when_close_to_dof_pos_limit, apply the termination
             if torch.rand(1) < self.config.termination_probality.terminate_when_close_to_dof_pos_limit:
-                self.reset_buf |= out_of_dof_pos_limits > 0.
+                self.reset_buf |= term_dof_pos_flag
         
         if self.config.termination.terminate_when_close_to_dof_vel_limit:
             out_of_dof_vel_limits = torch.sum((torch.abs(self.simulator.dof_vel) - self.dof_vel_limits * self.config.termination_scales.termination_close_to_dof_vel_limit).clip(min=0., max=1.), dim=1)
-            
-            
-
+            term_dof_vel_flag = out_of_dof_vel_limits > 0.
             if torch.rand(1) < self.config.termination_probality.terminate_when_close_to_dof_vel_limit:
-                self.reset_buf |= out_of_dof_vel_limits > 0.
+                self.reset_buf |= term_dof_vel_flag
         
         if self.config.termination.terminate_when_close_to_torque_limit:
             out_of_torque_limits = torch.sum((torch.abs(self.torques) - self.torque_limits * self.config.termination_scales.termination_close_to_torque_limit).clip(min=0., max=1.), dim=1)
-            
+            term_torque_flag = out_of_torque_limits > 0.
             if torch.rand(1) < self.config.termination_probality.terminate_when_close_to_torque_limit:
-                self.reset_buf |= out_of_torque_limits > 0.
+                self.reset_buf |= term_torque_flag
+
+        # Record counts for diagnostics
+        try:
+            self.log_dict["term_contact_count"] = term_contact_flag.float().sum()
+            self.log_dict["term_gravity_count"] = term_gravity_flag.float().sum()
+            self.log_dict["term_low_height_count"] = term_low_height_flag.float().sum()
+            self.log_dict["term_dof_pos_count"] = term_dof_pos_flag.float().sum()
+            self.log_dict["term_dof_vel_count"] = term_dof_vel_flag.float().sum()
+            self.log_dict["term_torque_count"] = term_torque_flag.float().sum()
+            self.log_dict["resets_this_step"] = self.reset_buf.float().sum()
+        except Exception:
+            pass
 
 
     def _update_timeout_buf(self):
