@@ -1,10 +1,6 @@
-<h1 align="center"> HumanoidVerse: Hunter Robot Training in IsaacSim </h1>
+<h1 align="center"> Hunter Robot Training in IsaacSim </h1>
 
 <div align="center">
-<p align="center">
-    <img src="assets/humanoidverse-logo-crop-png.png"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-</p>
-
 
 [![IsaacSim](https://img.shields.io/badge/IsaacSim-4.2.0-b.svg)](https://docs.isaacsim.omniverse.nvidia.com/4.2.0/index.html)
 
