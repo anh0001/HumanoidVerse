@@ -37,8 +37,8 @@ class LeggedRobotBase(BaseTask):
         """ Initialize torch tensors which will contain simulation states and processed quantities
         """
         super()._init_buffers()
-        # self.simulator.dof_pos = self.simulator.dof_state.view(self.num_envs, self.num_dof, 2)[..., 0]
-        # self.simulator.dof_vel = self.simulator.dof_state.view(self.num_envs, self.num_dof, 2)[..., 1]
+        # self.simulator.dof_pos = self.simulator.dof_state.view(self.num_envs, self.num_dofs, 2)[..., 0]
+        # self.simulator.dof_vel = self.simulator.dof_state.view(self.num_envs, self.num_dofs, 2)[..., 1]
 
 
         self.base_quat = self.simulator.base_quat
@@ -63,7 +63,7 @@ class LeggedRobotBase(BaseTask):
         self.base_ang_vel = quat_rotate_inverse(self.base_quat, self.simulator.robot_root_states[:, 10:13])
         self.projected_gravity = quat_rotate_inverse(self.base_quat, self.gravity_vec)
         # joint positions offsets and PD gains
-        self.default_dof_pos = torch.zeros(self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
+        self.default_dof_pos = torch.zeros(self.num_dofs, dtype=torch.float, device=self.device, requires_grad=False)
         for i in range(self.num_dofs):
             name = self.dof_names[i]
             angle = self.config.robot.init_state.default_joint_angles[name]
@@ -112,14 +112,14 @@ class LeggedRobotBase(BaseTask):
     def _init_domain_rand_buffers(self):
         ######################################### DR related tensors #########################################
         if self.config.domain_rand.randomize_ctrl_delay:
-            self.action_queue = torch.zeros(self.num_envs, self.config.domain_rand.ctrl_delay_step_range[1]+1, self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
+            self.action_queue = torch.zeros(self.num_envs, self.config.domain_rand.ctrl_delay_step_range[1]+1, self.num_dofs, dtype=torch.float, device=self.device, requires_grad=False)
             self.action_delay_idx = torch.randint(self.config.domain_rand.ctrl_delay_step_range[0], 
                                                 self.config.domain_rand.ctrl_delay_step_range[1]+1, (self.num_envs,), device=self.device, requires_grad=False)
 
         # self._link_mass_scale = torch.ones(self.num_envs, len(self.config.robot.randomize_link_body_names), dtype=torch.float, device=self.device, requires_grad=False)
-        self._kp_scale = torch.ones(self.num_envs, self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
-        self._kd_scale = torch.ones(self.num_envs, self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
-        self._rfi_lim_scale = torch.ones(self.num_envs, self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
+        self._kp_scale = torch.ones(self.num_envs, self.num_dofs, dtype=torch.float, device=self.device, requires_grad=False)
+        self._kd_scale = torch.ones(self.num_envs, self.num_dofs, dtype=torch.float, device=self.device, requires_grad=False)
+        self._rfi_lim_scale = torch.ones(self.num_envs, self.num_dofs, dtype=torch.float, device=self.device, requires_grad=False)
         self.push_robot_vel_buf = torch.zeros(self.num_envs, 2, dtype=torch.float, device=self.device, requires_grad=False)
         self.record_push_robot_vel_buf = torch.zeros(self.num_envs, 2, dtype=torch.float, device=self.device, requires_grad=False)
 
@@ -944,7 +944,7 @@ class LeggedRobotBase(BaseTask):
             else:
                 # Randomize around default joint targets with configurable range
                 self.simulator.dof_pos[env_ids] = self.default_dof_pos * torch_rand_float(
-                    dof_scale_low, dof_scale_high, (len(env_ids), self.num_dof), device=str(self.device)
+                    dof_scale_low, dof_scale_high, (len(env_ids), self.num_dofs), device=str(self.device)
                 )
                 self.simulator.dof_vel[env_ids] = 0.
 

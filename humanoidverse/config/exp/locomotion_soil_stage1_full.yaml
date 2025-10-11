@@ -35,13 +35,13 @@ env:
     # Slightly narrower resets for stability on furrows
     reset_randomization:
       enable: True
-      dof_pos_scale_range: [0.9, 1.1]
+      dof_pos_scale_range: [0.95, 1.05]
       root_lin_vel_range: [-0.10, 0.10]
       root_ang_vel_range: [-0.08, 0.08]
 
 # Reward rebalancing to favor upright survival while tracking
 rewards:
   reward_scales:
-    termination: -80.0            # keep low magnitude early; curriculum increases later
+    termination: -60.0            # keep low magnitude early; curriculum increases later
     penalty_orientation: -3.0     # stronger upright penalty to suppress tipping
     base_height: -6.0             # slightly stronger penalty on low base height
