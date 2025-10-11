@@ -14,7 +14,7 @@ num_envs: 4096
 
 ### Checkpoint logic
 auto_load_latest: False
-checkpoint: null
+checkpoint: ""
 
 ### Naming and dir structure
 project_name: TEST

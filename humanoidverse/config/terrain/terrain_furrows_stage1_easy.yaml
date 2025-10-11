@@ -27,7 +27,7 @@ terrain:
     type: 'furrows'
     depth_range_m: [0.08, 0.12]
     spacing_range_m: [2.7, 3.2]
-    orientation_deg: [0.0, 0.0]
+    orientation_range_deg: [0.0, 0.0]
     crest_offset_m: 0.05
 
   # Layout

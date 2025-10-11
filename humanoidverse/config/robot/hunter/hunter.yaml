@@ -55,7 +55,15 @@ robot:
                 'right_hip_yaw_link', 'right_hip_roll_link', 'right_hip_pitch_link', 'right_knee_link', 'right_ankle_link']
 
 
-  terminate_after_contacts_on : ["pelvis", "hip"]
+  terminate_after_contacts_on : [
+    "pelvis",
+    "left_hip_yaw_link",
+    "left_hip_roll_link",
+    "left_hip_pitch_link",
+    "right_hip_yaw_link",
+    "right_hip_roll_link",
+    "right_hip_pitch_link",
+  ]
   penalize_contacts_on: []
   init_state:
     pos: [0.0, 0.0, 0.6] # x,y,z [m]

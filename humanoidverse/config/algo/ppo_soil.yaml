@@ -38,7 +38,7 @@ algo:
     schedule: "adaptive"            # Keep adaptive learning rate schedule
     
     # Noise initialization for soil robustness
-    init_noise_std: 0.5             # Slightly increased from 0.8 for soil uncertainty
+    init_noise_std: 0.5             # for soil uncertainty
     
     # Training parameters
     num_learning_epochs: 5          # Keep standard number of epochs

@@ -32,9 +32,12 @@ def main(config: OmegaConf):
         sys.argv = [sys.argv[0]] + hydra_args
         args_cli.num_envs = config.num_envs
         args_cli.seed = config.seed
-        args_cli.env_spacing = config.env.config.env_spacing # config.env_spacing
+        args_cli.env_spacing = config.simulator.config.scene.env_spacing
         args_cli.output_dir = config.output_dir
         args_cli.headless = config.headless
+        # Keep simulator scene aligned with the global env count
+        if "config" in config.simulator and "scene" in config.simulator.config:
+            config.simulator.config.scene.num_envs = config.num_envs
         
         app_launcher = AppLauncher(args_cli)
         simulation_app = app_launcher.app  
