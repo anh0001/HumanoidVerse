@@ -71,6 +71,11 @@ env:
       root_lin_vel_range: [-0.15, 0.15]
       root_ang_vel_range: [-0.10, 0.10]
 
+    # Evaluation-time helpers (read by env when is_evaluating=True)
+    # Smooth actions to reduce jitter-induced slips on furrows
+    eval_action_smoothing: True
+    eval_action_smoothing_alpha: 0.6   # 0=no smoothing, 0.9=very smooth
+
 
 # Globally accessible parameters
 log_task_name: locomotion

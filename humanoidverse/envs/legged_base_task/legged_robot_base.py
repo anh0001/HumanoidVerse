@@ -275,6 +275,16 @@ class LeggedRobotBase(BaseTask):
         else:
             self.actions_after_delay = self.actions.clone()
 
+        # Optional: evaluation-time action smoothing to reduce high-frequency jitter on compliant terrains
+        try:
+            if self.is_evaluating and getattr(self.config, "eval_action_smoothing", False):
+                alpha = float(getattr(self.config, "eval_action_smoothing_alpha", 0.6))  # weight on previous action [0..1]
+                alpha = max(0.0, min(0.999, alpha))
+                # Exponential moving average using last applied actions as previous
+                self.actions_after_delay = alpha * self.last_actions + (1.0 - alpha) * self.actions_after_delay
+        except Exception:
+            pass
+
 
     def _physics_step(self):
         self.render()

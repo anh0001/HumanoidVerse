@@ -1,0 +1,47 @@
+# @package _global_
+
+defaults:
+  - /algo: ppo_soil
+  - /env: locomotion_soil
+  - /robot: hunter/hunter
+  - /rewards: loco/reward_hunter_soil_locomotion
+  - /terrain: terrain_furrows_stage1_easy
+  - /obs: loco/leggedloco_obs_singlestep_withlinvel
+  - /domain_rand: NO_domain_rand
+
+experiment_name: Hunter_Furrows_S1_Easy_Full
+
+# Stage-1 training-time overrides (not eval-only)
+env:
+  config:
+    # Enforce upright survival during training
+    termination:
+      terminate_by_contact: False   # contact termination can be noisy on HF; keep off for Stage-1
+      terminate_by_gravity: True
+      terminate_by_low_height: True
+    termination_scales:
+      termination_min_base_height: 0.28
+      termination_gravity_x: 0.80
+      termination_gravity_y: 0.80
+
+    # Command distribution (bias toward slow forward walking; minimal strafe/yaw)
+    locomotion_command_ranges:
+      lin_vel_x: [0.15, 0.35]
+      lin_vel_y: [-0.10, 0.10]
+      ang_vel_yaw: [-0.10, 0.10]
+      heading: [-3.14, 3.14]
+    locomotion_command_resampling_time: 8.0
+
+    # Slightly narrower resets for stability on furrows
+    reset_randomization:
+      enable: True
+      dof_pos_scale_range: [0.9, 1.1]
+      root_lin_vel_range: [-0.10, 0.10]
+      root_ang_vel_range: [-0.08, 0.08]
+
+# Reward rebalancing to favor upright survival while tracking
+rewards:
+  reward_scales:
+    termination: -80.0            # keep low magnitude early; curriculum increases later
+    penalty_orientation: -3.0     # stronger upright penalty to suppress tipping
+    base_height: -6.0             # slightly stronger penalty on low base height
