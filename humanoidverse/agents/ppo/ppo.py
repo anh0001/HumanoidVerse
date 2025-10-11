@@ -12,6 +12,7 @@ from humanoidverse.utils.average_meters import TensorAverageMeterDict
 from torch.utils.tensorboard import SummaryWriter as TensorboardSummaryWriter
 import time
 import os
+from pathlib import Path
 import statistics
 from collections import deque
 from hydra.utils import instantiate
@@ -137,22 +138,32 @@ class PPO(BaseAlgo):
 
     def load(self, ckpt_path):
         # import ipdb; ipdb.set_trace()
-        if ckpt_path is not None:
-            logger.info(f"Loading checkpoint from {ckpt_path}")
-            loaded_dict = torch.load(ckpt_path, map_location=self.device)
-            self.actor.load_state_dict(loaded_dict["actor_model_state_dict"])
-            self.critic.load_state_dict(loaded_dict["critic_model_state_dict"])
-            if self.load_optimizer:
-                self.actor_optimizer.load_state_dict(loaded_dict["actor_optimizer_state_dict"])
-                self.critic_optimizer.load_state_dict(loaded_dict["critic_optimizer_state_dict"])
-                self.actor_learning_rate = loaded_dict['actor_optimizer_state_dict']['param_groups'][0]['lr']
-                self.critic_learning_rate = loaded_dict['critic_optimizer_state_dict']['param_groups'][0]['lr']
-                self.set_learning_rate(self.actor_learning_rate, self.critic_learning_rate)
-                logger.info(f"Optimizer loaded from checkpoint")
-                logger.info(f"Actor Learning rate: {self.actor_learning_rate}")
-                logger.info(f"Critic Learning rate: {self.critic_learning_rate}")
-            self.current_learning_iteration = loaded_dict["iter"]
-            return loaded_dict["infos"]
+        if isinstance(ckpt_path, str):
+            ckpt_path = ckpt_path.strip()
+
+        if not ckpt_path:
+            logger.info("No checkpoint path provided; skipping load.")
+            return None
+
+        ckpt_path = Path(ckpt_path)
+        if not ckpt_path.is_file():
+            raise FileNotFoundError(f"Checkpoint file not found: {ckpt_path}")
+
+        logger.info(f"Loading checkpoint from {ckpt_path}")
+        loaded_dict = torch.load(str(ckpt_path), map_location=self.device)
+        self.actor.load_state_dict(loaded_dict["actor_model_state_dict"])
+        self.critic.load_state_dict(loaded_dict["critic_model_state_dict"])
+        if self.load_optimizer:
+            self.actor_optimizer.load_state_dict(loaded_dict["actor_optimizer_state_dict"])
+            self.critic_optimizer.load_state_dict(loaded_dict["critic_optimizer_state_dict"])
+            self.actor_learning_rate = loaded_dict['actor_optimizer_state_dict']['param_groups'][0]['lr']
+            self.critic_learning_rate = loaded_dict['critic_optimizer_state_dict']['param_groups'][0]['lr']
+            self.set_learning_rate(self.actor_learning_rate, self.critic_learning_rate)
+            logger.info(f"Optimizer loaded from checkpoint")
+            logger.info(f"Actor Learning rate: {self.actor_learning_rate}")
+            logger.info(f"Critic Learning rate: {self.critic_learning_rate}")
+        self.current_learning_iteration = loaded_dict["iter"]
+        return loaded_dict["infos"]
 
     def save(self, path, infos=None):
         logger.info(f"Saving checkpoint to {path}")
