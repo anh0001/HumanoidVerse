@@ -34,7 +34,7 @@ env:
 
     # Slightly narrower resets for stability on furrows
     reset_randomization:
-      enable: True
+      enable: False
       dof_pos_scale_range: [0.95, 1.05]
       root_lin_vel_range: [-0.10, 0.10]
       root_ang_vel_range: [-0.08, 0.08]
