@@ -713,8 +713,17 @@ class IsaacSim(BaseSimulator):
         #     ),
         # ),
 
-        self.dof_ids, self.dof_names = self._robot.find_joints(dof_names_list, preserve_order=True) 
+        # Find the indices of configured joints/bodies inside IsaacSim's internal (BFS) ordering.
+        # preserve_order=True returns indices for each name in the order given by the config, i.e.,
+        #   dof_ids[cfg_idx] = bfs_idx
+        self.dof_ids, self.dof_names = self._robot.find_joints(dof_names_list, preserve_order=True)
         self.body_ids, self.body_names = self._robot.find_bodies(self.robot_config.body_names, preserve_order=True)
+
+        # Also capture the BFS-ordered view for clearer diagnostics.
+        try:
+            bfs_dof_ids, bfs_dof_names = self._robot.find_joints(dof_names_list, preserve_order=False)
+        except Exception:
+            bfs_dof_ids, bfs_dof_names = None, None
 
 
         self._body_list = self.body_names.copy()
@@ -735,9 +744,28 @@ class IsaacSim(BaseSimulator):
         self.num_dof = len(self.dof_ids)
         self.num_bodies = len(self.body_ids)
 
-        # warning if the dof_ids order does not match the joint_names order in robot_config
+        # Build remapping helpers: cfg_idx -> bfs_idx and bfs_idx -> cfg_idx
+        # These ensure all read/write paths stay consistent even when orders differ.
+        self.cfg_to_bfs = torch.as_tensor(self.dof_ids, device=self.sim_device)
+        try:
+            self.bfs_to_cfg = torch.argsort(self.cfg_to_bfs)
+        except Exception:
+            # Fallback on CPU if needed (e.g., before devices are fully initialized)
+            self.bfs_to_cfg = torch.argsort(self.cfg_to_bfs.cpu()).to(self.sim_device)
+
+        # Warning (with actionable details) if config order != IsaacSim BFS order
         if self.dof_ids != list(range(self.num_dof)):
-            logger.warning("The order of the joint_names in the robot_config does not match the order of the joint_ids in IsaacSim.")
+            msg_lines = [
+                "The order of robot.dof_names (config) does not match IsaacSim's DOF order.",
+                "Actions/PD/obs are remapped safely by name, but reordering YAML is recommended for clarity.",
+                f"cfg->bfs index map: {self.dof_ids}",
+            ]
+            if bfs_dof_names is not None:
+                msg_lines.append(f"Config DOF order: {self.robot_config.dof_names}")
+                msg_lines.append(f"IsaacSim DOF order: {bfs_dof_names}")
+                msg_lines.append("Tip: reorder dof_names and associated limit lists in"
+                                  " humanoidverse/config/robot/hunter/hunter.yaml to match IsaacSim order above.")
+            logger.warning("\n".join(msg_lines))
         
         # assert if  aligns with config
         assert self.num_dof == len(self.robot_config.dof_names), "Number of DOFs must be equal to number of actions"
@@ -815,6 +843,7 @@ class IsaacSim(BaseSimulator):
         self.robot_root_states = self.all_root_states # (num_envs, 13)
         self.base_quat = self.robot_root_states[:, [4, 5, 6, 3]] # (num_envs, 4) 3 isaacsim use wxyz, we keep xyzw for consistency
         
+        # Map raw BFS-ordered joint_state into config order using cfg->bfs mapping
         self.dof_pos = self._robot.data.joint_pos[:, self.dof_ids] # (num_envs, num_dof)
         self.dof_vel = self._robot.data.joint_vel[:, self.dof_ids]
 
@@ -826,6 +855,7 @@ class IsaacSim(BaseSimulator):
         self._rigid_body_ang_vel = self._robot.data.body_ang_vel_w[:, self.body_ids, :]
 
     def apply_torques_at_dof(self, torques):
+        # Write torques provided in config order to the correct BFS joints in the simulator.
         self._robot.set_joint_effort_target(torques, joint_ids=self.dof_ids)
     
     def set_actor_root_state_tensor(self, set_env_ids, root_states):
