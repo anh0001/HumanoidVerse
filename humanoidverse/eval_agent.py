@@ -189,7 +189,10 @@ def main(override_config: OmegaConf):
             config = OmegaConf.merge(config, eval_overrides)
         else:
             config = override_config
-            
+
+    if "config" in config.simulator and "scene" in config.simulator.config:
+        config.simulator.config.scene.num_envs = config.num_envs
+
     simulator_type = config.simulator['_target_'].split('.')[-1]
     if simulator_type == 'IsaacSim':
         from omni.isaac.lab.app import AppLauncher

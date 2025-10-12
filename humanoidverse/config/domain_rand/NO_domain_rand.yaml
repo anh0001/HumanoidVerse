@@ -10,8 +10,7 @@ domain_rand:
   max_push_vel_xy : 1.0
 
   randomize_friction : False
-  # randomize_friction : False
-  friction_range : [-0.6, 1.2]
+  friction_range : [0.8, 1.2]
 
   randomize_base_mass : False # replaced by randomize_link_mass
   added_mass_range : [-5., 10.]
