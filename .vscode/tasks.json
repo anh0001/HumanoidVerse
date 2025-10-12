@@ -26,7 +26,7 @@
     {
       "label": "Furrows Schedule: Stage 1 Easy - Test",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/SoilFurrowsSchedule/20251002_174347-Hunter_Furrows_S1_Easy-locomotion-hunter/model_21600.pt +simulator=isaacsim +terrain=terrain_furrows_stage1_easy ++simulator.config.scene.env_spacing=4.0 headless=False num_envs=1 +eval_command=[0.2,0.0,0.0] > furrows_s1_test.log 2>&1\" &",
+      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/SoilFurrowsSchedule/20251002_174347-Hunter_Furrows_S1_Easy-locomotion-hunter/model_21600.pt +simulator=isaacsim +env=locomotion_soil +robot=hunter/hunter +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_furrows_stage1_easy +domain_rand=NO_domain_rand simulator.config.scene.env_spacing=4.0 headless=False num_envs=1 +eval_command=[0.2,0.0,0.0] > furrows_s1_test.log 2>&1\" &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
