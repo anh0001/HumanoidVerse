@@ -49,7 +49,7 @@ rewards:
   reward_scales:
     termination: -60.0            # keep low magnitude early; curriculum increases later
     penalty_orientation: -3.0     # stronger upright penalty to suppress tipping
-    base_height: -6.0             # slightly stronger penalty on low base height
+    base_height: -6.0             # Negative scale = penalty on (relative_base_height - desired_base_height)^2 (stronger in Stage-1)
     penalty_torques: -0.0003      # discourage torque saturation that spikes contact forces
 
 # Slightly reduce exploration pressure; prevents std -> 2.0 runaway

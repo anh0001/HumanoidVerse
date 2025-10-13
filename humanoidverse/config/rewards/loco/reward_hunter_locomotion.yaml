@@ -50,7 +50,7 @@ rewards:
       
       # GAIT AND LOCOMOTION REWARDS
       feet_air_time: 1.0         # Reward appropriate swing phase duration (natural gait)
-      base_height: -5.0          # Penalize deviation from target standing height with reduced weight
+      base_height: -5.0          # Negative scale = penalty on (relative_base_height - desired_base_height)^2 (reduced weight)
       penalty_feet_height: -1.   # Penalize inappropriate feet height during swing phase
       
       # TERMINATION AND STABILITY REWARDS (Currently disabled)
@@ -75,7 +75,7 @@ rewards:
   
   locomotion_max_contact_force: 100.0   # Derived threshold: total mass ≈12.7 kg → weight ≈125 N; per-foot static load ≈62.5 N; with 50% margin → ≈93 N; rounded to 100 N
   desired_feet_max_height_for_this_air: 0.06  # Desired maximum foot lift height (meters)
-  desired_base_height: 0.6              # Target standing height for Hunter robot (meters)
+  desired_base_height: 0.6              # Target relative base height w.r.t. local ground (meters)
 
   # REWARD PENALTY CURRICULUM SYSTEM (Currently disabled)
   reward_penalty_curriculum: False      # Enable adaptive penalty scaling based on performance

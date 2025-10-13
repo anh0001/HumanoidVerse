@@ -2,25 +2,33 @@ import math
 from loguru import logger
 from omegaconf import OmegaConf
 
-try:
-    OmegaConf.register_new_resolver("eval", eval)
-    OmegaConf.register_new_resolver("if", lambda pred, a, b: a if pred else b)
-    OmegaConf.register_new_resolver("eq", lambda x, y: x.lower() == y.lower())
-    OmegaConf.register_new_resolver("sqrt", lambda x: math.sqrt(float(x)))
-    OmegaConf.register_new_resolver("sum", lambda x: sum(x))
-    OmegaConf.register_new_resolver("ceil", lambda x: math.ceil(x))
-    OmegaConf.register_new_resolver("int", lambda x: int(x))
-    OmegaConf.register_new_resolver("len", lambda x: len(x))
-    OmegaConf.register_new_resolver("sum_list", lambda lst: sum(lst))
-except Exception as e:
-    logger.warning(f"Warning: Some resolvers already registered: {e}")
 
-# OmegaConf.register_new_resolver("eval", eval)
-# OmegaConf.register_new_resolver("if", lambda pred, a, b: a if pred else b)
-# OmegaConf.register_new_resolver("eq", lambda x, y: x.lower() == y.lower())
-# OmegaConf.register_new_resolver("sqrt", lambda x: math.sqrt(float(x)))
-# OmegaConf.register_new_resolver("sum", lambda x: sum(x))
-# OmegaConf.register_new_resolver("ceil", lambda x: math.ceil(x))
-# OmegaConf.register_new_resolver("int", lambda x: int(x))
-# OmegaConf.register_new_resolver("len", lambda x: len(x))
-# OmegaConf.register_new_resolver("sum_list", lambda lst: sum(lst))
+def _register_resolver(name, fn):
+    """Register Hydra resolver once; skip duplicates to avoid noisy warnings."""
+    has_resolver = getattr(OmegaConf, "has_resolver", None)
+    try:
+        if callable(has_resolver) and has_resolver(name):
+            logger.debug(f"Resolver '{name}' already registered; skipping duplicate.")
+            return
+        OmegaConf.register_new_resolver(name, fn)
+    except Exception as exc:  # pragma: no cover - defensive logging
+        if "already registered" in str(exc):
+            logger.debug(f"Resolver '{name}' already registered; skipping duplicate.")
+            return
+        logger.warning(f"Failed to register resolver '{name}': {exc}")
+
+
+_RESOLVERS = {
+    "eval": eval,
+    "if": lambda pred, a, b: a if pred else b,
+    "eq": lambda x, y: x.lower() == y.lower(),
+    "sqrt": lambda x: math.sqrt(float(x)),
+    "sum": lambda x: sum(x),
+    "ceil": lambda x: math.ceil(x),
+    "int": lambda x: int(x),
+    "len": lambda x: len(x),
+    "sum_list": lambda lst: sum(lst),
+}
+
+for _name, _fn in _RESOLVERS.items():
+    _register_resolver(_name, _fn)

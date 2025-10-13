@@ -150,18 +150,27 @@ class PPO(BaseAlgo):
             raise FileNotFoundError(f"Checkpoint file not found: {ckpt_path}")
 
         logger.info(f"Loading checkpoint from {ckpt_path}")
-        loaded_dict = torch.load(str(ckpt_path), map_location=self.device)
+        load_kwargs = {"map_location": self.device}
+        try:
+            loaded_dict = torch.load(str(ckpt_path), weights_only=True, **load_kwargs)
+        except TypeError:
+            loaded_dict = torch.load(str(ckpt_path), **load_kwargs)
         self.actor.load_state_dict(loaded_dict["actor_model_state_dict"])
         self.critic.load_state_dict(loaded_dict["critic_model_state_dict"])
         if self.load_optimizer:
-            self.actor_optimizer.load_state_dict(loaded_dict["actor_optimizer_state_dict"])
-            self.critic_optimizer.load_state_dict(loaded_dict["critic_optimizer_state_dict"])
-            self.actor_learning_rate = loaded_dict['actor_optimizer_state_dict']['param_groups'][0]['lr']
-            self.critic_learning_rate = loaded_dict['critic_optimizer_state_dict']['param_groups'][0]['lr']
-            self.set_learning_rate(self.actor_learning_rate, self.critic_learning_rate)
-            logger.info(f"Optimizer loaded from checkpoint")
-            logger.info(f"Actor Learning rate: {self.actor_learning_rate}")
-            logger.info(f"Critic Learning rate: {self.critic_learning_rate}")
+            actor_opt_state = loaded_dict.get("actor_optimizer_state_dict")
+            critic_opt_state = loaded_dict.get("critic_optimizer_state_dict")
+            if actor_opt_state and critic_opt_state:
+                self.actor_optimizer.load_state_dict(actor_opt_state)
+                self.critic_optimizer.load_state_dict(critic_opt_state)
+                self.actor_learning_rate = actor_opt_state['param_groups'][0]['lr']
+                self.critic_learning_rate = critic_opt_state['param_groups'][0]['lr']
+                self.set_learning_rate(self.actor_learning_rate, self.critic_learning_rate)
+                logger.info("Optimizer loaded from checkpoint")
+                logger.info(f"Actor Learning rate: {self.actor_learning_rate}")
+                logger.info(f"Critic Learning rate: {self.critic_learning_rate}")
+            else:
+                logger.warning("Optimizer state dict missing in checkpoint; skipping optimizer restore.")
         self.current_learning_iteration = loaded_dict["iter"]
         return loaded_dict["infos"]
 

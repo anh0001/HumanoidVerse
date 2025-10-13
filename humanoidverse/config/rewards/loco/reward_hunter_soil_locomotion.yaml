@@ -50,7 +50,7 @@ rewards:
       
       # GAIT AND LOCOMOTION REWARDS
       feet_air_time: 1.0         # Reward appropriate swing phase duration (natural gait)
-      base_height: -4.0          # Mild penalty for height deviation (reduced from -12.0 to account for soil sinkage)
+      base_height: -4.0          # Negative scale = penalty on (relative_base_height - desired_base_height)^2; mild on soil
       penalty_feet_height: 0.0   # Disable during Stage-1 on furrows to allow higher swing
       
       # TERMINATION AND STABILITY REWARDS
@@ -76,7 +76,7 @@ rewards:
   # Derived threshold: total mass ≈12.7 kg → weight ≈125 N; per-foot static load ≈62.5 N; with 50% margin → ≈93 N; rounded to 100 N
   locomotion_max_contact_force: 300.0   # Increased from 100.0 to account for normal forces on compliant soil (fast biped generates 200-300N peak forces)
   desired_feet_max_height_for_this_air: 0.06  # Desired maximum foot lift height (meters)
-  desired_base_height: 0.56             # Reduced from 0.6m to account for ~4cm soil sinkage under load
+  desired_base_height: 0.56             # Target relative base height (to local ground under feet); reduced from 0.6m for ~4cm sinkage
 
   # REWARD PENALTY CURRICULUM SYSTEM (Currently disabled)
   reward_penalty_curriculum: False      # Enable adaptive penalty scaling based on performance

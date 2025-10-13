@@ -135,7 +135,7 @@ def listen_for_keypress(env):
 # from humanoidverse.envs.base_task.base_task import BaseTask
 # from humanoidverse.envs.base_task.omnih2o_cfg import OmniH2OCfg
 
-@hydra.main(config_path="config", config_name="base_eval")
+@hydra.main(version_base="1.1", config_path="config", config_name="base_eval")
 def main(override_config: OmegaConf):
     # logging to hydra log file
     hydra_log_path = os.path.join(
@@ -274,6 +274,9 @@ def main(override_config: OmegaConf):
     key_listener_thread.start()
 
     algo: BaseAlgo = instantiate(config.algo, env=env, device=device, log_dir=None)
+    if hasattr(algo, "load_optimizer") and algo.load_optimizer:
+        logger.debug("Disabling optimizer loading for evaluation run.")
+        algo.load_optimizer = False
     algo.setup()
     algo.load(config.checkpoint)
 
