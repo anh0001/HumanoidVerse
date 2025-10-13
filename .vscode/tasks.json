@@ -34,7 +34,7 @@
     {
       "label": "Furrows Schedule: Stage 1 Easy - Full",
       "type": "shell",
-      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion_soil_stage1_full ++simulator.config.scene.env_spacing=12.0 num_envs=2048 project_name=SoilFurrowsSchedule headless=True\" > furrows_s1_full.log 2>&1 &",
+      "command": "nohup bash -ic \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +simulator=isaacsim +exp=locomotion_soil_stage1_full ++simulator.config.scene.env_spacing=12.0 num_envs=16 project_name=SoilFurrowsSchedule headless=True\" > furrows_s1_full.log 2>&1 &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []

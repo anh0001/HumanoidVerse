@@ -440,11 +440,25 @@ class IsaacSim(BaseSimulator):
                         #     )
                         # }
                     elif ttype == "furrows":
-                        # Map our YAML kwargs to a custom HF terrain that draws parallel grooves
-                        depth_rng = tkwargs.get("depth_range_m", [0.05, 0.15])
-                        spacing_rng = tkwargs.get("spacing_range_m", [0.8, 1.2])
-                        orient_rng = tkwargs.get("orientation_deg", [-10.0, 10.0])
-                        crest_offset = float(tkwargs.get("crest_offset_m", 0.0))
+                        # Map our YAML kwargs to a custom HF terrain that draws parallel grooves.
+                        # Accept both the legacy "*_m"/"orientation_deg" keys (used in gym utils)
+                        # and the Isaac Lab-native keys used by HfFurrowsTerrainCfg.
+                        depth_rng = (
+                            tkwargs.get("depth_range")
+                            or tkwargs.get("depth_range_m")
+                            or [0.05, 0.15]
+                        )
+                        spacing_rng = (
+                            tkwargs.get("spacing_range")
+                            or tkwargs.get("spacing_range_m")
+                            or [0.8, 1.2]
+                        )
+                        orient_rng = (
+                            tkwargs.get("orientation_range_deg")
+                            or tkwargs.get("orientation_deg")
+                            or [-10.0, 10.0]
+                        )
+                        crest_offset = float(tkwargs.get("crest_offset_m", tkwargs.get("crest_offset", 0.0)))
                         sub_terrains = {
                             "flat": HfFurrowsTerrainCfg(
                                 proportion=1.0,
@@ -479,13 +493,15 @@ class IsaacSim(BaseSimulator):
                 prim_path="/World/ground",
                 terrain_type="generator",
                 terrain_generator=terrain_generator_config,
-                max_init_terrain_level=9,
+                # Honor the YAML value (Stage-1 uses 0); default to 9 only if absent.
+                max_init_terrain_level=getattr(self.terrain_config, "max_init_terrain_level", 9),
                 collision_group=-1,
                 physics_material=sim_utils.RigidBodyMaterialCfg(
                     friction_combine_mode=_fric_mode,
                     restitution_combine_mode=_rest_mode,
                     static_friction=self.terrain_config.static_friction,
                     dynamic_friction=self.terrain_config.dynamic_friction,
+                    restitution=getattr(self.terrain_config, "restitution", 0.0),
                 ),
                 visual_material=sim_utils.MdlFileCfg(
                     mdl_path="{NVIDIA_NUCLEUS_DIR}/Materials/Base/Architecture/Shingles_01.mdl",
@@ -509,7 +525,7 @@ class IsaacSim(BaseSimulator):
                     restitution_combine_mode=_rest_mode,
                     static_friction=self.terrain_config.static_friction,
                     dynamic_friction=self.terrain_config.dynamic_friction,
-                    restitution=0.0,
+                    restitution=getattr(self.terrain_config, "restitution", 0.0),
                 ),
                 debug_vis=False,
             )

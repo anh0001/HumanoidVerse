@@ -39,9 +39,20 @@ env:
       root_lin_vel_range: [-0.10, 0.10]
       root_ang_vel_range: [-0.08, 0.08]
 
+# Keep PD torques away from hard saturation during Stage-1
+robot:
+  control:
+    action_scale: 0.5
+
 # Reward rebalancing to favor upright survival while tracking
 rewards:
   reward_scales:
     termination: -60.0            # keep low magnitude early; curriculum increases later
     penalty_orientation: -3.0     # stronger upright penalty to suppress tipping
     base_height: -6.0             # slightly stronger penalty on low base height
+    penalty_torques: -0.0003      # discourage torque saturation that spikes contact forces
+
+# Slightly reduce exploration pressure; prevents std -> 2.0 runaway
+algo:
+  config:
+    entropy_coef: 0.006

@@ -28,7 +28,7 @@ terrain:
     depth_range: [0.08, 0.12]
     spacing_range: [2.7, 3.2]
     orientation_range_deg: [0.0, 0.0]
-    crest_offset_m: 0.05
+    crest_offset: 0.05
 
   # Layout
   curriculum: False
