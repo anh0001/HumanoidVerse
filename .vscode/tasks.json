@@ -26,7 +26,7 @@
     {
       "label": "Furrows Schedule: Stage 1 Easy - Test",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/SoilFurrowsSchedule/20251013_091135-Hunter_Furrows_S1_Easy_Full-locomotion-hunter/model_30000.pt +simulator=isaacsim +env=locomotion_soil +robot=hunter/hunter +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_furrows_stage1_easy +domain_rand=NO_domain_rand ++simulator.config.scene.env_spacing=12.0 headless=False num_envs=1 > furrows_s1_test.log 2>&1\" &",
+      "command": "DISPLAY=:30540 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/eval_agent.py +checkpoint=logs/SoilFurrowsSchedule/20251013_091135-Hunter_Furrows_S1_Easy_Full-locomotion-hunter/model_55000.pt +simulator=isaacsim +env=locomotion_soil +robot=hunter/hunter +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_furrows_stage1_easy +domain_rand=NO_domain_rand ++simulator.config.scene.env_spacing=12.0 headless=False num_envs=1 > furrows_s1_test.log 2>&1\" &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
@@ -42,7 +42,7 @@
     {
       "label": "Furrows Schedule: Stage 2 Medium - Test",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil +algo=ppo_soil +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_furrows_stage2_medium +domain_rand=NO_domain_rand ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/SoilFurrowsSchedule/latest/model.pt num_envs=16 project_name=TestSoilFurrowsSchedule experiment_name=Hunter_Furrows_S2_Medium headless=False > furrows_s2_test.log 2>&1\" &",
+      "command": "DISPLAY=:30540 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil +algo=ppo_soil +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_furrows_stage2_medium +domain_rand=NO_domain_rand ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/SoilFurrowsSchedule/latest/model.pt num_envs=16 project_name=TestSoilFurrowsSchedule experiment_name=Hunter_Furrows_S2_Medium headless=False > furrows_s2_test.log 2>&1\" &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
@@ -58,7 +58,7 @@
     {
       "label": "Furrows Schedule: Stage 3 Full - Test",
       "type": "shell",
-      "command": "DISPLAY=:77 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil +algo=ppo_soil +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_furrows_stage3_full +domain_rand=NO_domain_rand ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/SoilFurrowsSchedule/latest/model.pt num_envs=16 project_name=TestSoilFurrowsSchedule experiment_name=Hunter_Furrows_S3_Full headless=False > furrows_s3_test.log 2>&1\" &",
+      "command": "DISPLAY=:30540 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/train_agent.py +robot=hunter/hunter +simulator=isaacsim +exp=locomotion_soil +algo=ppo_soil +rewards=loco/reward_hunter_soil_locomotion +obs=loco/leggedloco_obs_singlestep_withlinvel +terrain=terrain_furrows_stage3_full +domain_rand=NO_domain_rand ++simulator.config.scene.env_spacing=4.0 +checkpoint=logs/SoilFurrowsSchedule/latest/model.pt num_envs=16 project_name=TestSoilFurrowsSchedule experiment_name=Hunter_Furrows_S3_Full headless=False > furrows_s3_test.log 2>&1\" &",
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
