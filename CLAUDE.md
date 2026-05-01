@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Scope (LOCKED)
+
+- **Robot:** Hunter only. Always pass `+robot=hunter/hunter`. Do not touch or recommend `g1` / `h1` configs even though they exist on disk — they are unmaintained.
+- **Simulator:** IsaacSim / IsaacLab only. Always pass `+simulator=isaacsim`. The `isaacgym` and `genesis` backends under `humanoidverse/simulator/` are legacy and out of scope.
+- **Paper search:** Use the `scite` MCP tool for any literature lookup, citation verification, or related-work search. Prefer it over arXiv-only or web search when academic grounding is needed.
+
 ## Common Development Commands
 
 ### Training Commands
