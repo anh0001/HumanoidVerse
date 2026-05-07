@@ -1,0 +1,19 @@
+# @package _global_
+## ---------------------------------------------------------------------------
+#  DR_dfh_moderate — Stage 2
+## ---------------------------------------------------------------------------
+
+defaults:
+  - DR_soil_moderate
+
+domain_rand:
+  dfh_param_ranges:
+    bekker_kc:               [7.0e2, 1.4e3]
+    bekker_k_phi:            [3.5e5, 7.0e5]
+    bekker_n:                [0.85,  1.05]
+    cohesion_pa:             [6.0e3, 1.4e4]
+    friction_angle_deg:      [26.0,  32.0]
+    mu_along:                [0.40,  0.55]
+    mu_across:               [0.55,  0.70]
+    slip_sinkage_alpha:      [0.10,  0.30]
+    bulldoze_share:          [0.30,  0.50]

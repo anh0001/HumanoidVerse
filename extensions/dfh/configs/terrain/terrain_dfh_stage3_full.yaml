@@ -1,0 +1,36 @@
+# @package _global_
+## ---------------------------------------------------------------------------
+#  DFH Stage 3 (Full) — wet/loose Bekker, strong anisotropy, deepest sink cap
+## ---------------------------------------------------------------------------
+
+defaults:
+  - terrain_furrows_stage3_full
+
+terrain:
+  dfh_enabled: True
+
+  dfh:
+    horizontal_scale_m: 0.10
+    vertical_scale_m:   0.002
+    terrain_length_m:   12.0
+    terrain_width_m:    12.0
+    physx_writeback_every_k_steps: 4
+    device: "cuda"
+    store_furrow_direction: True
+
+    params:
+      bekker:
+        kc: 5.0e2
+        k_phi: 2.0e5
+        n: 0.9
+        cohesion: 6.0e3
+        friction_angle_deg: 26.0
+      anisotropy:
+        enabled: True
+        mu_along: 0.35
+        mu_across: 0.60
+      slip_sinkage_alpha: 0.40
+      slip_sinkage_eps:   1.0e-3
+      bulldoze_share:     0.50
+      sinkage_floor_m:   -0.10
+      contact_patch_area_m2: 3.45e-3

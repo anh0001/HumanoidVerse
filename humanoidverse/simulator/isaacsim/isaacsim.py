@@ -569,6 +569,60 @@ class IsaacSim(BaseSimulator):
         )
         light_config1.func("/World/DomeLight", light_config1, translation=(1, 0, 10))
 
+        # ------------------------------------------------------------------
+        # DFH (Deformable Furrowed Heightfield) — optional standalone extension.
+        # Activated only when terrain.dfh_enabled is set in the Hydra config.
+        # Silently skipped if the ext_dfh package is not installed.
+        # ------------------------------------------------------------------
+        self._dfh = None
+        if getattr(self.terrain_config, "dfh_enabled", False):
+            try:
+                from ext_dfh.integration import build_dfh_adapter
+                from omegaconf import OmegaConf
+                dfh_dict = OmegaConf.to_container(self.terrain_config.dfh, resolve=True)
+                foot_names = list(getattr(self.config.robot, "contact_bodies", []))
+                if not foot_names:
+                    foot_names = ["left_ankle_link", "right_ankle_link"]
+                self._dfh = build_dfh_adapter(
+                    num_envs=self.scene.cfg.num_envs,
+                    dfh_config_dict=dfh_dict,
+                    robot=self._robot,
+                    contact_sensor=self.contact_sensor,
+                    foot_body_names=foot_names,
+                )
+                self._dfh.initialize()  # furrow direction defaults to 0 deg in v0.2
+                # Path A: PhysX heightfield write-back on terrain mesh prim.
+                from ext_dfh.writeback import build_writeback
+                wb = build_writeback(
+                    isaacsim_terrain=self.terrain,
+                    terrain_prim_path=terrain_config.prim_path,
+                    horizontal_scale_m=self._dfh.layer.cfg.horizontal_scale_m,
+                    dfh_grid_h=self._dfh.layer.cfg.grid_h,
+                    dfh_grid_w=self._dfh.layer.cfg.grid_w,
+                    device=self._dfh.layer.cfg.device,
+                )
+                if wb is not None:
+                    self._dfh.attach_physx_writeback(wb)
+                logger.info(
+                    f"DFH terrain layer attached: feet={foot_names}, "
+                    f"grid={self._dfh.layer.cfg.grid_h}x{self._dfh.layer.cfg.grid_w}, "
+                    f"writeback={'on' if wb is not None else 'off (no trimesh)'}"
+                )
+            except ImportError:
+                logger.warning(
+                    "terrain.dfh_enabled=True but ext_dfh package not importable; "
+                    "running with rigid heightfield."
+                )
+            except Exception as e:
+                logger.warning(f"DFH attach failed: {e}; running with rigid heightfield.")
+
+    # ----------------------------------------------------------------- DFH
+
+    def dfh_reset(self, env_ids: torch.Tensor) -> None:
+        """Reset the DFH plastic buffer for the given envs (no-op if DFH off)."""
+        if self._dfh is not None:
+            self._dfh.on_reset(env_ids)
+
 
     def set_headless(self, headless):
         # call super
@@ -885,7 +939,16 @@ class IsaacSim(BaseSimulator):
     def simulate_at_each_physics_step(self):
         self._sim_step_counter += 1
         is_rendering = self.sim.has_gui() or self.sim.has_rtx_sensors()
-        
+
+        # DFH per-step update: read foot contacts, advance the plastic buffer,
+        # (v0.3) push deformation back into PhysX.  Runs BEFORE sim.step so that
+        # any heightfield write-back takes effect on the upcoming integration.
+        if self._dfh is not None:
+            try:
+                self._dfh.on_physics_step()
+            except Exception as e:
+                logger.warning(f"DFH step skipped: {e}")
+
         self.scene.write_data_to_sim()
         # simulate
         self.sim.step(render=False)

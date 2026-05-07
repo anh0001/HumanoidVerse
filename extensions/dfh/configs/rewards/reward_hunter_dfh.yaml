@@ -1,0 +1,27 @@
+# @package _global_
+## ---------------------------------------------------------------------------
+#  Hunter DFH reward set — extends reward_hunter_soil_locomotion
+#  Adds:
+#    * penalty_sinkage_excess     — discourages digging in past sinkage cap
+#    * reward_foot_exit_velocity  — encourages clean lift-off (less bulldozing)
+#    * dynamic_base_height        — adapts target base height to expected sink
+## ---------------------------------------------------------------------------
+
+defaults:
+  - /rewards/loco/reward_hunter_soil_locomotion
+
+rewards:
+  reward_scales:
+    tracking_lin_vel:          2.0
+    tracking_ang_vel:          1.0
+    base_height:              -25.0
+    penalty_sinkage_excess:    0.0   # disabled until _reward_penalty_sinkage_excess implemented
+    reward_foot_exit_velocity: 0.0   # disabled until _reward_reward_foot_exit_velocity implemented
+    feet_air_time:             0.0   # disabled in Stage 1; re-enable in Stage 2
+    penalty_feet_height:       0.0
+  terms:
+    penalty_sinkage_excess:
+      sigma_m: 0.04        # quadratic penalty above 4cm mean sink (when re-enabled)
+    reward_foot_exit_velocity:
+      vz_target_mps: 0.20  # target lift-off vertical velocity at toe-off (when re-enabled)
+  desired_base_height: 0.54   # dropped further from 0.56 to absorb up to ~6cm sink

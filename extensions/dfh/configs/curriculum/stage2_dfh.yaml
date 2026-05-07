@@ -1,0 +1,16 @@
+# @package _global_
+## ---------------------------------------------------------------------------
+#  Curriculum Stage 2 DFH — moderate Bekker, full anisotropy
+## ---------------------------------------------------------------------------
+
+defaults:
+  - /terrain: terrain_dfh_stage2_medium
+  - /domain_rand: DR_dfh_moderate
+  - /rewards: loco/reward_hunter_dfh
+
+curriculum:
+  stage_id: "stage2_dfh"
+  promotion:
+    metric_mean_episode_length_s_min: 18.0
+    metric_term_reward_per_s_min:    -0.03
+    require_nonzero_feet_air_time:    True

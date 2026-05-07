@@ -1,0 +1,16 @@
+# @package _global_
+## ---------------------------------------------------------------------------
+#  Curriculum Stage 1 DFH — soft Bekker, mild slip-sinkage, gentle anisotropy
+## ---------------------------------------------------------------------------
+
+defaults:
+  - /terrain: terrain_dfh_stage1_easy
+  - /domain_rand: DR_dfh_soft
+  - /rewards: loco/reward_hunter_dfh
+
+curriculum:
+  stage_id: "stage1_dfh"
+  promotion:
+    metric_mean_episode_length_s_min: 16.0
+    metric_term_reward_per_s_min:    -0.05
+    require_nonzero_feet_air_time:    False

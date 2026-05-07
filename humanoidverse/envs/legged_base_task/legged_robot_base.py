@@ -561,6 +561,12 @@ class LeggedRobotBase(BaseTask):
             self._update_reward_penalty_curriculum()
 
     def _reset_buffers_callback(self, env_ids, target_buf=None):
+        # DFH terrain layer reset (no-op when DFH disabled or method missing).
+        if hasattr(self.simulator, "dfh_reset"):
+            try:
+                self.simulator.dfh_reset(env_ids)
+            except Exception:
+                pass
         if target_buf is not None:
             self.simulator.dof_pos[env_ids] = target_buf["dof_pos"].to(self.simulator.dof_pos.dtype)
             self.simulator.dof_vel[env_ids] = target_buf["dof_vel"].to(self.simulator.dof_vel.dtype)

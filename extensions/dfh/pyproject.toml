@@ -1,0 +1,40 @@
+[project]
+name = "ext_dfh"
+version = "0.1.0"
+description = "Deformable Furrowed Heightfield (DFH) terrain layer for IsaacSim/IsaacLab. Plastic heightfield with Bekker-Wong sinkage, Janosi-Hanamoto shear, slip-sinkage coupling, and furrow-anisotropic friction."
+requires-python = ">=3.10"
+authors = [{ name = "HumanoidVerse" }]
+license = { text = "MIT" }
+readme = "README.md"
+dependencies = [
+    "torch>=2.0",
+    "numpy>=1.26,<2.0",
+    "hydra-core>=1.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=24.0",
+    "isort>=5.12",
+    "ruff>=0.4",
+]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["source"]
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
