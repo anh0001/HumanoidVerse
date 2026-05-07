@@ -1,5 +1,6 @@
 import sys
 import os
+import math
 from loguru import logger
 import torch
 from humanoidverse.utils.torch_utils import to_torch, torch_rand_float
@@ -542,9 +543,21 @@ class IsaacSim(BaseSimulator):
         
         
         self.terrain = terrain_config.class_type(terrain_config)
+        # Keep terrain.env_origins as (num_rows, num_cols, 3) so the existing
+        # `base_task._get_env_origins` indexing (`terrain_origins[levels, types]`)
+        # still works and yields (num_envs, 3).
         self.terrain.env_origins = self.terrain.terrain_origins
 
-        # import ipdb; ipdb.set_trace()
+        # Pack a per-env spawn anchor onto the actual terrain mesh. For
+        # generator-type heightfields, terrain.terrain_origins is shaped
+        # (rows, cols, 3) and gives sub-terrain centers; we distribute
+        # multiple envs per tile via env_spacing-based local offsets and
+        # raycast the ground Z so the spawn anchor sits on the mesh. Stored
+        # on self._packed_env_origins so `create_envs` can use it without
+        # mutating terrain.env_origins (which other code expects in 2D shape).
+        self._packed_env_origins = None
+        if getattr(self.terrain, "terrain_origins", None) is not None:
+            self._packed_env_origins = self._pack_env_origins_in_terrain(self.terrain)
 
         # clone, filter, and replicate
         self.scene.clone_environments(copy_from_source=False)
@@ -848,13 +861,96 @@ class IsaacSim(BaseSimulator):
         # return self.num_dof, self.num_bodies, self.dof_names, self.body_names
         
 
+    def _pack_env_origins_in_terrain(self, terrain) -> torch.Tensor:
+        """Distribute num_envs spawn anchors over the available sub-terrains.
+
+        Each tile gets up to ``ceil(num_envs / num_tiles)`` envs laid out on a
+        local grid of ``env_spacing``. Z is set from a downward raycast onto
+        the terrain's warp mesh when available so the spawn point sits on the
+        actual ground surface.
+        """
+        base = terrain.terrain_origins.reshape(-1, 3).to(self.sim_device)
+        num_envs = self.scene.cfg.num_envs
+        num_tiles = base.shape[0]
+        per_tile = math.ceil(num_envs / num_tiles)
+
+        spacing = float(self.scene.cfg.env_spacing)
+        length = float(self.terrain_config.terrain_length)
+        width = float(self.terrain_config.terrain_width)
+
+        nx = max(1, int(math.floor(length / spacing)))
+        ny = max(1, int(math.floor(width / spacing)))
+        if nx * ny < per_tile:
+            raise ValueError(
+                f"Cannot place {num_envs} envs on {num_tiles} tiles with "
+                f"tile={length}x{width} and env_spacing={spacing}: "
+                f"capacity={num_tiles * nx * ny}."
+            )
+
+        xs = (torch.arange(nx, device=self.sim_device, dtype=torch.float32)
+              - (nx - 1) / 2.0) * spacing
+        ys = (torch.arange(ny, device=self.sim_device, dtype=torch.float32)
+              - (ny - 1) / 2.0) * spacing
+        gx, gy = torch.meshgrid(xs, ys, indexing="ij")
+        local = torch.stack((gx.reshape(-1), gy.reshape(-1)), dim=-1)[:per_tile]
+
+        env_ids = torch.arange(num_envs, device=self.sim_device)
+        tile_ids = env_ids % num_tiles
+        slot_ids = torch.div(env_ids, num_tiles, rounding_mode="floor")
+
+        env_origins = base[tile_ids].clone()
+        env_origins[:, :2] += local[slot_ids]
+
+        # Snap Z to the actual mesh surface via warp raycast when available.
+        try:
+            from omni.isaac.lab.utils.warp import raycast_mesh
+            warp_meshes = getattr(terrain, "warp_meshes", None) or {}
+            mesh = warp_meshes.get("terrain") or next(iter(warp_meshes.values()), None)
+            if mesh is not None:
+                starts = env_origins.clone()
+                starts[:, 2] = 100.0
+                dirs = torch.zeros_like(starts)
+                dirs[:, 2] = -1.0
+                hits = raycast_mesh(starts.unsqueeze(0), dirs.unsqueeze(0), mesh)[0][0].to(self.sim_device)
+                valid = torch.isfinite(hits[:, 2])
+                env_origins[valid, 2] = hits[valid, 2]
+        except Exception as _e:
+            logger.warning(f"[pack env_origins] raycast snap-to-mesh skipped: {_e}")
+
+        logger.info(
+            f"[pack env_origins] envs={num_envs} tiles={num_tiles} per_tile={per_tile} "
+            f"xy_range=[{env_origins[:, :2].min().item():.2f}, "
+            f"{env_origins[:, :2].max().item():.2f}] "
+            f"z_range=[{env_origins[:, 2].min().item():.4f}, "
+            f"{env_origins[:, 2].max().item():.4f}]"
+        )
+        return env_origins
+
     def create_envs(self, num_envs, env_origins, base_init_state):
-        
+
         self.num_envs = num_envs
-        # Copy env_origins from scene after build - this is the key fix!
-        self.env_origins = self.scene.env_origins.to(self.sim_device)
+        # Prefer the packed (num_envs, 3) tensor we built in _setup_scene that
+        # snaps each env to a sub-terrain center plus a local env_spacing
+        # slot. Fall back to scene.env_origins (uniform cloner grid) for
+        # plane terrains where there are no per-tile origins.
+        packed = getattr(self, "_packed_env_origins", None)
+        if (
+            torch.is_tensor(packed)
+            and packed.dim() == 2
+            and packed.shape == (num_envs, 3)
+        ):
+            self.env_origins = packed.to(self.sim_device)
+            logger.info(
+                f"[create_envs] using packed env_origins shape={tuple(packed.shape)}"
+            )
+        else:
+            scene_origins = self.scene.env_origins
+            self.env_origins = scene_origins.to(self.sim_device)
+            logger.info(
+                f"[create_envs] using scene.env_origins shape={tuple(scene_origins.shape)}"
+            )
         self.base_init_state = base_init_state
-        
+
         return self.scene, self._robot
     
     def get_dof_limits_properties(self):
