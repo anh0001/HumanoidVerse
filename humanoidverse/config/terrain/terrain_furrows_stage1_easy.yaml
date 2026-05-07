@@ -10,18 +10,18 @@ defaults:
 
 terrain:
   mesh_type: 'heightfield'
-  max_init_terrain_level: 0
+  max_init_terrain_level: 9       # was 0 — confined all envs to row 0 (~128x8m), 2048 envs spilled off mesh; match soft_soil
   horizontal_scale: 0.10
   vertical_scale: 0.005
   border_size: 40
 
-  # Material
-  static_friction: 0.80
-  dynamic_friction: 0.60
+  # Material — match soft_soil (proven to train)
+  static_friction: 0.60           # was 0.80
+  dynamic_friction: 0.45          # was 0.60
   restitution: 0.02
-  friction_combine_mode: max
+  friction_combine_mode: multiply
 
-  # Geometry generator
+  # Geometry generator — restore real furrow depth (probe with depth=0.001 also failed, so shape not the catapult)
   selected: True
   terrain_kwargs:
     type: 'furrows'
@@ -30,12 +30,12 @@ terrain:
     orientation_range_deg: [0.0, 0.0]
     crest_offset: 0.05
 
-  # Layout
+  # Layout — 16x16 sub-terrain grid (256 tiles, ~128m x 128m) fits 2048 envs at env_spacing=5
   curriculum: False
   terrain_length: 8.0
   terrain_width: 8.0
-  num_rows: 1
-  num_cols: 1
+  num_rows: 16
+  num_cols: 16
   terrain_types: ['flat']
   terrain_proportions: [1.0]
 
