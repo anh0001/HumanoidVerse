@@ -9,32 +9,32 @@ defaults:
 
 terrain:
   mesh_type: 'heightfield'
-  max_init_terrain_level: 0
+  max_init_terrain_level: 9
   horizontal_scale: 0.10
   vertical_scale: 0.005
   border_size: 40
 
-  # Material
-  static_friction: 0.80
-  dynamic_friction: 0.60
+  # Material — match stage1/2 (proven to train under packed env_origins)
+  static_friction: 0.60
+  dynamic_friction: 0.45
   restitution: 0.02
-  friction_combine_mode: max
+  friction_combine_mode: multiply
 
-  # Geometry generator
+  # Geometry generator (full depth: 0.20-0.30m, tighter spacing, full orientation jitter)
   selected: True
   terrain_kwargs:
     type: 'furrows'
-    depth_range_m: [0.20, 0.30]
-    spacing_range_m: [1.5, 2.0]
-    orientation_deg: [-5.0, 5.0]
-    crest_offset_m: 0.0
+    depth_range: [0.20, 0.30]
+    spacing_range: [1.5, 2.0]
+    orientation_range_deg: [-5.0, 5.0]
+    crest_offset: 0.0
 
-  # Layout
+  # Layout — 16x16 sub-terrain grid for 2048 envs at env_spacing=2.5 (per_tile=8, capacity 2304)
   curriculum: False
   terrain_length: 8.0
   terrain_width: 8.0
-  num_rows: 1
-  num_cols: 1
+  num_rows: 16
+  num_cols: 16
   terrain_types: ['flat']
   terrain_proportions: [1.0]
 
