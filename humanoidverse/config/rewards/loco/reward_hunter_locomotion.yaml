@@ -52,6 +52,12 @@ rewards:
       feet_air_time: 1.0         # Reward appropriate swing phase duration (natural gait)
       base_height: -5.0          # Negative scale = penalty on (relative_base_height - desired_base_height)^2 (reduced weight)
       penalty_feet_height: -1.   # Penalize inappropriate feet height during swing phase
+
+      # IDEA 2: periodic-clock + bilateral-symmetry (soft; set both to 0 for the
+      # no-gait-structure ablation arm A0/A3). Kept small so the clock cannot
+      # override terrain adaptation (reviewer risk #4).
+      gait_phase: 0.5            # Reward feet matching the swing/stance phase clock
+      penalty_gait_asymmetry: -0.2  # Penalize unequal left/right swing durations
       
       # TERMINATION AND STABILITY REWARDS (Currently disabled)
       # termination: -500.0      # Large penalty for episode termination
@@ -69,6 +75,11 @@ rewards:
     soft_dof_pos_limit: 0.9    # Start penalizing at 90% of position limit
     soft_dof_vel_limit: 0.9    # Start penalizing at 90% of velocity limit  
     soft_torque_limit: 0.9     # Start penalizing at 90% of torque limit
+
+  # IDEA 2: periodic gait-clock parameters
+  gait_period_s: 0.7                    # Full swing+stance cycle duration (s)
+  gait_duty: 0.6                        # Fraction of cycle in stance per foot
+  gait_ramp: 0.1                        # Cosine ramp width at stance->swing (cycle fraction)
 
   # HUNTER ROBOT PHYSICAL TARGETS
   feet_height_target: 0.02              # Target height for feet during swing phase (meters)

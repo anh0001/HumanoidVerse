@@ -170,6 +170,47 @@ class LeggedRobotLocomotion(LeggedRobotBase):
         rew_airTime *= torch.norm(self.commands[:, :2], dim=1) > 0.1 #no reward for zero command
         self.feet_air_time *= ~contact_filt
         return rew_airTime
+
+    # ---------------- Idea 2: periodic-clock + bilateral-symmetry ----------------
+    # Siekmann-style swing/stance phase clock. Soft weights (see reward yaml) so
+    # the clock cannot override terrain adaptation (reviewer risk #4). Phase is
+    # derived directly from episode_length_buf so it is reset-safe automatically.
+    def _gait_phase(self) -> torch.Tensor:
+        period = float(getattr(self.config.rewards, "gait_period_s", 0.7))
+        return (self.episode_length_buf.float() * self.dt / period) % 1.0
+
+    @staticmethod
+    def _expected_stance(phase: torch.Tensor, duty: float, ramp: float) -> torch.Tensor:
+        """Smooth expected-contact indicator in [0,1]: ~1 during stance
+        ([0, duty)), ~0 during swing ([duty, 1)), cosine-ramped over ``ramp``
+        (cycle fraction) at the stance->swing transition."""
+        t = torch.clamp((phase - (duty - ramp)) / ramp, 0.0, 1.0)  # 0 -> 1 across ramp
+        ramp_val = 0.5 * (1.0 + torch.cos(torch.pi * t))           # 1 -> 0
+        stance = torch.where(phase < (duty - ramp), torch.ones_like(phase), ramp_val)
+        return torch.where(phase >= duty, torch.zeros_like(phase), stance)
+
+    def _reward_gait_phase(self) -> torch.Tensor:
+        """Reward feet matching a periodic swing/stance clock (left/right
+        antiphase). Bounded ~[0,1]; zeroed at near-zero command."""
+        duty = float(getattr(self.config.rewards, "gait_duty", 0.6))
+        ramp = float(getattr(self.config.rewards, "gait_ramp", 0.1))
+        phase = self._gait_phase()
+        es_l = self._expected_stance(phase, duty, ramp)
+        es_r = self._expected_stance((phase + 0.5) % 1.0, duty, ramp)
+        contact = (self.simulator.contact_forces[:, self.feet_indices, 2] > 1.).float()
+        c_l, c_r = contact[:, 0], contact[:, 1]
+        match_l = es_l * c_l + (1.0 - es_l) * (1.0 - c_l)
+        match_r = es_r * c_r + (1.0 - es_r) * (1.0 - c_r)
+        rew = 0.5 * (match_l + match_r)
+        rew *= (torch.norm(self.commands[:, :2], dim=1) > 0.1).float()
+        return rew
+
+    def _reward_penalty_gait_asymmetry(self) -> torch.Tensor:
+        """Bilateral-symmetry penalty: unequal left/right swing durations.
+        No joint mirror map needed (robust). Soft weight; zeroed at zero command."""
+        asym = torch.square(self.feet_air_time[:, 0] - self.feet_air_time[:, 1])
+        asym *= (torch.norm(self.commands[:, :2], dim=1) > 0.1).float()
+        return asym
     
     def _reward_penalty_in_the_air(self):
         contact = self.simulator.contact_forces[:, self.feet_indices, 2] > 1.
@@ -186,6 +227,53 @@ class LeggedRobotLocomotion(LeggedRobotBase):
         return torch.any(torch.norm(self.simulator.contact_forces[:, self.feet_indices, :2], dim=2) >\
              5 *torch.abs(self.simulator.contact_forces[:, self.feet_indices, 2]), dim=1)
 
+
+    def _reward_penalty_sinkage_excess(self):
+        """Quadratic penalty when local DFH sinkage at the feet exceeds sigma.
+
+        Pulls per-foot plastic depth from the DFH adapter
+        (``simulator._dfh.layer``) for the env_idx + cell at the foot XY.
+        Returns zeros when DFH is disabled. ``terms.penalty_sinkage_excess.sigma_m``
+        controls the soft excess threshold (default 0.04 m).
+        """
+        sim = self.simulator
+        adapter = getattr(sim, "_dfh", None)
+        if adapter is None:
+            return torch.zeros(self.num_envs, device=self.device)
+        try:
+            layer = adapter.layer
+            h_plastic = layer.h_plastic  # (N, H, W) signed metres
+        except Exception:
+            return torch.zeros(self.num_envs, device=self.device)
+        feet_xy = sim._rigid_body_pos[:, self.feet_indices, :2]  # (N, n_feet, 2)
+        env_origins = getattr(sim, "env_origins", None)
+        if env_origins is not None:
+            origins_xy = env_origins[:, :2].unsqueeze(1)  # (N, 1, 2)
+        else:
+            origins_xy = torch.zeros_like(feet_xy[:, :1, :])
+        scale = float(layer.cfg.horizontal_scale_m)
+        gh, gw = layer.cfg.grid_h, layer.cfg.grid_w
+        ext_x = gh * scale
+        ext_y = gw * scale
+        local = feet_xy - origins_xy
+        local[..., 0] = local[..., 0] + 0.5 * ext_x
+        local[..., 1] = local[..., 1] + 0.5 * ext_y
+        cell_i = torch.clamp(torch.floor(local[..., 0] / scale).long(), 0, gh - 1)
+        cell_j = torch.clamp(torch.floor(local[..., 1] / scale).long(), 0, gw - 1)
+        env_grid = torch.arange(self.num_envs, device=self.device).unsqueeze(1).expand_as(cell_i)
+        depth = h_plastic[env_grid, cell_i, cell_j]  # signed metres (N, n_feet)
+        sink = depth.clamp(max=0.0).abs()  # >=0 metres
+        sigma = 0.04
+        try:
+            terms = getattr(self.config.rewards, "terms", None)
+            if terms is not None:
+                term_cfg = getattr(terms, "penalty_sinkage_excess", None)
+                if term_cfg is not None:
+                    sigma = float(getattr(term_cfg, "sigma_m", sigma))
+        except Exception:
+            pass
+        excess = (sink - sigma).clamp(min=0.0)
+        return torch.sum(excess * excess, dim=1)
 
     def _reward_penalty_feet_ori(self):
         left_quat = self.simulator._rigid_body_rot[:, self.feet_indices[0]]

@@ -1,123 +1,51 @@
-# Experiment Plan — DFH for Hunter on Tilled Soil
+# Experiment Plan — Implicit Online Adaptation for Blind Hunter Locomotion
 
-**Date:** 2026-05-01
-**Compute assumption:** single A100/H100 unless noted
+**Date:** 2026-05-19  ·  Prior soil plan archived `EXPERIMENT_PLAN.soil-archive.md`
+**Gate-first design:** cheapest falsification before any architecture work.
 
-## Phased Implementation
+## §0 — Falsification Gate (MUST run first, <2 GPU-h, no GPU train of ROA)
 
-### Phase 0 — Foot Collider Audit (0.5 day)
+**Purpose:** test the single highest-risk assumption — *can a 50-step proprioceptive history infer control-relevant terrain/dynamics early?*
 
-- Inspect `humanoidverse/config/robot/hunter/hunter.yaml` foot collider geometry
-- If point/sphere → switch to capsule/box of contact area ~0.014 m² (Hunter foot)
-- Smoke test with `num_envs=16 headless=False +curriculum=stage0_plane`
-- **Gate:** rigid-baseline gait unchanged after collider swap
+1. Reuse an existing trained Hunter checkpoint (`logs/CurriculumStage2/model_910050.pt`) OR a quick privileged-conditioned rollout collector. Collect rollouts under randomized {friction, added mass, push, terrain class soil/furrow} — log per-step 50-window proprio history + ground-truth privileged params.
+2. Train a small supervised TCN/GRU: history → predict privileged params / discretized bins. (~20–40 min on the contended GPU; CPU-feasible fallback.)
+3. **PASS** if: (a) prediction ≫ chance on friction class + soil/rigid + disturbance regime; (b) accuracy rises within the **first few stance transitions**, not post-fall; (c) prediction quality correlates with control-relevant outcomes.
+4. **FAIL** → ROA is not the right dominant idea. Fallback: demote to history-only policy + periodic-symmetry reward (Idea 3 + Idea 2), drop the privileged teacher. Re-review.
 
-### Phase 1 — Plastic Heightfield Buffer + Bekker Sink (3 days)
+**Also in §0 (cheap, no GPU): baseline fragility measurement.** Run `sample_eps.py` with current baseline on soil + furrows under DR; record fall rate, mean ep_len, tracking error. Defines whether "drastic" headroom even exists.
 
-- Add `humanoidverse/simulator/isaacsim/dfh.py` with `DFHTerrainLayer` class
-- Allocate `H_plastic[num_envs, H, W]` torch tensor
-- Hook into per-step callback in `isaacsim.py:_pre_physics_step` (find correct hook)
-- Implement Bekker pressure-sinkage update from `IsaacSim` contact reporter output
-- Push `H_plastic` deltas back into PhysX heightfield each K=4 steps
-- **Gate:** standing Hunter sinks 2-6mm into stage 1 soil, matches preset doc string
+## §1 — Cheap multiplier first (Idea 2, ~1 day, ~3–4 GPU-h)
 
-### Phase 2 — Slip-Sinkage + Bulldozing (2 days)
+Implement periodic-clock + symmetry reward (soft weights). Train 3 seeds, current obs/arch, plane→soil curriculum, ~3000 iters each (or `Sim-to-Real-in-15min`-style fast recipe for pilots). Compare vs baseline. Fast signal; ships independently if positive.
 
-- Add C3, C4 to kernel
-- Visual check in `headless=False`: dragging foot leaves a trench
-- **Gate:** trench depth scales monotonically with `α_s`; bulldozed ridges visible
+## §2 — Ablation Matrix (reviewer-mandated, the core result)
 
-### Phase 3 — Anisotropic Friction (1 day)
+Same curriculum, same total env-steps, same DR distribution, matched param counts where possible, **seeds {1,2,3}** (extend to 5 for submission), exclude seed 0 per existing protocol.
 
-- Store furrow direction `θ_f` per cell during furrow terrain generation (`isaacsim.py:442` extension)
-- Per-contact tangential force injection with direction-dependent μ
-- **Gate:** Hunter slides faster across furrows than along, observable in `headless=False`
+| # | Arm | Isolates |
+|---|---|---|
+| A0 | single-step MLP PPO (current) | baseline |
+| A1 | + asymmetric critic only | critic info |
+| A2 | + 5-step history | short memory |
+| A3 | + 50-step TCN/GRU history, no teacher | **memory alone** |
+| A4 | privileged teacher / oracle (upper bound) | ceiling |
+| A5 | ROA student (M1–M3) | **adaptation** |
+| A6 | + periodic-clock only | clock alone |
+| A7 | + symmetry only | symmetry alone |
+| A8 | + clock + symmetry | gait reg combined |
+| A9 | **Full: ROA + clock + symmetry** | proposed stack |
+| A10 | DFH explicit-soil arm (reuse Pass-4 ckpts) | fidelity-vs-adaptation |
 
-### Phase 4 — Configs + Curriculum (1 day)
+**Eval:** held-out terrain/friction/mass/push (NOT training curriculum) + in-distribution. Metrics: mean ep_len, fall rate, lin/ang tracking error, cost-of-transport, gait regularity, `‖z−ẑ‖`, z-causality (zero/shuffle-`ẑ`).
 
-- Write `terrain/terrain_dfh_stage{1,2,3}_*.yaml`
-- Write `domain_rand/DR_dfh_{soft,moderate,wet}.yaml`
-- Write `curriculum/stage{1,2}_dfh.yaml`
-- Write `rewards/loco/reward_hunter_dfh.yaml`
-- **Gate:** dry run `--dry-run` for each stage passes Hydra composition
+## §3 — Claim Gate (minimum bar)
+Claim "drastic improvement" only if A9 vs A0: ≥2× ep_len OR ≥50% fewer falls on held-out soil/furrow; ≥25–30% tracking-error cut under DR; **A9 > A3 and A9 > A8** (memory-only and gait-only do not explain it); `ẑ` causal; no energy/gait regression; A9 ≥ A10 (beats explicit soil modeling).
 
-### Phase 5 — Train Block A: DFH-Stage1 Easy (~12-24 GPU-hr)
-
-```bash
-python humanoidverse/train_agent.py \
-  +curriculum=stage1_dfh +robot=hunter/hunter +simulator=isaacsim \
-  +exp=locomotion_soil +algo=ppo_soil \
-  +obs=loco/leggedloco_obs_singlestep_withlinvel \
-  +rewards=loco/reward_hunter_dfh \
-  +terrain=terrain_dfh_stage1_easy \
-  +domain_rand=DR_dfh_soft \
-  +checkpoint=logs/CurriculumStage0/latest/model.pt \
-  num_envs=2048 headless=True \
-  project_name=DFH experiment_name=Hunter_DFH_S1_Easy
-```
-**Promotion criteria (CLAUDE.md):** mean_episode_length ≥ 16s, term reward ≥ -0.05/s
-
-### Phase 6 — Train Block B: DFH-Stage2 Medium (~12-24 GPU-hr)
-
-Continue from Stage 1 checkpoint. Switch terrain + DR to `_medium`. Same gating.
-
-### Phase 7 — Train Block C: DFH-Stage3 Full (~24-48 GPU-hr)
-
-Continue from Stage 2. `terrain_dfh_stage3_full` + `DR_dfh_wet`. Target: episode length ~18-20s.
-
-## Ablation Matrix (Phase 8 — paper-critical)
-
-Each ablation: train-from-Stage0 → eval on terrain_dfh_stage3_full + DR_dfh_wet, 100 envs × 100 episodes via `sample_eps.py`.
-
-| # | Ablation | Hypothesis | Metric |
-|---|----------|------------|--------|
-| A1 | Rigid-only training (existing furrows pipeline) → DFH eval | catastrophic failure | episode length ≪ DFH-trained |
-| A2 | DFH w/o slip-sinkage (α_s=0) | slip-sinkage matters for tilled soil | DFH-trained advantage shrinks |
-| A3 | DFH w/o anisotropy (μ_∥=μ_⊥) | anisotropy matters | episode length drops |
-| A4 | DFH w/o bulldozing | bulldozing matters less than sinkage | smaller drop than A2 |
-| A5 | Coarser heightfield (0.20m vs 0.10m) | speed/quality tradeoff | speed +X%, quality -Y% |
-| A6 | Static `desired_base_height=0.6` (no soft-soil adapt) | dynamic height matters | early termination spike |
-
-## Validation
-
-| # | Test | Baseline | Pass criterion |
-|---|------|----------|---------------|
-| V1 | Sinkage realism | published bevameter sink curves (cite Hu 2023, Lim 2021) | within ±20% |
-| V2 | DFH speed | rigid heightfield FPS | DFH ≥ 0.6× rigid at num_envs=2048 |
-| V3 | Generalization | DFH-stage3 trained, eval on rigid | should still walk (≥80% rigid policy ep length) |
-| V4 | Cost of transport | rigid-trained baseline | DFH-trained within 30% on DFH-stage3 |
-| V5 | Catastrophic failure baseline | rigid-trained → DFH-stage3 | confirms gap (target: ≥3× ep length advantage for DFH-trained) |
-
-## Run Order (first 5 commands to launch)
-
-1. **Phase 0 collider audit** (cheap, blocking)
-2. **Phase 1 standing-sink smoke test** (`num_envs=16 headless=False`)
-3. **Phase 5 Stage 1 train** (long; kicks off after Phase 1-4 done)
-4. **Phase 6 Stage 2** (after Stage 1 promotes)
-5. **Phase 7 Stage 3** (after Stage 2 promotes)
-
-Ablations A1-A6 launched in parallel after Phase 7 model exists.
-
-## Compute Budget Estimate
-
-| Block | GPU-hr |
-|-------|--------|
-| Phase 5 Stage 1 | 12-24 |
-| Phase 6 Stage 2 | 12-24 |
-| Phase 7 Stage 3 | 24-48 |
-| Ablations A1-A6 (each ~Stage 3 cost) | 144-288 |
-| Eval sweeps (sample_eps) | ~10 |
-| **Total** | **~200-400 GPU-hr** |
-
-Distill recipe: only run A1 + A3 + A5 if budget tight (paper-critical contrast set).
-
-## Open Questions / Required Decisions
-
-1. **Foot collider geometry** — capsule vs box? confirm Hunter foot CAD area
-2. **Heightfield grid** — current `horizontal_scale=0.10`. Stays for stage 1; consider 0.05 for stage 3 detail
-3. **Real soil calibration** — start from published tables or push to v2?
-4. **Open-source release** — DFH layer as standalone IsaacLab extension or stays in HumanoidVerse?
+## Run order & budget
+1. §0 gate + fragility (<2 GPU-h) — **decision point**.
+2. §1 periodic-symmetry pilot (~3–4 GPU-h).
+3. §2 matrix: ~10 arms × 3 seeds. Stage pilots at reduced iters; promote on signal. Est. ~30–50 GPU-h total — sequence after the GPU frees (currently externally contended at 76%).
+4. `/run-experiment` to deploy; `/auto-review-loop` to iterate to the bar.
 
 ## Tracker
-
-See `refine-logs/EXPERIMENT_TRACKER.md` (to be created when first run launches).
+`refine-logs/EXPERIMENT_TRACKER.md` to be created at first launch (arm × seed × status × metrics).

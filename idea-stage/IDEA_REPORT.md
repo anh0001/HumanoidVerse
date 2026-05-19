@@ -1,139 +1,87 @@
-# Idea Discovery Report — Hunter Biped on Tilled Soil (IsaacSim)
+# Idea Discovery Report — Drastically Improving Hunter Locomotion (IsaacSim / PPO)
 
-**Date:** 2026-05-01
-**Direction:** Modify HumanoidVerse so Hunter robot trains/walks on realistic tilled soil in IsaacSim
-**Pipeline:** scite lit survey → idea brainstorm → filter → novelty check → critical review → refinement
-**Pilots:** SKIPPED per user (paper-only validation)
-
----
+**Date:** 2026-05-19
+**Direction:** Drastically improve Hunter biped locomotion performance (episode length, command tracking, terrain robustness) in HumanoidVerse. Pivot away from the DFH soil-realism line (confirmed null, RIGID 27.0 > DFH 26.2).
+**Pipeline:** scite lit survey → idea brainstorm/filter → (next) novelty check → critical review → refinement
+**Lit landscape:** `idea-stage/LITERATURE_LANDSCAPE.md`. Prior soil report archived at `IDEA_REPORT.soil-archive.md`.
 
 ## Executive Summary
 
-Repo currently models tilled soil as a **rigid heightfield** (perlin/furrows geometry + friction patches + static `contact_stiffness`). No soil deformation, no sinkage dynamics, no slip-sinkage coupling, no anisotropic furrow behavior. This is exactly what makes Hunter policies trained here brittle in real tilled fields.
-
-Lit confirms the niche is open: no published RL paper trains a biped on physically-deformable agricultural soil. Closest references are Choi 2023 (quadruped on sand, custom sim) and Singh 2024 (biped on rigid uneven w/ contact-stiffness DR, not IsaacSim). The dominant scalable pattern in terramechanics is **offline DEM/SPH → online calibrated parametric model** (Hu 2023, Buse 2023, Alvarado 2022). Nobody has wired this into IsaacSim.
-
-**🏆 Recommended path:** ship a **Deformable Furrowed Heightfield (DFH)** contact layer for IsaacSim — GPU-resident plastic heightfield with Bekker-Wong pressure-sinkage + Janosi-Hanamoto shear + furrow-anisotropic friction + slip-sinkage coupling. Train Hunter on it via the existing 3-stage curriculum. Backup idea: privileged-encoder soil-ID head (RMA-style) on top of DFH for online soil adaptation.
-
----
+The current Hunter pipeline is a **single-step MLP PPO with hand-tuned reward and no temporal memory, no privileged teacher, no periodic/symmetry structure**. The literature is unusually consistent that exactly these three absent ingredients are the highest-yield levers for blind biped locomotion. Recommended path: a **composable two-part stack** — (1) a privileged teacher + proprioceptive-history estimator trained with **Regularized Online Adaptation (ROA)** as the dominant contribution, multiplied by (2) a cheap **periodic-clock + bilateral-symmetry reward**. Both are IsaacSim-only, Hunter-only, orthogonal to and reusable by the existing terrain curriculum, and grounded in repo files that already exist (`leggedloco_obs_history_*`, asymmetric actor/critic obs, `ppo_modules.py`).
 
 ## Ranked Ideas
 
-### 🏆 Idea 1 — Deformable Furrowed Heightfield (DFH) — RECOMMENDED
+### 🏆 Idea 1 — Privileged Teacher + Regularized Online Adaptation (ROA) — RECOMMENDED (dominant)
+**One-liner:** Add a privileged environment-latent encoder (critic-side: terrain/friction/mass/push params already available in sim) and a proprioceptive-history estimator trained *jointly* with the policy via ROA's single-stage regularized loss, so a blind Hunter infers terrain/dynamics online and adapts gait.
+**Mechanism:** `PPOActor`/`PPOCritic` in `ppo_modules.py` gain a latent `z` head; teacher conditions on privileged vector, student estimator (TCN/GRU over the existing `short_history`, extended to ~50 steps of dof_pos/vel/actions/IMU) regresses `ẑ`; ROA regularizer aligns `ẑ→z` while policy trains on `ẑ` (no 3-phase RMA pipeline).
+**Evidence:** Cheng 2023 ROA: *"≈30% improvement in the student policy ... order of magnitude better z regression"* vs RMA; A-RMA biped-proven on Cassie; Radosavovic 2024 history-conditioning dominates MLP.
+**Repo fit:** asymmetric obs already exists (critic sees `base_lin_vel`); `leggedloco_obs_history_wolinvel.yaml` provides the history scaffold; single new module + loss term.
+**Novelty (prelim):** RMA/ROA known on quadrupeds; **ROA on a HumanoidVerse Hunter biped across a soil/furrows curriculum in IsaacSim is unaddressed.** Needs Phase 3 deep check.
+**Reviewer self-est:** 8/10. Risk: latent identifiability from biped proprio (mitigate: privileged-dropout, info bottleneck).
 
-**One-liner:** Replace IsaacSim's rigid heightfield contact with a GPU-resident plastic heightfield that deforms under foot load, models slip-sinkage coupling, and exposes furrow anisotropy.
+### 🥈 Idea 2 — Periodic-Clock + Bilateral-Symmetry Reward — RECOMMENDED (cheap multiplier)
+**One-liner:** Add a Siekmann-style phase clock (swing/stance von-Mises reward) and a left/right mirror-symmetry penalty to `reward_hunter_locomotion.yaml` / `locomotion.py`.
+**Evidence:** Mou 2023 — plain PPO without periodic reward *"fails periodic characteristics ... can lead to falls"*; symmetry → faster convergence; Wang 2022 — phase structure cut velocity-tracking error 60%.
+**Repo fit:** pure reward addition next to existing `_reward_feet_air_time`; no architecture change. ~1 day.
+**Novelty:** LOW standalone (known terms) but high *yield* and composes with Idea 1; ship as the Idea-1 reward set.
+**Reviewer self-est:** 6/10 standalone, 8/10 as the Idea-1 companion.
 
-**Mechanism:**
-- Per-step heightfield update: contact patches push grid cells down by `Δz = f(p, φ, c, μ)` (Bekker pressure-sinkage); plastic deformation persists.
-- Bulldozing: lateral cell mass redistributes to adjacent cells when foot drags.
-- Slip-sinkage: tangential slip velocity increases sink depth this step (Wong-Reece).
-- Anisotropic friction: μ_along_furrow ≠ μ_across_furrow, depth-of-step modulates.
-- All on GPU as Warp/torch kernels operating on the existing `mesh_type: heightfield` buffer at `humanoidverse/simulator/isaacsim/isaacsim.py:426-450`.
+### Idea 3 — Long Proprio-History Policy (GRU/TCN) — COMPOSABLE / enabler
+Upgrade actor obs from single-step to a learned recurrent/TCN encoder over ~1–2 s history (Radosavovic 2024). This is effectively the *student backbone* of Idea 1; ship as Idea 1's architecture, or as a standalone ablation isolating "memory vs. teacher."
+**Reviewer self-est:** 7/10; mostly an ablation arm of Idea 1.
 
-**Why it works:**
-- Single-file plumbing inside `isaacsim.py`. No new sim engine. Stays IsaacSim-only.
-- Reuses existing `terrain_furrows_stage{1,2,3}` configs as initial geometry.
-- Falls back to rigid (deformation off) for ablation and Stage 0 plane.
+### Idea 4 — AMP Style Reward from a Reference Gait
+Replace the hand-tuned reward soup with an Adversarial Motion Prior discriminator trained on a short reference Hunter walk (or retargeted mocap). Lower cost-of-transport, natural gait (Escontrela 2022).
+**Why deprioritized:** needs a reference trajectory source for Hunter; higher integration risk than Ideas 1–2; strong as a follow-up paper, not the first drastic win.
+**Reviewer self-est:** 7/10 (future), 5/10 now given no curated reference set.
 
-**Novelty:** HIGH. No biped-on-deformable-soil RL paper. Choi 2023 is closest but quad + custom sim, no public IsaacSim port.
+### Idea 5 — Navigation/Return Reward + Exploration on Furrows
+Reframe furrows from velocity-tracking to a navigation/return objective with an exploration bonus + generalist→specialist finetune (Zhang 2024 IROS, ≥2.5 m/s on risky terrain).
+**Reviewer self-est:** 6/10. Composes with Idea 1 for the furrows stage specifically.
 
-**Differentiation vs Choi 2023:**
-- Biped (Hunter) not quad
-- Furrowed agricultural soil + anisotropy, not isotropic sand
-- IsaacLab-native (open release fills gap noted by survey papers)
-- Calibratable from open bevameter/DEM data (Hu 2023 workflow)
+### Idea 6 — Symmetry Data Augmentation in the PPO Buffer
+Mirror left/right transitions when filling the rollout buffer (cheap sample-efficiency regularizer). Bundle into Idea 2.
+**Reviewer self-est:** 5/10 standalone.
 
-**Reviewer score (self-est):** 8/10. Risk: GPU-Bekker speed at 2048 envs unknown; fall back to coarser heightfield grid + cached deformation kernels.
-
-**Pilot signal:** N/A (skipped per user). Paper-only validation: lit gap + repo gap match cleanly.
-
----
-
-### Idea 2 — Soil-ID Adaptive Policy (RMA-for-Biped) — BACKUP / COMPOSABLE
-
-**One-liner:** Privileged-encoder student-teacher: teacher sees true soil params (cohesion c, friction angle φ, water content w), student infers them online from proprio history and adapts gait.
-
-**Mechanism:**
-- Stage A teacher: actor-critic conditioned on `[c, φ, μ_static, μ_dynamic, contact_stiffness]` privileged vector.
-- Stage B student: distill via DAgger/RMA. Student input = proprio history (50 steps of joint states + IMU + contact forces). Output = action + soil-param embedding.
-- Reuse existing `+algo=ppo_soil` and `obs/leggedloco_obs_singlestep_withlinvel`. Add encoder head in `agents/modules/ppo_modules.py`.
-
-**Composes with Idea 1.** Adds online soil adaptation on top of DFH.
-
-**Novelty:** MEDIUM. RMA pattern known; biped+soil application novel.
-
-**Reviewer score:** 7/10. Risk: identifiability of soil params from biped proprio is empirically open.
-
----
-
-### Idea 3 — Anisotropic Furrow Contact (cheap quick-win) — COMPOSABLE
-
-**One-liner:** Extend `patchy_friction` to direction-dependent shear + sinkage along furrow orientation. No new physics engine.
-
-**Mechanism:**
-- Per-cell store furrow direction θ; at contact compute `μ_eff = μ⊥·cos²(α) + μ∥·sin²(α)` where α = stride heading vs furrow.
-- Couple to per-cell sinkage depth (deeper in trough cells, ridges = higher).
-
-**Subset of Idea 1.** Ship as Phase 1 of DFH if full DFH delayed.
-
-**Novelty:** LOW-MEDIUM (anisotropy known in terramechanics, not in biped RL configs).
-
-**Reviewer score:** 6/10 standalone, 8/10 as DFH staging.
-
----
-
-### Idea 4 — DEM-Calibrated Parametric Foot-Soil Wrench
-
-**One-liner:** Run offline Project Chrono DEM for Hunter foot on tilled soil samples (varying c, φ, w). Fit Bekker+Janosi parameters via Bayesian inference (Hu 2023 virtual bevameter). Apply as augmented contact wrench in IsaacSim.
-
-**Why deprioritized:** Requires standing up Chrono pipeline + multi-day DEM runs. Out of scope for IsaacSim-only restriction unless explicitly approved.
-
-**Reviewer score:** 7/10 as future work; 4/10 as immediate target given scope lock.
-
----
-
-### Idea 5 — Energy/COT-Aware Reward for Soft Soil
-
-**One-liner:** Add cost-of-transport, foot-exit-velocity, and contact-dwell penalties — proxies for energy lost to plastic deformation.
-
-**Reviewer score:** 5/10 standalone (reward shaping). Bundle into Idea 1 reward set.
-
----
-
-### Idea 6 — Furrow-Aware Look-Ahead Exteroception
-
-**One-liner:** Augment proprio with low-res local sinkage map; let policy plan stride to land on ridges not troughs (biomechanics motivation: Darici & Kuo 2023).
-
-**Reviewer score:** 6/10. Hunter sensor budget unclear; may need synthetic exteroceptive obs.
-
----
-
-## Eliminated Ideas
+## Eliminated
 
 | # | Idea | Reason |
 |---|------|--------|
-| E1 | Two-tier sim distillation (Choi-engine teacher → DFH student) | Needs second sim engine; out of scope |
-| E2 | DEM-validated automated curriculum | Same — Chrono dep |
-| E3 | Ankle-mounted tactile pseudo-sensor | Requires new sensor modeling; fold into Idea 2 instead |
-| E4 | Real bevameter calibration | No real bevameter access stated; future work |
-| E5 | Power-throttling adaptive-frequency policy | Subsumed by Idea 5 reward shaping |
+| E1 | Continue DFH soil-realism | Confirmed null after 4 review passes; reviewer recommends pivot |
+| E2 | New sim engine / DEM | Out of scope (IsaacSim-only lock) |
+| E3 | Exteroceptive height-map policy | Hunter sensor budget unclear; blind-proprio is the higher-evidence niche |
+| E4 | Bigger MLP / hyperparam sweep | Literature: architecture *class* (memory/teacher) >> width; low ceiling |
 
----
+## Recommended path
 
-## Refined Plan
+**Idea 1 (ROA teacher-student) + Idea 2 (periodic-symmetry reward) as one composable stack.** Idea 3 = Idea 1's backbone / ablation arm. Idea 5 = furrows-stage add-on. This maximizes expected drastic gain (memory + online adaptation + gait structure) while staying single-file-ish, IsaacSim-only, Hunter-only, and curriculum-compatible.
 
-See `refine-logs/FINAL_PROPOSAL.md` and `refine-logs/EXPERIMENT_PLAN.md`.
+## Phase 3 — Novelty (scite)
+No concurrent work pre-empts the specific stack. RMA/ROA/periodic-reward are individually known; **ROA + periodic-symmetry on a HumanoidVerse Hunter biped in IsaacSim across a soil/furrows curriculum, framed against a deformable-soil null, is unaddressed.** Honest framing: contribution is **integration + controlled empirical study**, not a new algorithm.
 
-**Top idea:** Idea 1 (DFH) shipped first. Idea 2 (RMA Soil-ID) layered on top once DFH stable. Idea 3 ships as Stage 1 of DFH rollout.
+## Phase 4 — External critical review (Codex gpt-5.5, thread 019e3e82)
+**Score 5.5/10. ALMOST (internal performance push); NO (publication) unless reframed + ablated.**
 
----
+Key verdicts:
+- "Drastic" gain is plausible **only if the current baseline is fragile** (falls often under soil/furrow/DR). If baseline already completes most episodes, expect 10–30% incremental. **Must measure baseline fragility first.**
+- Novelty as "we combined these" is weak engineering. **Strongest reframe (adopted):** the DFH null is *evidence* that explicit soil modeling is not the bottleneck → test the sharper hypothesis *"robust blind biped locomotion on structured/deformable terrain is bottlenecked by online system identification, not terrain-model fidelity."* The null becomes a baseline arm, not an embarrassment.
+- Highest-risk assumption: **short proprioceptive history contains enough signal for Hunter to infer terrain/dynamics early enough to act on it** (bipeds have less contact redundancy than quadrupeds).
+- Mandatory 10-arm ablation matrix; ≥3 seeds; held-out terrain/friction/mass/push eval; matched env-steps & param counts.
+- Minimum bar for "drastic": ≥2× episode length OR ≥50% fall-rate reduction on held-out soil/furrow, ≥25–30% tracking-error reduction under DR, beats history-only AND periodic-only ablations, latent demonstrably terrain-dependent and used.
 
-## Next Steps
+## Refined deliverables
+- `refine-logs/FINAL_PROPOSAL.md` (reframed: adaptation-vs-fidelity, DFH-null as arm)
+- `refine-logs/EXPERIMENT_PLAN.md` (cheap falsification gate → ablation matrix)
 
-- [ ] Implement DFH GPU kernel in `humanoidverse/simulator/isaacsim/isaacsim.py` (extend furrow handler at L442)
-- [ ] Add `terrain_dfh_stage{1,2,3}` configs (subset of existing furrow stages w/ deformation toggles)
-- [ ] Add `domain_rand=DR_dfh_{rigid,moderate,wet}` for Bekker param ranges
-- [ ] Train Hunter via `+curriculum=stage1_dfh +simulator=isaacsim +robot=hunter/hunter`
-- [ ] Validate vs rigid baseline on (a) sinkage realism, (b) policy COT, (c) zero-shot transfer to harder DFH params
-- [ ] (Phase 2) Add RMA soil-ID head, retrain
-- [ ] (Phase 3) Open-source DFH terrain layer as IsaacLab extension
+## §0 GATE RESULT (executed 2026-05-19) — ✅ PASS, both halves
+See `refine-logs/S0_RESULTS.md`.
+- **§0-A fragility:** baseline 0 falls on plane (401-step episodes) vs **100% falls in <0.45 s** on soil_moderate/challenging + furrows_s2/s3 under DR. Drastic headroom is real and genuine (0→1 gap).
+- **§0-B latent-identifiability:** an 8-step (~0.16 s) blind proprio window separates safe-vs-killer terrain at **99.9%**, 4-way regime at 80%+. ROA's core assumption empirically holds.
+- En route, fixed 2 pre-existing repo bugs: `domain_rand_base.yaml` invalid-float typo; soil-terrain 1×1-tile capacity.
+
+## Next steps
+- [x] §0 falsification gate — PASSED → ROA is the right dominant idea (not the history-only fallback)
+- [x] Implement Idea 2 (periodic-clock + symmetry reward) — DONE, smoke-validated (109 iters, no NaN; `rew_gait_phase`/`rew_penalty_gait_asymmetry` log correctly). `_reward_gait_phase` + `_reward_penalty_gait_asymmetry` in `locomotion.py`; soft scales + `gait_*` params in `reward_hunter_locomotion.yaml` (set both scales to 0 for the no-gait ablation arm)
+- [ ] Implement Idea 1 (privileged teacher + ROA estimator) in `ppo_modules.py`
+- [ ] Run §2 ablation matrix (A0–A10, seeds 1–3) per `refine-logs/EXPERIMENT_PLAN.md`
+- [ ] `/run-experiment` for the matrix → `/auto-review-loop` to the claim bar
