@@ -65,6 +65,7 @@ for arm in "${ARMS[@]}"; do
       +terrain=terrain_furrows_stage2_medium \
       +obs="$obs" \
       num_envs="$NUM_ENVS" seed="$s" headless=True \
+      ++env.config.env_spacing=2.5 \
       ++algo.config.num_learning_iterations="$ITERS" \
       project_name=AblationMatrix experiment_name="$run" \
       $gait_ov \
