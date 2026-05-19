@@ -1,0 +1,59 @@
+# @package _global_
+# PPO + Regularized Online Adaptation (Idea 1). Critic uses module_dict.critic;
+# the actor is built by PPOROA as PPOActorROA (privileged teacher + proprio
+# history estimator), so module_dict.actor is unused here but kept for parity.
+
+algo:
+  _target_: humanoidverse.agents.ppo.ppo_roa.PPOROA
+  _recursive_: False
+  config:
+    num_learning_epochs: 5
+    num_mini_batches: 4
+    clip_param: 0.2
+    gamma: 0.99
+    lam: 0.95
+    value_loss_coef: 1.0
+    entropy_coef: 0.01
+    actor_learning_rate: 1.e-3
+    critic_learning_rate: 1.e-3
+    max_grad_norm: 1.0
+    use_clipped_value_loss: True
+    schedule: "adaptive"
+    desired_kl: 0.01
+
+    num_steps_per_env: 24
+    save_interval: 100
+
+    load_optimizer: True
+
+    init_noise_std: 0.8
+
+    num_learning_iterations: 1000000
+    init_at_random_ep_len: True
+    eval_callbacks: null
+
+    # --- ROA (Idea 1) ---
+    roa:
+      latent_dim: 16
+      roa_coef: 1.0          # weight on the ROA regularizer in the actor loss
+      beta: 0.5              # weight on the student->teacher term (vs teacher->student)
+      policy_hidden: [512, 256, 128]
+      est_hidden: [256, 128]
+      priv_hidden: [128, 64]
+
+    module_dict:
+      actor:
+        input_dim: [actor_obs]
+        output_dim: [robot_action_dim]
+        layer_config:
+          type: MLP
+          hidden_dims: [512, 256, 128]
+          activation: ELU
+      critic:
+        type: MLP
+        input_dim: [critic_obs]
+        output_dim: [1]
+        layer_config:
+          type: MLP
+          hidden_dims: [512, 256, 128]
+          activation: ELU

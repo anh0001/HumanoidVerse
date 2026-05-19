@@ -47,6 +47,7 @@ obs:
     dof_pos: 1.0,
     dof_vel: 0.05,
     history: 1.0,
+    short_history: 1.0,
     actions: 1.0,
   }
 
@@ -60,6 +61,7 @@ obs:
     dof_vel: 0.0,
     actions: 0.0,
     history: 0.0,
+    short_history: 0.0,
   }
 
   # obs_dims should use list instead of dict

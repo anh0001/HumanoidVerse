@@ -82,6 +82,6 @@ See `refine-logs/S0_RESULTS.md`.
 ## Next steps
 - [x] §0 falsification gate — PASSED → ROA is the right dominant idea (not the history-only fallback)
 - [x] Implement Idea 2 (periodic-clock + symmetry reward) — DONE, smoke-validated (109 iters, no NaN; `rew_gait_phase`/`rew_penalty_gait_asymmetry` log correctly). `_reward_gait_phase` + `_reward_penalty_gait_asymmetry` in `locomotion.py`; soft scales + `gait_*` params in `reward_hunter_locomotion.yaml` (set both scales to 0 for the no-gait ablation arm)
-- [ ] Implement Idea 1 (privileged teacher + ROA estimator) in `ppo_modules.py`
+- [x] Implement Idea 1 (privileged teacher + ROA estimator) — DONE, smoke-validated (462 iters, no NaN; `[ROA] latent_dim=16 actor_obs=234 critic_obs=237`). `PPOActorROA` in `ppo_modules.py`; `PPOROA(PPO)` in `agents/ppo/ppo_roa.py` (single-stage, symmetric reg, isolated subclass so baseline arms untouched); `+algo=ppo_roa` config; inference uses only actor_obs (eval-compatible). Also fixed broken `leggedloco_obs_history_wolinvel.yaml` (missing `short_history` scales) — needed for history ablation arms too
 - [ ] Run §2 ablation matrix (A0–A10, seeds 1–3) per `refine-logs/EXPERIMENT_PLAN.md`
 - [ ] `/run-experiment` for the matrix → `/auto-review-loop` to the claim bar
