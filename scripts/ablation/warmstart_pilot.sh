@@ -109,6 +109,7 @@ for arm in "${ARMS[@]}"; do
     +terrain=terrain_locomotion_plane \
     +obs="$obs" \
     num_envs="$NUM_ENVS" seed="$SEED" headless=True \
+    ++env.config.env_spacing=2.0 \
     ++algo.config.num_learning_iterations="$PLANE_ITERS" \
     ++algo.config.save_interval="$SAVE_EVERY" \
     project_name=WarmstartPilot experiment_name="$pname" \
@@ -133,7 +134,7 @@ for arm in "${ARMS[@]}"; do
     ++algo.config.num_learning_iterations="$FURROW_ITERS" \
     ++algo.config.save_interval="$SAVE_EVERY" \
     ++algo.config.load_optimizer=False \
-    +checkpoint="$plane_ckpt" \
+    ++checkpoint="$plane_ckpt" \
     project_name=WarmstartPilot experiment_name="$fname" \
     $gait_ov 2>&1 | tee "$rd/stageF.log"
 
