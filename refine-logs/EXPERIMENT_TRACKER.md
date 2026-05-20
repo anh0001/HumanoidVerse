@@ -1,6 +1,7 @@
 # Experiment Tracker — §2 Ablation Matrix
 
-**Launched:** 2026-05-19 (core wave, bg PID 146599) · `logs/AblationMatrix_wave.log`
+**Launched:** 2026-05-19 (core wave, bg PID 263226, commit 07e3814) · `logs/AblationMatrix_wave.log`
+**Verified training:** A0_baseline_s1 reached iter 8/3000 at 2048 envs, no capacity/runtime error (env_spacing=2.5 fix applied + verified).
 **Train:** furrows_s2 + YES_domain_rand, 3000 iters, 2048 envs, seeds {1,2,3}
 **Held-out eval:** furrows_s3 (+DR) and soil_challenging (+DR) via sample_eps, 256 envs × 64 ep
 **Calibration:** PASSED — all 5 arms compose + run train→eval end-to-end (20-iter dry, ALL ARMS COMPLETE).
