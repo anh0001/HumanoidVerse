@@ -603,23 +603,68 @@ class IsaacSim(BaseSimulator):
                     contact_sensor=self.contact_sensor,
                     foot_body_names=foot_names,
                 )
-                self._dfh.initialize()  # furrow direction defaults to 0 deg in v0.2
-                # Path A: PhysX heightfield write-back on terrain mesh prim.
-                from ext_dfh.writeback import build_writeback
-                wb = build_writeback(
-                    isaacsim_terrain=self.terrain,
-                    terrain_prim_path=terrain_config.prim_path,
-                    horizontal_scale_m=self._dfh.layer.cfg.horizontal_scale_m,
-                    dfh_grid_h=self._dfh.layer.cfg.grid_h,
-                    dfh_grid_w=self._dfh.layer.cfg.grid_w,
-                    device=self._dfh.layer.cfg.device,
+                # Sample a per-env furrow orientation matching the parent
+                # furrows generator's ``orientation_range_deg``. The generator
+                # picks one theta per sub-tile, so per-env (not per-cell)
+                # sampling is the right granularity here. Broadcast to the
+                # ``(num_envs, grid_h, grid_w)`` per-cell tensor expected by
+                # :meth:`DFHTerrainLayer.initialize`.
+                furrow_dir = None
+                try:
+                    kwargs_cfg = getattr(self.terrain_config, "terrain_kwargs", {}) or {}
+                    rng = kwargs_cfg.get("orientation_range_deg", None) if isinstance(kwargs_cfg, dict) else getattr(kwargs_cfg, "orientation_range_deg", None)
+                    if rng is not None and len(rng) == 2:
+                        lo, hi = float(rng[0]), float(rng[1])
+                        n_envs = self.scene.cfg.num_envs
+                        gh = self._dfh.layer.cfg.grid_h
+                        gw = self._dfh.layer.cfg.grid_w
+                        per_env_theta = (
+                            lo
+                            + (hi - lo)
+                            * torch.rand(n_envs, device=self._dfh.layer.device)
+                        )
+                        furrow_dir = per_env_theta.view(n_envs, 1, 1).expand(n_envs, gh, gw).contiguous()
+                except Exception as _e:
+                    furrow_dir = None
+                self._dfh.initialize(furrow_direction_deg=furrow_dir)
+
+                # Force-coupled DFH: per-foot tangential drag is applied each
+                # physics step so per-env DFH state actually affects the
+                # robot, even when the visual heightfield writeback is off
+                # or globally aliased across envs.
+                from ext_dfh.integration import build_force_apply_for_robot
+                force_apply = build_force_apply_for_robot(
+                    robot=self._robot,
+                    foot_body_names=foot_names,
+                    num_envs=self.scene.cfg.num_envs,
                 )
-                if wb is not None:
-                    self._dfh.attach_physx_writeback(wb)
+                self._dfh.attach_force_apply(force_apply)
+                # Lazily resolve env_origins (set in ``create_envs``).
+                self._dfh.attach_env_origins_provider(
+                    lambda: getattr(self, "env_origins", None)
+                )
+
+                # Path A USD writeback — opt-in via ``terrain.dfh.writeback_enabled``;
+                # default OFF because the current implementation aliases all
+                # envs onto a single shared mesh via cross-env min reduction.
+                wb = None
+                if bool(dfh_dict.get("writeback_enabled", False)):
+                    from ext_dfh.writeback import build_writeback
+                    wb = build_writeback(
+                        isaacsim_terrain=self.terrain,
+                        terrain_prim_path=terrain_config.prim_path,
+                        horizontal_scale_m=self._dfh.layer.cfg.horizontal_scale_m,
+                        dfh_grid_h=self._dfh.layer.cfg.grid_h,
+                        dfh_grid_w=self._dfh.layer.cfg.grid_w,
+                        device=self._dfh.layer.cfg.device,
+                    )
+                    if wb is not None:
+                        self._dfh.attach_physx_writeback(wb)
                 logger.info(
                     f"DFH terrain layer attached: feet={foot_names}, "
                     f"grid={self._dfh.layer.cfg.grid_h}x{self._dfh.layer.cfg.grid_w}, "
-                    f"writeback={'on' if wb is not None else 'off (no trimesh)'}"
+                    f"force_coupling={'on' if self._dfh.force_coupling_enabled else 'off'}, "
+                    f"writeback={'on' if wb is not None else 'off'}"
                 )
             except ImportError:
                 logger.warning(
@@ -635,6 +680,19 @@ class IsaacSim(BaseSimulator):
         """Reset the DFH plastic buffer for the given envs (no-op if DFH off)."""
         if self._dfh is not None:
             self._dfh.on_reset(env_ids)
+
+    def dfh_randomize(self, env_ids: torch.Tensor, ranges) -> None:
+        """Sample per-env DFH parameters for the given envs.
+
+        ``ranges`` is the resolved ``domain_rand.dfh_param_ranges`` dict (or
+        ``None``). No-op when DFH is disabled or ``ranges`` is empty.
+        """
+        if self._dfh is None or not ranges:
+            return
+        try:
+            self._dfh.randomize_envs(env_ids, ranges)
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"DFH randomize_envs failed: {e}")
 
 
     def set_headless(self, headless):
@@ -902,18 +960,42 @@ class IsaacSim(BaseSimulator):
         env_origins[:, :2] += local[slot_ids]
 
         # Snap Z to the actual mesh surface via warp raycast when available.
+        # Use a FOOTPRINT of rays (not a single anchor point): on a corrugated
+        # furrow surface a single-point raycast can land in a trough/crest that
+        # the robot's spread feet do not stand on, leaving the feet unsupported
+        # (0 N foot contact, robot topples). Snapping Z to the MAX hit over the
+        # stance footprint guarantees the whole footprint is at-or-below spawn,
+        # so the feet settle cleanly onto the surface. A small clearance lets
+        # the robot drop the last few mm into clean contact.
         try:
             from omni.isaac.lab.utils.warp import raycast_mesh
             warp_meshes = getattr(terrain, "warp_meshes", None) or {}
             mesh = warp_meshes.get("terrain") or next(iter(warp_meshes.values()), None)
             if mesh is not None:
-                starts = env_origins.clone()
-                starts[:, 2] = 100.0
+                # 3x3 footprint, r = 0.25 m: covers Hunter's stance without
+                # reaching into the neighbouring furrow (spacing ~2.7-3.2 m).
+                r = 0.25
+                offs = torch.tensor(
+                    [[0.0, 0.0], [-r, -r], [-r, 0.0], [-r, r],
+                     [0.0, -r], [0.0, r], [r, -r], [r, 0.0], [r, r]],
+                    device=self.sim_device, dtype=torch.float32,
+                )
+                n_off = offs.shape[0]
+                starts = env_origins[:, None, :].expand(-1, n_off, -1).clone()
+                starts[:, :, :2] += offs[None, :, :]
+                starts[:, :, 2] = 100.0
                 dirs = torch.zeros_like(starts)
-                dirs[:, 2] = -1.0
-                hits = raycast_mesh(starts.unsqueeze(0), dirs.unsqueeze(0), mesh)[0][0].to(self.sim_device)
-                valid = torch.isfinite(hits[:, 2])
-                env_origins[valid, 2] = hits[valid, 2]
+                dirs[:, :, 2] = -1.0
+                flat_s = starts.reshape(-1, 3)
+                flat_d = dirs.reshape(-1, 3)
+                hits = raycast_mesh(flat_s.unsqueeze(0), flat_d.unsqueeze(0), mesh)[0][0]
+                hits = hits.to(self.sim_device).reshape(-1, n_off, 3)
+                hit_z = hits[:, :, 2]
+                valid = torch.isfinite(hit_z)
+                patch_z = torch.where(valid, hit_z, torch.full_like(hit_z, -1e9)).amax(dim=1)
+                has_hit = patch_z > -1e8
+                spawn_clearance = 0.03  # m — settle the last few mm into contact
+                env_origins[has_hit, 2] = patch_z[has_hit] + spawn_clearance
         except Exception as _e:
             logger.warning(f"[pack env_origins] raycast snap-to-mesh skipped: {_e}")
 
