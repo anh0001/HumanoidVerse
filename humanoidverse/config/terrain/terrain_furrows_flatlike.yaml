@@ -1,0 +1,43 @@
+# @package _global_
+## ---------------------------------------------------------------------------
+#  Furrows "flat-like" diagnostic terrain — heightfield mesh_type but
+#  near-zero depth and plane-matched material. Used to test whether the
+#  furrows config is STRUCTURALLY broken (a plane-trained policy that walks
+#  on terrain_locomotion_plane should also walk here, since this is
+#  physically nearly identical to a plane). If it fails, the furrows
+#  registration/mesh path itself is the bug, independent of difficulty.
+## ---------------------------------------------------------------------------
+defaults:
+  - terrain_base
+
+terrain:
+  mesh_type: 'heightfield'
+  max_init_terrain_level: 9
+  horizontal_scale: 0.10
+  vertical_scale: 0.005
+  border_size: 40
+
+  # Plane-matched material (deliberately undoes the soft-soil friction)
+  static_friction: 1.0
+  dynamic_friction: 1.0
+  restitution: 0.0
+  friction_combine_mode: multiply
+
+  selected: True
+  terrain_kwargs:
+    type: 'furrows'
+    depth_range: [0.001, 0.001]      # near-zero depth -> physically ~flat
+    spacing_range: [3.0, 3.0]
+    orientation_range_deg: [0.0, 0.0]
+    crest_offset: 0.0
+
+  curriculum: False
+  terrain_length: 8.0
+  terrain_width: 8.0
+  num_rows: 16
+  num_cols: 16
+  terrain_types: ['flat']
+  terrain_proportions: [1.0]
+
+  slope_treshold: 0.75
+  measure_heights: False
