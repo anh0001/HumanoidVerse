@@ -105,8 +105,28 @@ def main(override_config: OmegaConf):
 
     # Get evaluation parameters
     num_episodes = getattr(config, 'num_episodes', 100)
-    
+
     logger.info(f"Running evaluation for {num_episodes} episodes")
+
+    # Optional TensorBoard logging so cross-eval runs feed analyze_regret.py,
+    # which globs events.out.tfevents.* and averages the last points of the
+    # Episode/* and Env/dfh_* tags -- the SAME tags ppo.py emits at train time
+    # (Episode/<k> from infos['episode'], Env/<k> from infos['to_log']).
+    eval_tb_dir = getattr(config, 'eval_tb_dir', None)
+    tb_writer = None
+    ep_info_accum: list[dict[str, float]] = []  # mirrors ppo.py ep_infos averaging
+    env_log_accum: dict[str, list[float]] = {}  # mirrors ppo.py Env/ tensors
+    if eval_tb_dir:
+        from torch.utils.tensorboard import SummaryWriter as _TBWriter
+        os.makedirs(eval_tb_dir, exist_ok=True)
+        tb_writer = _TBWriter(log_dir=eval_tb_dir, flush_secs=10)
+        logger.info(f"TensorBoard eval logging -> {eval_tb_dir}")
+
+    def _scalarize(v: object) -> float | None:
+        try:
+            return float(v.float().mean().item()) if hasattr(v, "float") else float(v)
+        except Exception:
+            return None
     
     # Create environment
     env = instantiate(config.env, device=device)
@@ -208,14 +228,38 @@ def main(override_config: OmegaConf):
     
     logger.info("Starting episode collection...")
     
+    # Diagnostic: +eval_stochastic=True evaluates the SAMPLED (training-mode)
+    # policy instead of the deterministic mean, to test whether a train/eval
+    # gap is caused by exploration noise propping up a bad mean policy.
+    eval_stochastic = bool(getattr(config, "eval_stochastic", False))
+    if eval_stochastic:
+        logger.info("[eval] STOCHASTIC mode: using actor.act() sampled actions")
+
     while episodes_completed < num_episodes:
         # Get actions from policy
         with torch.no_grad():
-            actions = eval_policy(obs_dict["actor_obs"])  # policy expects actor_obs tensor
+            if eval_stochastic:
+                actions = algo.actor.act(obs_dict)  # sampled; ROA actor reads the dict
+            else:
+                actions = eval_policy(obs_dict["actor_obs"])  # deterministic mean
         
         # Take environment step
         actor_state = {"actions": actions}
         obs_dict, rewards, dones, infos = env.step(actor_state)
+
+        # Mirror ppo.py logging: collect infos['episode'] (rew_* means) and
+        # infos['to_log'] (env log_dict incl. dfh_*) for TB export.
+        if tb_writer is not None and isinstance(infos, dict):
+            ep_i = infos.get("episode")
+            if ep_i:
+                row = {k: _scalarize(v) for k, v in ep_i.items()}
+                ep_info_accum.append({k: v for k, v in row.items() if v is not None})
+            to_log = infos.get("to_log")
+            if to_log:
+                for k, v in to_log.items():
+                    fv = _scalarize(v)
+                    if fv is not None:
+                        env_log_accum.setdefault(k, []).append(fv)
 
         # Accumulate step-wise metrics (IsaacSim focus; backend-agnostic when buffers exist)
         try:
@@ -405,6 +449,25 @@ def main(override_config: OmegaConf):
         logger.info(f"Velocity error (m/s): {vel_err_mean:.3f} ± {vel_err_ci:.3f}")
     if cot_list:
         logger.info(f"CoT (J/kg·m): {cot_mean:.2f} ± {cot_ci:.2f}")
+
+    # Write TB scalars (analyze_regret.py averages the last points per tag).
+    if tb_writer is not None:
+        if ep_info_accum:
+            ep_keys = set().union(*(d.keys() for d in ep_info_accum))
+            for key in ep_keys:
+                vals = [d[key] for d in ep_info_accum if key in d]
+                if vals:
+                    tb_writer.add_scalar(f"Episode/{key}", sum(vals) / len(vals), 0)
+        for k, vals in env_log_accum.items():
+            if vals:
+                tb_writer.add_scalar(f"Env/{k}", sum(vals) / len(vals), 0)
+        # analyze_regret prefers Episode/mean_episode_length, else Train/.
+        # avg_episode_length is in control steps, matching ppo.py's lenbuffer.
+        tb_writer.add_scalar("Episode/mean_episode_length", float(avg_episode_length), 0)
+        tb_writer.add_scalar("Train/mean_episode_length", float(avg_episode_length), 0)
+        tb_writer.flush()
+        tb_writer.close()
+        logger.info(f"Wrote eval TensorBoard scalars to {eval_tb_dir}")
 
     # Flush stdout to ensure the summary is written when running under nohup/redirects
     try:

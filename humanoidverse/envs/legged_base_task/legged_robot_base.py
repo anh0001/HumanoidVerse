@@ -219,23 +219,31 @@ class LeggedRobotBase(BaseTask):
     def set_is_evaluating(self):
         logger.info("Setting Env is evaluating")
         self.is_evaluating = True
-        # Disable control delay during evaluation for stability
-        try:
-            if hasattr(self.config, "domain_rand"):
-                self.config.domain_rand.randomize_ctrl_delay = False
-        except Exception:
-            pass
-        # Clear any existing action delay buffers
-        if hasattr(self, "action_queue"):
+        # NOTE: Previously this method disabled control delay and cleared the
+        # action queue at eval time "for stability". That created a SILENT
+        # train/eval plant mismatch: policies trained with ctrl_delay learn to
+        # lead the actuator dynamics, so removing the delay at eval makes them
+        # over-react and fall within ~35 steps despite training ep_len ~500+
+        # (diagnosed 2026-05-24 from termination histogram + stochastic eval).
+        # Keep ctrl_delay enabled in eval to match training conditions; if a
+        # deterministic eval is required, pass a fixed delay via the config
+        # rather than disabling the delay machinery.
+        if bool(getattr(self.config, "eval_disable_ctrl_delay", False)):
             try:
-                self.action_queue *= 0.0
+                if hasattr(self.config, "domain_rand"):
+                    self.config.domain_rand.randomize_ctrl_delay = False
             except Exception:
                 pass
-        if hasattr(self, "action_delay_idx"):
-            try:
-                self.action_delay_idx[:] = 0
-            except Exception:
-                pass
+            if hasattr(self, "action_queue"):
+                try:
+                    self.action_queue *= 0.0
+                except Exception:
+                    pass
+            if hasattr(self, "action_delay_idx"):
+                try:
+                    self.action_delay_idx[:] = 0
+                except Exception:
+                    pass
     
     def step(self, actor_state):
         """ Apply actions, simulate, call self.post_physics_step()
@@ -356,6 +364,107 @@ class LeggedRobotBase(BaseTask):
             self.log_dict["roll_pitch_rate_mean"] = torch.mean(torch.norm(self.base_ang_vel[:, :2], dim=-1))
         except Exception:
             pass
+
+        # DFH adapter diagnostics — surfaced as Env/dfh_* tags so paired
+        # eval / training can verify the closed-loop drag is firing.
+        adapter = getattr(self.simulator, "_dfh", None)
+        if adapter is not None:
+            try:
+                attrs = (
+                    "last_mean_drag_n",
+                    "last_mean_wouldbe_drag_n",
+                    "last_mean_applied_drag_n",
+                    "last_max_sink_m",
+                    "last_mean_sink_m",
+                    "last_mean_aniso_drag_n",
+                    "last_mean_sink_drag_n",
+                    "last_drag_clipped_frac",
+                    "last_contact_count",
+                    "last_mean_normal_force_n",
+                    "last_stance_drag_contact_mean_n",
+                    "last_stance_drag_contact_p95_n",
+                    "last_total_drag_per_robot_p95_n",
+                    "last_stance_fraction",
+                )
+                for a in attrs:
+                    v = getattr(adapter, a, None)
+                    if v is None:
+                        continue
+                    key = "dfh_" + a.replace("last_", "")
+                    self.log_dict[key] = torch.as_tensor(
+                        float(v), device=self.device
+                    )
+                self.log_dict["dfh_attached"] = torch.as_tensor(1.0, device=self.device)
+                self.log_dict["dfh_force_coupling_on"] = torch.as_tensor(
+                    1.0 if getattr(adapter, "force_coupling_enabled", False) else 0.0,
+                    device=self.device,
+                )
+                self.log_dict["dfh_shuffle_on"] = torch.as_tensor(
+                    1.0 if getattr(adapter, "shuffle_env_ids", False) else 0.0,
+                    device=self.device,
+                )
+                self.log_dict["dfh_force_apply_ok"] = torch.as_tensor(
+                    1.0 if getattr(adapter, "last_force_apply_ok", True) else 0.0,
+                    device=self.device,
+                )
+                # Force budget: applied drag as fraction of body weight.
+                # Weight estimated once from robot.data.default_mass; cached.
+                w = getattr(self, "_dfh_robot_weight_n", None)
+                if w is None:
+                    try:
+                        m = float(
+                            self.simulator.robot.data.default_mass.sum(dim=-1).mean().item()
+                        )
+                    except Exception:
+                        m = 62.0  # Hunter approx fallback
+                    w = max(1.0, m * 9.81)
+                    self._dfh_robot_weight_n = w
+                # Per-robot total (sum of feet) is the right numerator for
+                # pct-of-weight; per-contact mean would under-count when both
+                # feet are on the ground.
+                total = float(getattr(adapter, "last_total_drag_per_robot_n", 0.0))
+                per_contact = float(getattr(adapter, "last_mean_applied_drag_n", 0.0))
+                self.log_dict["dfh_total_drag_per_robot_n"] = torch.as_tensor(
+                    total, device=self.device
+                )
+                self.log_dict["dfh_mean_drag_per_contact_n"] = torch.as_tensor(
+                    per_contact, device=self.device
+                )
+                self.log_dict["dfh_applied_drag_pct_weight"] = torch.as_tensor(
+                    total / w, device=self.device
+                )
+                self.log_dict["dfh_robot_weight_n"] = torch.as_tensor(
+                    w, device=self.device
+                )
+            except Exception:
+                pass
+        else:
+            zero = torch.as_tensor(0.0, device=self.device)
+            for key in (
+                "dfh_attached",
+                "dfh_force_coupling_on",
+                "dfh_shuffle_on",
+                "dfh_force_apply_ok",
+                "dfh_mean_drag_n",
+                "dfh_mean_wouldbe_drag_n",
+                "dfh_mean_applied_drag_n",
+                "dfh_max_sink_m",
+                "dfh_mean_sink_m",
+                "dfh_mean_aniso_drag_n",
+                "dfh_mean_sink_drag_n",
+                "dfh_drag_clipped_frac",
+                "dfh_contact_count",
+                "dfh_mean_normal_force_n",
+                "dfh_applied_drag_pct_weight",
+                "dfh_robot_weight_n",
+                "dfh_total_drag_per_robot_n",
+                "dfh_mean_drag_per_contact_n",
+                "dfh_stance_drag_contact_mean_n",
+                "dfh_stance_drag_contact_p95_n",
+                "dfh_total_drag_per_robot_p95_n",
+                "dfh_stance_fraction",
+            ):
+                self.log_dict[key] = zero
 
         # return clipped obs, clipped states (None), rewards, dones and infos
         clip_obs = self.config.normalization.clip_observations
@@ -478,6 +587,18 @@ class LeggedRobotBase(BaseTask):
             )
             self.reset_buf |= term_low_height_flag
 
+        # Catch base flying away or NaN states. Numeric blow-ups (e.g. from the
+        # earlier slip-sinkage divide-by-eps bug) used to slip past the low-height
+        # check because the base was high or non-finite.
+        max_base_h = getattr(
+            self.config.termination_scales, "termination_max_base_height", 5.0
+        )
+        base_z = self.simulator.robot_root_states[:, 2]
+        nonfinite = ~torch.isfinite(base_z)
+        too_high = base_z > float(max_base_h)
+        self.reset_buf |= nonfinite
+        self.reset_buf |= too_high
+
         if self.config.termination.terminate_when_close_to_dof_pos_limit:
             out_of_dof_pos_limits = -(self.simulator.dof_pos - self.simulator.dof_pos_limits_termination[:, 0]).clip(max=0.) # lower limit
             out_of_dof_pos_limits += (self.simulator.dof_pos - self.simulator.dof_pos_limits_termination[:, 1]).clip(min=0.)
@@ -567,6 +688,16 @@ class LeggedRobotBase(BaseTask):
                 self.simulator.dfh_reset(env_ids)
             except Exception:
                 pass
+        # DFH per-env domain randomization (Bekker / friction / slip params).
+        # ``domain_rand.dfh_param_ranges`` is a dict of ``[lo, hi]`` ranges; the
+        # simulator falls back gracefully if DFH is not active.
+        if hasattr(self.simulator, "dfh_randomize"):
+            ranges = getattr(self.config.domain_rand, "dfh_param_ranges", None)
+            if ranges is not None:
+                try:
+                    self.simulator.dfh_randomize(env_ids, ranges)
+                except Exception:
+                    pass
         if target_buf is not None:
             self.simulator.dof_pos[env_ids] = target_buf["dof_pos"].to(self.simulator.dof_pos.dtype)
             self.simulator.dof_vel[env_ids] = target_buf["dof_vel"].to(self.simulator.dof_vel.dtype)
@@ -943,7 +1074,20 @@ class LeggedRobotBase(BaseTask):
             except Exception:
                 pass
 
-            if self.is_evaluating or not reset_enabled:
+            # Eval defaults to deterministic resets, but
+            # ++env.config.eval_use_train_reset=True forces eval to use the
+            # SAME randomized reset distribution as training. Added 2026-05-24
+            # to diagnose the 15× train/eval ep_len gap on furrows: the policy
+            # only ever saw scrambled-start training resets (dof_pos_scale_range
+            # [0.5,1.5], root_vel ±0.5), so the clean default_dof_pos eval start
+            # is OOD and the policy falls in ~35 steps.
+            eval_use_train_reset = bool(
+                getattr(self.config, "eval_use_train_reset", False)
+            )
+            force_deterministic = (
+                self.is_evaluating and not eval_use_train_reset
+            ) or not reset_enabled
+            if force_deterministic:
                 # Deterministic, balanced joint configuration
                 self.simulator.dof_pos[env_ids] = self.default_dof_pos
                 self.simulator.dof_vel[env_ids] = 0.0
@@ -1032,7 +1176,14 @@ class LeggedRobotBase(BaseTask):
             except Exception:
                 pass
 
-            if self.is_evaluating or not reset_enabled:
+            # Same gate as in _reset_dofs above.
+            eval_use_train_reset = bool(
+                getattr(self.config, "eval_use_train_reset", False)
+            )
+            force_deterministic = (
+                self.is_evaluating and not eval_use_train_reset
+            ) or not reset_enabled
+            if force_deterministic:
                 # Start from zero velocity to avoid immediate instability
                 self.simulator.robot_root_states[env_ids, 7:13] = 0.0
             else:
