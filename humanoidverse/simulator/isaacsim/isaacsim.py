@@ -572,6 +572,17 @@ class IsaacSim(BaseSimulator):
             # Keep training robust even if the feature is unavailable on this stack
             logger.warning(f"Skipping friction patches: {e}")
 
+        # Optional: decorative maize plants for the agricultural-demo eval. No
+        # collision, no physics — purely cosmetic. Plants live under
+        # /World/maize_plants/ (NOT under /World/envs/), so they share across
+        # all envs and are skipped for performance during high-num_envs training.
+        try:
+            maize_cfg = getattr(self.terrain_config, "maize_plants", None)
+            if maize_cfg and getattr(maize_cfg, "enabled", False):
+                self._spawn_maize_plants(maize_cfg)
+        except Exception as e:
+            logger.warning(f"Skipping maize plants: {e}")
+
         # add lights
         # light_config = sim_utils.DomeLightCfg(intensity=2000.0, color=(0.98, 0.95, 0.88))
         # light_config.func("/World/Light", light_config)
@@ -810,6 +821,154 @@ class IsaacSim(BaseSimulator):
                 obj.set_world_pose(position=np.array([x, y, z]))
 
 
+    def _spawn_maize_plants(self, plants_cfg) -> None:
+        """Spawn decorative (no collision, no physics) maize plants.
+
+        Plants are imported from `humanoidverse/data/assets/maize/`. Their
+        (x, y, yaw) positions come from a virtual_maize_field generated world.
+        First call also converts the COLLADA meshes to USD in-place — neither
+        `omni.kit.asset_converter` nor USD's stage reference loader handle
+        DAE files, so we build the USDs directly via pxr + trimesh while a
+        SimulationApp is up (which is when this method runs).
+
+        Config (under `terrain.maize_plants`):
+            enabled:   bool (gate)
+            max_count: int  (cap, default 200)
+            scale:     float (mesh scale, default 0.683 — matches upstream model.sdf)
+            z_offset:  float (m, default 0.0)
+        """
+        import json
+        from math import cos, sin
+        from pathlib import Path
+
+        import omni.isaac.lab.sim as sim_utils
+
+        assets_dir = Path(__file__).resolve().parents[2] / "data" / "assets" / "maize"
+        positions_file = assets_dir / "maize_positions.json"
+        if not positions_file.exists():
+            logger.warning(f"maize positions JSON missing at {positions_file}; "
+                           "run humanoidverse/data/assets/maize/extract_positions.py")
+            return
+
+        positions = json.loads(positions_file.read_text())
+        max_count = int(plants_cfg.get("max_count", 200))
+        positions = positions[:max_count]
+
+        # Ensure USDs exist (one-time DAE→USD via pxr).
+        usd_paths = {}
+        for model_id in ("maize_01", "maize_02"):
+            usd_path = assets_dir / f"{model_id}.usd"
+            if not usd_path.exists():
+                dae_path = assets_dir / "meshes" / f"{model_id}.dae"
+                tex_path = assets_dir / "materials" / "textures" / f"{model_id}.png"
+                self._convert_dae_to_usd_pxr(
+                    name=model_id,
+                    dae_path=dae_path,
+                    out_path=usd_path,
+                    texture_path=tex_path if tex_path.exists() else None,
+                )
+            usd_paths[model_id] = str(usd_path)
+
+        scale_val = float(plants_cfg.get("scale", 0.683))
+        z_offset = float(plants_cfg.get("z_offset", 0.0))
+
+        # Plants spawn under /World/, not under /World/envs/env_*/, so they do
+        # NOT get cloned/replicated per-env. The cached positions are in the
+        # virtual_maize_field world frame (centered around origin), but env_0
+        # actually lives at the FAR CORNER of the multi-tile terrain grid (eg
+        # (-62.5, -62.5)). Offset every plant by env_0's origin so the field
+        # surrounds Hunter wherever the cloner placed him.
+        try:
+            env_origin = self._packed_env_origins[0]
+            offset_x = float(env_origin[0])
+            offset_y = float(env_origin[1])
+        except (AttributeError, IndexError, TypeError):
+            offset_x = offset_y = 0.0
+        logger.info(f"maize plants anchored at env_0 origin ({offset_x:.2f}, {offset_y:.2f})")
+
+        for i, p in enumerate(positions):
+            usd_cfg = sim_utils.UsdFileCfg(
+                usd_path=usd_paths[p["model"]],
+                scale=(scale_val, scale_val, scale_val),
+                # No rigid_props, no collision_props — purely decorative.
+            )
+            yaw = p["yaw"]
+            qw, qz = cos(yaw / 2.0), sin(yaw / 2.0)
+            usd_cfg.func(
+                prim_path=f"/World/maize_plants/p_{i:04d}",
+                cfg=usd_cfg,
+                translation=(float(p["x"]) + offset_x, float(p["y"]) + offset_y, z_offset),
+                orientation=(qw, 0.0, 0.0, qz),
+            )
+
+        logger.info(f"Spawned {len(positions)} maize plants under /World/maize_plants/")
+
+
+    def _convert_dae_to_usd_pxr(self, name, dae_path, out_path, texture_path) -> None:
+        """Author a textured USD stage from a COLLADA mesh using trimesh + pxr.
+
+        Called inside the live SimulationApp (where pxr is on the path). One-off
+        per asset — caches results on disk next to the DAE.
+        """
+        import trimesh
+        from pxr import Sdf, Usd, UsdGeom, UsdShade
+
+        if not dae_path.exists():
+            logger.warning(f"DAE missing at {dae_path}; cannot convert {name}")
+            return
+
+        mesh = trimesh.load(str(dae_path), force="mesh")
+        if not isinstance(mesh, trimesh.Trimesh) or len(mesh.faces) == 0:
+            logger.warning(f"{dae_path} has no faces; skipping {name}")
+            return
+        logger.info(f"converting {name}: v={len(mesh.vertices)} f={len(mesh.faces)} "
+                    f"texture={'ok' if texture_path else 'none'}")
+
+        stage = Usd.Stage.CreateNew(str(out_path))
+        UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)
+
+        root = UsdGeom.Xform.Define(stage, f"/{name}")
+        stage.SetDefaultPrim(root.GetPrim())
+
+        mesh_prim = UsdGeom.Mesh.Define(stage, f"/{name}/mesh")
+        mesh_prim.CreatePointsAttr().Set([tuple(v) for v in mesh.vertices.astype(float)])
+        mesh_prim.CreateFaceVertexIndicesAttr().Set(mesh.faces.astype(int).flatten().tolist())
+        mesh_prim.CreateFaceVertexCountsAttr().Set([3] * len(mesh.faces))
+        mesh_prim.CreateSubdivisionSchemeAttr().Set(UsdGeom.Tokens.none)
+
+        # Face-varying UVs (if trimesh extracted any).
+        visual = getattr(mesh, "visual", None)
+        uvs = getattr(visual, "uv", None) if visual is not None else None
+        if uvs is not None and len(uvs) == len(mesh.vertices):
+            import numpy as np
+            primvars = UsdGeom.PrimvarsAPI(mesh_prim.GetPrim())
+            st = primvars.CreatePrimvar(
+                "st", Sdf.ValueTypeNames.TexCoord2fArray, UsdGeom.Tokens.faceVarying
+            )
+            face_uvs = np.asarray(uvs, dtype=float)[mesh.faces.flatten()]
+            st.Set([tuple(uv) for uv in face_uvs])
+
+        if texture_path is not None:
+            mat = UsdShade.Material.Define(stage, f"/{name}/material")
+            pbr = UsdShade.Shader.Define(stage, f"/{name}/material/pbr")
+            pbr.CreateIdAttr("UsdPreviewSurface")
+            pbr.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(0.9)
+            pbr.CreateInput("metallic", Sdf.ValueTypeNames.Float).Set(0.0)
+            tex = UsdShade.Shader.Define(stage, f"/{name}/material/diffuse_tex")
+            tex.CreateIdAttr("UsdUVTexture")
+            tex.CreateInput("file", Sdf.ValueTypeNames.Asset).Set(str(texture_path))
+            tex.CreateOutput("rgb", Sdf.ValueTypeNames.Float3)
+            pbr.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f).ConnectToSource(
+                tex.ConnectableAPI(), "rgb"
+            )
+            mat.CreateSurfaceOutput().ConnectToSource(pbr.ConnectableAPI(), "surface")
+            UsdShade.MaterialBindingAPI(mesh_prim).Bind(mat)
+
+        stage.GetRootLayer().Save()
+        logger.info(f"wrote {out_path} ({out_path.stat().st_size} bytes)")
+
+
     def load_assets(self):
         '''
         save self.num_dofs, self.num_bodies, self.dof_names, self.body_names in simulator class
@@ -1032,6 +1191,23 @@ class IsaacSim(BaseSimulator):
                 f"[create_envs] using scene.env_origins shape={tuple(scene_origins.shape)}"
             )
         self.base_init_state = base_init_state
+
+        # Always retarget the viewport camera at env_0's actual spawn so the
+        # user can see the robot when not headless. The default world-origin
+        # camera misses the spawn area whenever env_origins are packed onto a
+        # real heightfield tile (tens of meters away from origin). Costs
+        # nothing in headless training.
+        try:
+            eo = self.env_origins[0].detach().cpu().tolist()
+            target = [float(eo[0]), float(eo[1]), float(eo[2]) + 0.7]
+            cam = [target[0] + 3.0, target[1] + 3.0, target[2] + 1.8]
+            self.sim.set_camera_view(cam, target)
+            logger.info(
+                f"[viewport] camera set to look at env_0 origin "
+                f"target={target} cam={cam}"
+            )
+        except Exception as _e:
+            logger.warning(f"[viewport] camera retarget skipped: {_e}")
 
         return self.scene, self._robot
     

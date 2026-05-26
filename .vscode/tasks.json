@@ -70,6 +70,38 @@
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
+    },
+    {
+      "label": "Visualize v7 m4250: Stage 1 Easy",
+      "type": "shell",
+      "command": "DISPLAY=:30540 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/FixedStageFv7/20260525_060629-fixedFv7-locomotion-hunter/model_4250.pt +robot=hunter/hunter +simulator=isaacsim +terrain=terrain_furrows_stage1_easy +domain_rand=DR_mild +eval_command=[0.3,0.0,0.0] num_envs=4 ++simulator.config.scene.num_envs=4 ++env.config.env_spacing=2.5 +num_episodes=20 headless=False ++env.config.termination.terminate_by_contact=True > logs/diagnostics/v7_m4250_VISUAL_stage1.log 2>&1\" &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
+      "label": "Visualize v7 m4250: Stage 2 Medium",
+      "type": "shell",
+      "command": "DISPLAY=:30540 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/FixedStageFv7/20260525_060629-fixedFv7-locomotion-hunter/model_4250.pt +robot=hunter/hunter +simulator=isaacsim +terrain=terrain_furrows_stage2_medium +domain_rand=DR_mild +eval_command=[0.3,0.0,0.0] num_envs=4 ++simulator.config.scene.num_envs=4 ++env.config.env_spacing=2.5 +num_episodes=20 headless=False ++env.config.termination.terminate_by_contact=True > logs/diagnostics/v7_m4250_VISUAL_stage2.log 2>&1\" &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
+      "label": "Visualize v7 m4250: Stage 3 Full",
+      "type": "shell",
+      "command": "DISPLAY=:30540 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && python ${workspaceFolder}/humanoidverse/sample_eps.py +checkpoint=logs/FixedStageFv7/20260525_060629-fixedFv7-locomotion-hunter/model_4250.pt +robot=hunter/hunter +simulator=isaacsim +terrain=terrain_furrows_stage3_full +domain_rand=DR_mild +eval_command=[0.3,0.0,0.0] num_envs=4 ++simulator.config.scene.num_envs=4 ++env.config.env_spacing=2.5 +num_episodes=20 headless=False ++env.config.termination.terminate_by_contact=True > logs/diagnostics/v7_m4250_VISUAL_stage3.log 2>&1\" &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
+      "label": "Agri Field: Hunter v7 m4250 in maize (IsaacSim)",
+      "type": "shell",
+      "command": "DISPLAY=:30540 XAUTHORITY=$HOME/.Xauthority xterm -hold -e \"source ~/miniconda3/bin/activate isaaclab && source $HOME/isaacsim_4.2/setup_python_env.sh && python ${workspaceFolder}/humanoidverse/eval_agent.py +simulator=isaacsim +checkpoint=logs/FixedStageFv7/20260525_060629-fixedFv7-locomotion-hunter/model_4250.pt +terrain=terrain_furrows_with_maize > logs/diagnostics/v7_m4250_agri_field.log 2>&1\" &",
+      "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
     }
   ]
 }

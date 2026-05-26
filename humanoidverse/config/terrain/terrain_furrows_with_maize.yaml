@@ -1,0 +1,22 @@
+# @package _global_
+##---------------------------------------------------------------------------
+#  Stage 1 furrows + decorative maize plants for the visual demo.
+#
+#  Geometry / friction = stage1_easy (the easiest furrow terrain on which v7
+#  generalizes well). Adds the maize plant visuals at positions copied from
+#  the upstream virtual_maize_field generator (see
+#  humanoidverse/data/assets/maize/maize_positions.json).
+#
+#  Plants are **decorative only** — no collision, no physics. The robot walks
+#  through them. This is a visualisation config, not a training one.
+##---------------------------------------------------------------------------
+
+defaults:
+  - terrain_furrows_stage1_easy
+
+terrain:
+  maize_plants:
+    enabled: True
+    max_count: 200      # cap to ~200 of the 206 generated plants
+    scale: 0.683        # matches upstream maize_01/02 model.sdf scale
+    z_offset: 0.0       # plants sit at terrain z=0 (visual offset; no physics)
