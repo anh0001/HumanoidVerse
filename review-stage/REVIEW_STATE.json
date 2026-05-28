@@ -1,0 +1,59 @@
+{
+  "round": 4,
+  "threadId": "019e3cf3-5e9a-73e2-805f-453cf1a98399",
+  "status": "completed",
+  "difficulty": "medium",
+  "last_score": 3.0,
+  "last_score_design": 5.5,
+  "last_score_evidence": 2.0,
+  "last_verdict": "not ready (claim); headline NOT supported -- clean null/negative",
+  "pending_experiments": [],
+  "evidence_result": {
+    "strength": "ultra", "seeds": [1], "verdict": "NEGATIVE/NULL -- claim not supported",
+    "paired_improvement_dfh_minus_rigid": -0.8, "normalized": -0.028,
+    "ep_len_DFH@DFH": 26.2, "ep_len_RIGID@DFH": 27.0, "ep_len_SHUF@DFH": 23.9,
+    "FULL_minus_SHUFFLED": 2.3, "dose_match_pct_weight": {"FULL": 0.042, "SHUF": 0.045},
+    "cap_saturation": {"cap_n": 500, "stance_p95": {"FULL": 450.0, "RIGID": 462.1, "SHUF": 423.1}, "clip_frac": {"FULL": 0.177, "RIGID": 0.306, "SHUF": 0.265}, "note": "eval clip 17-31% / p95 ~90% of cap -- WORSE than ULTRA calib (0.55%)"},
+    "note": "RIGID-trained marginally outlasts DFH-trained on DFH terrain (-0.8); negative control internally consistent (FULL>SHUFFLED) but moot since FULL never beats RIGID. Single seed only.",
+    "csv": "logs/DFHTuned/crosseval/regret_ultra.csv"
+  },
+  "final_ruling": {
+    "score_overall": 3.0, "verdict": "not ready", "claim_supported": false,
+    "next_step": "PIVOT to honest null/negative finding OR targeted repair: lower sinkage_drag_k to de-saturate cap (stance p95 <70-75% cap, clip <5%) + seeds 1-3 x {DFH_FULL,RIGID,SHUFFLED}; accept only if DFH>RIGID on DFH eval in >=2/3 seeds AND DFH>SHUFFLED under matched drag AND cap not dominating",
+    "recommendation": "do NOT proceed to paper writing; pivot is lower-risk given 2 prior Pass-4 nulls + consistent cap-saturation confound; repair justified only if de-saturated seed-1 pilot shows positive trend first"
+  },
+  "followup_pilot": {
+    "kind": "de-saturated seed-1 decision gate (user-approved post-loop)",
+    "script": "extensions/dfh/scripts/pilot_desat_k12_s1.sh",
+    "bg_pid": 1716942,
+    "log": "logs/DFHPilot_pilot_k12_s1.log",
+    "change": "sinkage_drag_k 40 -> 12 (0.3x; mu/cap unchanged, reviewer mandate: lower k not cap)",
+    "decision_rule": "de-saturated (DFH@dfh stance_drag_p95_n <360 i.e. <72% of 500 cap AND clip_frac <0.05) AND ep_len(DFH@dfh) > ep_len(RIGID@dfh) -> full repair seeds 1-3; de-saturated but DFH<=RIGID -> pivot (clean evidence); still saturated -> lower k again",
+    "csv": "logs/DFHPilot/crosseval/pilot_k12.csv",
+    "started": "2026-05-19T06:20:00",
+    "status": "completed",
+    "completed": "2026-05-19T11:00:00",
+    "result": {
+      "DFH@dfh": {"ep_len": 27.62, "stance_drag_p95_n": 453.77, "total_drag_p95_n": 367.33, "clip_frac": 0.032, "drag_pct_wt": 0.0235, "total_drag_n": 14.31},
+      "RIGID@dfh": {"ep_len": 31.44, "stance_drag_p95_n": 422.04, "clip_frac": 0.034},
+      "DFH@rigid_ep_len": 29.5, "RIGID@rigid_ep_len": 31.08,
+      "clip_desaturated": true,
+      "stance_p95_below_360": false,
+      "paired_improvement_dfh_minus_rigid": -3.82,
+      "interpretation": "Clip confound REMOVED (clip 3.2%, was 17-31% at k=40) yet DFH loses by -3.82 (WORSE than the k=40 null of -0.8). stance_drag_contact_p95 stayed ~454N but with clip 3.2% it is NOT a cap artifact -- it is genuine transient per-contact peaks while mean drag is low (2.35% wt). De-saturation did NOT rescue the claim; it strengthened the null. Lowering k further only weakens the dose toward negligible and trend got more negative (k40 -0.8 -> k12 -3.82), so it will not flip the sign.",
+      "routed_recommendation": "PIVOT to honest null/negative finding. Strict decision_rule literal branch (stance_p95 not <360) = 'lower k again', but that is overridden by the decisive evidence: the clip confound is gone and DFH still loses by a wide and widening margin. A further-lowered-k seed-1 run is not justified.",
+      "trace_csv": "logs/DFHPilot/crosseval/pilot_k12.csv"
+    }
+  },
+  "model": "codex gpt-5.5 xhigh (fresh thread 019e3cf3; prior 019e38d8 lost to server restart during 22h sweep -- 2nd thread loss)",
+  "pass": 4,
+  "max_rounds": 4,
+  "next_round_is_evidence_review": false,
+  "timestamp": "2026-05-19T06:10:00",
+  "passes": [
+    {"thread": "019e099b-1a76-7e21-ad48-ff1c5bf1026c", "scores": [2, 4, 5, 6], "ended_at_round": 4, "ended_at_verdict": "almost"},
+    {"thread": "019e0ec8-5c1c-7581-8772-2e9efec9122d", "scores": [6.5, 7, 7], "ended_at_round": 4, "ended_at_verdict": "almost"},
+    {"thread": "019e19f1-a15d-72b0-a0f0-ef3e843cbe3d", "scores": [4, 5.5, 6], "ended_at_round": 3, "ended_at_verdict": "almost"},
+    {"thread": "019e252c-9dde-7f52-9f31-4588d7b33de0+019e38d8-dc92-7f11-a23c-9ce338c358e6+019e3cf3-5e9a-73e2-805f-453cf1a98399", "scores": [4, 4.5, 6, 3], "ended_at_round": 4, "ended_at_verdict": "not ready -- claim NOT supported (clean null/negative)"}
+  ]
+}

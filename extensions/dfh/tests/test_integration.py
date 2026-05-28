@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import List
 
@@ -66,8 +67,8 @@ def _make_mocks(n_envs: int = 4, n_bodies: int = 6) -> tuple:
     sensor_n_bodies = 3
     forces = torch.zeros(n_envs, sensor_n_bodies, 3)
     # Index 1 = left foot, ground reaction +Z = robot pushes -Z
-    forces[:, 1, 2] = -150.0  # 150 N normal load
-    forces[:, 2, 2] = -150.0
+    forces[:, 1, 2] = 150.0  # 150 N normal load (ground reaction is +Z on foot body)
+    forces[:, 2, 2] = 150.0
     return (
         _MockRobot(name_to_idx_robot, _MockData(body_pos, body_vel)),
         _MockContactSensor(name_to_idx_sensor, forces),
@@ -116,8 +117,8 @@ def test_contact_source_resolves_feet_and_filters_below_threshold() -> None:
 @pytest.mark.unit
 def test_contact_source_below_threshold_returns_empty() -> None:
     robot, sensor = _make_mocks()
-    sensor.data.net_forces_w[:, 1, 2] = -1.0  # both feet below 5 N threshold
-    sensor.data.net_forces_w[:, 2, 2] = -1.0
+    sensor.data.net_forces_w[:, 1, 2] = 1.0  # both feet below 5 N threshold
+    sensor.data.net_forces_w[:, 2, 2] = 1.0
     src = HunterFootContactSource(
         robot=robot, contact_sensor=sensor,
         foot_body_names=["left_ankle_link", "right_ankle_link"],
@@ -189,6 +190,145 @@ def test_adapter_writeback_called_at_cadence() -> None:
     adapter.on_physics_step()
     adapter.on_physics_step()
     assert calls == [4, 4]
+
+
+@pytest.mark.unit
+def test_quat_rotate_inverse_wxyz_known_rotations() -> None:
+    """Verify the inline quat rotation matches known cases.
+
+    For a body rotated 90° around the Y axis (quat wxyz=(cos45,0,sin45,0)):
+    body +X aligns with world -Z, body +Z aligns with world +X. So
+    ``quat_rotate_inverse(q, world_+X) = body_+Z = (0,0,1)``.
+    """
+    from ext_dfh.integration import _quat_rotate_inverse_wxyz
+
+    q = torch.tensor([[math.cos(math.pi / 4), 0.0, math.sin(math.pi / 4), 0.0]])
+    v = torch.tensor([[1.0, 0.0, 0.0]])
+    out = _quat_rotate_inverse_wxyz(q, v)
+    assert torch.allclose(out, torch.tensor([[0.0, 0.0, 1.0]]), atol=1e-6)
+
+    # Identity quaternion is a no-op.
+    q_id = torch.tensor([[1.0, 0.0, 0.0, 0.0]])
+    v2 = torch.tensor([[0.7, -0.3, 0.5]])
+    out_id = _quat_rotate_inverse_wxyz(q_id, v2)
+    assert torch.allclose(out_id, v2, atol=1e-6)
+
+
+@pytest.mark.unit
+def test_adapter_clears_force_buffer_when_no_contacts() -> None:
+    """No-contact path must invoke the force callback with zero buffers
+    so the stale wrench from the prior step is overwritten.
+    """
+    robot, sensor = _make_mocks()
+    sensor.data.net_forces_w[:, 1, 2] = 1.0  # both feet below threshold
+    sensor.data.net_forces_w[:, 2, 2] = 1.0
+    cfg = _config()
+    calls: List[tuple] = []
+
+    def _fake_force_apply(env_ids, foot_local_idx, force, torque):
+        calls.append((env_ids.numel(), force.shape, float(force.abs().sum())))
+
+    adapter = DFHIsaacSimAdapter(
+        num_envs=4, config=cfg,
+        contact_source=IsaacSimContactSource(
+            get_contacts=HunterFootContactSource(
+                robot=robot, contact_sensor=sensor,
+                foot_body_names=["left_ankle_link", "right_ankle_link"],
+            )
+        ),
+    )
+    adapter.attach_force_apply(_fake_force_apply)
+    adapter.initialize()
+    adapter.on_physics_step()
+    # Empty contacts → callback fired with zero env_ids and zero magnitudes.
+    assert len(calls) == 1
+    assert calls[0][0] == 0
+    assert calls[0][2] == 0.0
+
+
+@pytest.mark.unit
+def test_diagnostics_populate_when_force_coupling_disabled() -> None:
+    """SHADOW_DFH: sink/contact stats must fire even when force apply is off."""
+    robot, sensor = _make_mocks()
+    cfg = _config()
+    adapter = DFHIsaacSimAdapter(
+        num_envs=4, config=cfg,
+        contact_source=IsaacSimContactSource(
+            get_contacts=HunterFootContactSource(
+                robot=robot, contact_sensor=sensor,
+                foot_body_names=["left_ankle_link", "right_ankle_link"],
+            )
+        ),
+        force_coupling_enabled=False,  # SHADOW
+    )
+    adapter.initialize()
+    adapter.on_physics_step()
+    assert adapter.last_contact_count == 8       # 4 envs × 2 feet
+    assert adapter.last_max_sink_m > 0.0
+    assert adapter.last_mean_normal_force_n > 0.0
+    # Drag stats may be zero (force coupling disabled) but contact-side stats fire.
+
+
+@pytest.mark.unit
+def test_diagnostics_zero_on_no_contact() -> None:
+    robot, sensor = _make_mocks()
+    sensor.data.net_forces_w[:, 1, 2] = 1.0
+    sensor.data.net_forces_w[:, 2, 2] = 1.0
+    cfg = _config()
+    adapter = DFHIsaacSimAdapter(
+        num_envs=4, config=cfg,
+        contact_source=IsaacSimContactSource(
+            get_contacts=HunterFootContactSource(
+                robot=robot, contact_sensor=sensor,
+                foot_body_names=["left_ankle_link", "right_ankle_link"],
+            )
+        ),
+    )
+    adapter.last_max_sink_m = 0.5  # stale value
+    adapter.last_mean_drag_n = 100.0
+    adapter.initialize()
+    adapter.on_physics_step()
+    assert adapter.last_contact_count == 0
+    assert adapter.last_max_sink_m == 0.0
+    assert adapter.last_mean_drag_n == 0.0
+
+
+@pytest.mark.unit
+def test_shuffle_env_ids_routes_drag_to_actual_contacts() -> None:
+    """SHUFFLED_DFH: env_idx of receiver stays bound to actual contact;
+    only DFH state (mu_eff, depth_after) is permuted. Drag still applied."""
+    robot, sensor = _make_mocks()
+    cfg = _config()
+    calls: List[tuple] = []
+
+    def _fake_force_apply(env_ids, foot_local_idx, force, torque):
+        calls.append((env_ids.clone(), foot_local_idx.clone(), force.clone()))
+
+    adapter = DFHIsaacSimAdapter(
+        num_envs=4, config=cfg,
+        contact_source=IsaacSimContactSource(
+            get_contacts=HunterFootContactSource(
+                robot=robot, contact_sensor=sensor,
+                foot_body_names=["left_ankle_link", "right_ankle_link"],
+            )
+        ),
+        force_coupling_enabled=True,
+        sinkage_drag_k=10.0,
+        shuffle_env_ids=True,
+    )
+    adapter.attach_force_apply(_fake_force_apply)
+    adapter.initialize()
+    torch.manual_seed(0)
+    adapter.on_physics_step()
+    assert len(calls) == 1
+    env_ids, foot_idx, force = calls[0]
+    # env_ids stay bound to original contact layout (env_grid).
+    expected_env = torch.tensor([0, 0, 1, 1, 2, 2, 3, 3])
+    expected_foot = torch.tensor([0, 1, 0, 1, 0, 1, 0, 1])
+    assert torch.equal(env_ids, expected_env)
+    assert torch.equal(foot_idx, expected_foot)
+    # Drag is non-zero (sinkage drag fires from permuted depth_after).
+    assert force.abs().sum().item() > 0.0
 
 
 @pytest.mark.unit

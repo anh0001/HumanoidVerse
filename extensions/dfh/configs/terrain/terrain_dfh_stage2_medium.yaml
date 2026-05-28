@@ -9,11 +9,16 @@ defaults:
 terrain:
   dfh_enabled: True
 
+  # Override parent friction to match force-coupling baseline so the
+  # additive drag is bounded above zero for both along/across.
+  static_friction:  0.40
+  dynamic_friction: 0.40
+
   dfh:
     horizontal_scale_m: 0.10
     vertical_scale_m:   0.002
-    terrain_length_m:   12.0
-    terrain_width_m:    12.0
+    terrain_length_m:   8.0
+    terrain_width_m:    8.0
     physx_writeback_every_k_steps: 4
     device: "cuda"
     store_furrow_direction: True
@@ -28,9 +33,17 @@ terrain:
       anisotropy:
         enabled: True
         mu_along: 0.45
-        mu_across: 0.65
+        mu_across: 0.90   # widened from 0.65 (Pass3 R1)
       slip_sinkage_alpha: 0.20
       slip_sinkage_eps:   1.0e-3
       bulldoze_share:     0.40
       sinkage_floor_m:   -0.08
-      contact_patch_area_m2: 3.45e-3
+      contact_patch_area_m2: 1.75e-3
+
+    writeback_enabled: False
+    force_coupling:
+      enabled: True
+      baseline_mu: 0.40          # deltas now +0.05 / +0.50 (Pass3 R1)
+      sinkage_drag_k: 30.0       # bumped 6→30 (Pass3 R1)
+      max_drag_force_n: 350.0
+      shuffle_env_ids: False

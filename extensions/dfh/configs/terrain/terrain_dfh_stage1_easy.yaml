@@ -15,8 +15,8 @@ terrain:
   dfh:
     horizontal_scale_m: 0.10
     vertical_scale_m:   0.005   # match parent terrain_furrows_stage1_easy.vertical_scale (0.005)
-    terrain_length_m:   12.0
-    terrain_width_m:    12.0
+    terrain_length_m:   8.0     # match parent terrain_furrows_stage1_easy.terrain_length
+    terrain_width_m:    8.0     # match parent terrain_furrows_stage1_easy.terrain_width
     physx_writeback_every_k_steps: 4
     device: "cuda"
     store_furrow_direction: True
@@ -31,9 +31,21 @@ terrain:
       anisotropy:
         enabled: True
         mu_along: 0.55
-        mu_across: 0.65
+        mu_across: 0.70   # MILD default (Pass3 R2): across-Δ=+0.25; launcher overrides to medium/strong
       slip_sinkage_alpha: 0.10   # mild
       slip_sinkage_eps:   1.0e-3
       bulldoze_share:     0.30
       sinkage_floor_m:   -0.05   # cap at 5 cm for Stage 1
-      contact_patch_area_m2: 3.45e-3   # Hunter ankle box
+      contact_patch_area_m2: 1.75e-3   # Hunter ankle box bottom face: 0.1001 × 0.0175
+
+    # Force-coupled mode: per-foot tangential drag closes the loop on the
+    # robot regardless of whether the USD writeback is active. Disabling the
+    # writeback below avoids the cross-env amin aliasing of the shared mesh
+    # (the visual-only writeback is opt-in for v0.3 per-env meshes).
+    writeback_enabled: False
+    force_coupling:
+      enabled: True
+      baseline_mu: 0.45          # parent dynamic_friction; MILD deltas along=+0.10 across=+0.25 (Pass3 R2)
+      sinkage_drag_k: 8.0        # MILD default — target ~5% body weight (Pass3 R2)
+      max_drag_force_n: 200.0    # MILD cap; launcher overrides to 250/300 for medium/strong
+      shuffle_env_ids: False     # SHUFFLED_DFH adversarial knob; permutes mu_eff/depth_after across contacts

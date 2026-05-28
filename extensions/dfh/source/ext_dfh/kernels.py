@@ -14,7 +14,7 @@ A Warp port is planned for v0.2 once the algebra is locked.
 from __future__ import annotations
 
 import math
-from typing import Tuple
+from typing import Optional, Tuple
 
 import torch
 
@@ -49,16 +49,27 @@ def apply_slip_sinkage(
     v_tangential: torch.Tensor,
     v_normal: torch.Tensor,
     params: DFHParams,
+    slip_alpha: Optional[torch.Tensor] = None,
+    slip_max: float = 1.0,
 ) -> torch.Tensor:
-    """Wong-Reece slip-sinkage coupling.
+    """Wong-Reece slip-sinkage coupling, bounded.
 
-    z_eff = z * (1 + alpha * |v_t| / (|v_n| + eps))
+    Original form ``z * (1 + alpha * |v_t|/(|v_n|+eps))`` blows up in stance when
+    ``v_n -> 0``. We use a bounded slip ratio:
+        slip = |v_t| / max(|v_t| + |v_n|, eps_floor)
+        z_eff = z * (1 + alpha * clamp(slip, 0, slip_max))
+    which is in ``[0, 1]`` and is well-behaved at zero normal velocity.
+
+    ``slip_alpha`` may be a per-contact tensor (used by per-env DR); when ``None``
+    the scalar ``params.slip_sinkage_alpha`` is broadcast.
     """
-    alpha = params.slip_sinkage_alpha
-    eps = params.slip_sinkage_eps
+    eps_floor = max(float(params.slip_sinkage_eps), 1e-3)
     vt = torch.linalg.vector_norm(v_tangential, dim=-1)
-    vn = torch.abs(v_normal) + eps
-    return z_target * (1.0 + alpha * vt / vn)
+    vn = torch.abs(v_normal)
+    denom = torch.clamp(vt + vn, min=eps_floor)
+    slip = torch.clamp(vt / denom, min=0.0, max=slip_max)
+    alpha = slip_alpha if slip_alpha is not None else params.slip_sinkage_alpha
+    return z_target * (1.0 + alpha * slip)
 
 
 def update_plastic_height(
@@ -137,10 +148,38 @@ def world_xy_to_cell(
     grid_h: int,
     grid_w: int,
     horizontal_scale_m: float,
+    env_origin_xy: Optional[torch.Tensor] = None,
+    extent_xy: Optional[Tuple[float, float]] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Convert world (x, y) metres to integer cell index, clamped to grid."""
-    cell_i = torch.clamp((pos_xy_m[..., 0] / horizontal_scale_m).long(), 0, grid_h - 1)
-    cell_j = torch.clamp((pos_xy_m[..., 1] / horizontal_scale_m).long(), 0, grid_w - 1)
+    """Convert world (x, y) metres to integer cell index in a per-env grid.
+
+    The DFH grid is treated as a square tile of physical extent
+    ``(extent_x, extent_y) = (grid_h * scale, grid_w * scale)`` centered on the
+    env origin. ``pos_xy`` is shifted by the env origin and the half-extent so
+    that the centre of the tile lands on cell ``(grid_h//2, grid_w//2)``.
+
+    Args:
+        pos_xy_m: (..., 2) world positions.
+        grid_h, grid_w: grid resolution.
+        horizontal_scale_m: cell width (m).
+        env_origin_xy: (..., 2) world origin for each contact's env. When None,
+            the legacy origin-less mapping is used (back-compat for tests).
+        extent_xy: physical (length, width) of the tile (m). Defaults to
+            ``(grid_h * scale, grid_w * scale)``.
+
+    Returns:
+        Tuple of long tensors ``(cell_i, cell_j)`` clamped to ``[0, grid-1]``.
+    """
+    if extent_xy is None:
+        extent_xy = (grid_h * horizontal_scale_m, grid_w * horizontal_scale_m)
+    if env_origin_xy is None:
+        local_x = pos_xy_m[..., 0]
+        local_y = pos_xy_m[..., 1]
+    else:
+        local_x = pos_xy_m[..., 0] - env_origin_xy[..., 0] + 0.5 * float(extent_xy[0])
+        local_y = pos_xy_m[..., 1] - env_origin_xy[..., 1] + 0.5 * float(extent_xy[1])
+    cell_i = torch.clamp(torch.floor(local_x / horizontal_scale_m).long(), 0, grid_h - 1)
+    cell_j = torch.clamp(torch.floor(local_y / horizontal_scale_m).long(), 0, grid_w - 1)
     return cell_i, cell_j
 
 

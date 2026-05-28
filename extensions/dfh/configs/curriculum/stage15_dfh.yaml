@@ -1,0 +1,20 @@
+# @package _global_
+## ---------------------------------------------------------------------------
+#  Curriculum Stage 1.5 DFH — soil bridge (S1 geometry + intermediate dynamics)
+## ---------------------------------------------------------------------------
+
+defaults:
+  - /terrain: terrain_dfh_stage15_soil
+  - /domain_rand: DR_dfh_soft
+  - /rewards: loco/reward_hunter_dfh
+
+curriculum:
+  stage_id: "stage15_dfh"
+  promotion:
+    metric_mean_episode_length_s_min: 17.0
+    metric_term_reward_per_s_min:    -0.04
+    require_nonzero_feet_air_time:    False
+
+env:
+  config:
+    env_spacing: 2.5
