@@ -1,0 +1,49 @@
+# @package _global_
+## ---------------------------------------------------------------------------
+#  DFH Stage 1.7 (Geom bridge) — S2 furrow geometry, S1.5 DFH dynamics
+#  Once the policy survives intermediate dynamics on easy geometry, this stage
+#  swaps in S2 geometry (deeper furrows, mild yaw jitter) while holding soil.
+## ---------------------------------------------------------------------------
+
+defaults:
+  - terrain_furrows_stage2_medium   # S2 geometry
+
+terrain:
+  dfh_enabled: True
+
+  static_friction:  0.42
+  dynamic_friction: 0.42
+
+  dfh:
+    horizontal_scale_m: 0.10
+    vertical_scale_m:   0.002   # matches stage-2 parent
+    terrain_length_m:   8.0
+    terrain_width_m:    8.0
+    physx_writeback_every_k_steps: 4
+    device: "cuda"
+    store_furrow_direction: True
+
+    params:
+      bekker:
+        kc: 1.2e3
+        k_phi: 6.5e5
+        n: 1.0
+        cohesion: 1.25e4
+        friction_angle_deg: 31.0
+      anisotropy:
+        enabled: True
+        mu_along: 0.50
+        mu_across: 0.78
+      slip_sinkage_alpha: 0.15
+      slip_sinkage_eps:   1.0e-3
+      bulldoze_share:     0.35
+      sinkage_floor_m:   -0.065
+      contact_patch_area_m2: 1.75e-3
+
+    writeback_enabled: False
+    force_coupling:
+      enabled: True
+      baseline_mu: 0.42
+      sinkage_drag_k: 16.0
+      max_drag_force_n: 260.0
+      shuffle_env_ids: False

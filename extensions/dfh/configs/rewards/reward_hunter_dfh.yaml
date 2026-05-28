@@ -15,7 +15,7 @@ rewards:
     tracking_lin_vel:          2.0
     tracking_ang_vel:          1.0
     base_height:              -25.0
-    penalty_sinkage_excess:    0.0   # disabled until _reward_penalty_sinkage_excess implemented
+    penalty_sinkage_excess:   -2.0   # quadratic on excess sink at feet (sigma_m below)
     reward_foot_exit_velocity: 0.0   # disabled until _reward_reward_foot_exit_velocity implemented
     feet_air_time:             0.0   # disabled in Stage 1; re-enable in Stage 2
     penalty_feet_height:       0.0

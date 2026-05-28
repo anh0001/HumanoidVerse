@@ -1,18 +1,18 @@
 # @package _global_
 ## ---------------------------------------------------------------------------
-#  Curriculum Stage 2 DFH — moderate Bekker, full anisotropy
+#  Curriculum Stage 1.7 DFH — geometry bridge (S2 geometry + intermediate soil)
 ## ---------------------------------------------------------------------------
 
 defaults:
-  - /terrain: terrain_dfh_stage2_medium
-  - /domain_rand: DR_dfh_moderate
+  - /terrain: terrain_dfh_stage17_geom
+  - /domain_rand: DR_dfh_soft
   - /rewards: loco/reward_hunter_dfh
 
 curriculum:
-  stage_id: "stage2_dfh"
+  stage_id: "stage17_dfh"
   promotion:
-    metric_mean_episode_length_s_min: 18.0
-    metric_term_reward_per_s_min:    -0.03
+    metric_mean_episode_length_s_min: 17.5
+    metric_term_reward_per_s_min:    -0.035
     require_nonzero_feet_air_time:    True
 
 env:

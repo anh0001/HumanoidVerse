@@ -14,3 +14,10 @@ curriculum:
     metric_mean_episode_length_s_min: 16.0
     metric_term_reward_per_s_min:    -0.05
     require_nonzero_feet_air_time:    False
+
+# 16x16 tiles × 8m × 8m at env_spacing=5.0 only fits 256 envs
+# (floor(8/5)=1 env per tile). Drop spacing to 2.5 → 9 envs/tile × 256 tiles
+# = 2304-env capacity, matching the planned num_envs=2048.
+env:
+  config:
+    env_spacing: 2.5

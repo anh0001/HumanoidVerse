@@ -955,9 +955,16 @@ class IsaacSim(BaseSimulator):
             pbr.CreateIdAttr("UsdPreviewSurface")
             pbr.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(0.9)
             pbr.CreateInput("metallic", Sdf.ValueTypeNames.Float).Set(0.0)
+            st_reader = UsdShade.Shader.Define(stage, f"/{name}/material/st_reader")
+            st_reader.CreateIdAttr("UsdPrimvarReader_float2")
+            st_reader.CreateInput("varname", Sdf.ValueTypeNames.Token).Set("st")
+            st_reader.CreateOutput("result", Sdf.ValueTypeNames.Float2)
             tex = UsdShade.Shader.Define(stage, f"/{name}/material/diffuse_tex")
             tex.CreateIdAttr("UsdUVTexture")
             tex.CreateInput("file", Sdf.ValueTypeNames.Asset).Set(str(texture_path))
+            tex.CreateInput("st", Sdf.ValueTypeNames.Float2).ConnectToSource(
+                st_reader.ConnectableAPI(), "result"
+            )
             tex.CreateOutput("rgb", Sdf.ValueTypeNames.Float3)
             pbr.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f).ConnectToSource(
                 tex.ConnectableAPI(), "rgb"
