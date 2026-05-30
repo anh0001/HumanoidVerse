@@ -503,6 +503,10 @@ class IsaacSim(BaseSimulator):
                     static_friction=self.terrain_config.static_friction,
                     dynamic_friction=self.terrain_config.dynamic_friction,
                     restitution=getattr(self.terrain_config, "restitution", 0.0),
+                    # PhysX compliant normal contact (paper Fn = kn*δ + cn*δ̇).
+                    # stiffness>0 enables the spring model; 0 keeps default rigid contact.
+                    compliant_contact_stiffness=getattr(self.terrain_config, "compliant_contact_stiffness", 0.0),
+                    compliant_contact_damping=getattr(self.terrain_config, "compliant_contact_damping", 0.0),
                 ),
                 visual_material=sim_utils.MdlFileCfg(
                     mdl_path="{NVIDIA_NUCLEUS_DIR}/Materials/Base/Architecture/Shingles_01.mdl",
@@ -527,6 +531,10 @@ class IsaacSim(BaseSimulator):
                     static_friction=self.terrain_config.static_friction,
                     dynamic_friction=self.terrain_config.dynamic_friction,
                     restitution=getattr(self.terrain_config, "restitution", 0.0),
+                    # PhysX compliant normal contact (paper Fn = kn*δ + cn*δ̇).
+                    # stiffness>0 enables the spring model; 0 keeps default rigid contact.
+                    compliant_contact_stiffness=getattr(self.terrain_config, "compliant_contact_stiffness", 0.0),
+                    compliant_contact_damping=getattr(self.terrain_config, "compliant_contact_damping", 0.0),
                 ),
                 debug_vis=False,
             )

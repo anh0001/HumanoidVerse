@@ -1,0 +1,10 @@
+arm,seed,ckpt,episodes,falls,ep_len_steps,distance_m,slip_per_100m,falls_per_100m
+A,1,logs/FuzzySoilFurrows/20260528_192207-armA_seed1-locomotion-hunter/model_5000.pt,1000,1000,54.30,0.700,79.140,142.857
+A,2,logs/FuzzySoilFurrows/20260528_211150-armA_seed2-locomotion-hunter/model_5000.pt,1000,1000,50.00,0.700,89.050,142.857
+A,3,logs/FuzzySoilFurrows/20260528_225724-armA_seed3-locomotion-hunter/model_5000.pt,1000,1000,47.80,0.770,73.810,129.870
+B,1,logs/FuzzySoilFurrows/20260529_015641-armB_S3_seed1-locomotion-hunter/model_5000.pt,1000,1000,368.30,1.660,288.230,60.241
+B,2,logs/FuzzySoilFurrows/20260529_034802-armB_S3_seed2-locomotion-hunter/model_5000.pt,1000,1000,532.50,2.360,283.850,42.373
+B,3,logs/FuzzySoilFurrows/20260529_053913-armB_S3_seed3-locomotion-hunter/model_5000.pt,1000,1000,444.90,1.880,299.780,53.191
+C,1,logs/FuzzySoilFurrows/20260529_131748-armC_S3_seed1-locomotion-hunter/model_5000.pt,1000,1000,455.20,1.940,300.440,51.546
+B_recheck,1,logs/FuzzySoilFurrows/20260529_015641-armB_S3_seed1-locomotion-hunter/model_5000.pt,1000,1000,452.50,1.870,317.890,53.476
+D,1,logs/FuzzySoilFurrows/20260529_165729-armD_S3_seed1-locomotion-hunter/model_5000.pt,1000,1000,361.90,1.770,259.300,56.497

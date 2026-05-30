@@ -961,9 +961,27 @@ class LeggedRobotBase(BaseTask):
         return torch.sum((torch.abs(self.torques) - self.torque_limits * self.config.rewards.reward_limit.soft_torque_limit).clip(min=0.), dim=1)
 
     def _reward_penalty_slippage(self):
-        # assert self.simulator._rigid_body_vel.shape[1] == 20
+        # Slip penalty with a configurable stance gate.
+        #   kind=hard  : v7-compatible — ‖foot_vel_3d‖ * 𝟙(F_n > 1 N)        (default)
+        #   kind=soft  : paper-style  — ‖v_tan‖ * sigmoid(β (F_n − F_th))
+        # World-z is used as the surface-normal approximation for tangential
+        # projection (adequate for Perlin furrows with ≤15 cm depth).
         foot_vel = self.simulator._rigid_body_vel[:, self.feet_indices]
-        return torch.sum(torch.norm(foot_vel, dim=-1) * (torch.norm(self.simulator.contact_forces[:, self.feet_indices, :], dim=-1) > 1.), dim=1)
+        f_vec = self.simulator.contact_forces[:, self.feet_indices, :]
+        f_norm = torch.norm(f_vec, dim=-1)
+
+        slip_gate_cfg = getattr(self.config.rewards, "slip_gate", None)
+        kind = getattr(slip_gate_cfg, "kind", "hard") if slip_gate_cfg is not None else "hard"
+
+        if kind == "soft":
+            f_th = float(getattr(slip_gate_cfg, "F_th", 1.0))
+            beta = float(getattr(slip_gate_cfg, "beta", 4.0))
+            v_tan = foot_vel.clone()
+            v_tan[..., 2] = 0.0
+            mu_stance = torch.sigmoid(beta * (f_norm - f_th))
+            return torch.sum(torch.norm(v_tan, dim=-1) * mu_stance, dim=1)
+
+        return torch.sum(torch.norm(foot_vel, dim=-1) * (f_norm > 1.), dim=1)
 
     def _reward_feet_max_height_for_this_air(self):
         # Reward long steps

@@ -1,0 +1,97 @@
+# @package _global_
+#
+# Paper-recipe reward for fuzzy-soil-on-furrows transfer test.
+# Derived from reward_hunter_locomotion.yaml (v7 baseline) with the changes
+# specified in docs/wcci2026_hunter.pdf §III-E:
+#   - Stance-gated slip via smooth logistic membership (Eq. 4): w_slip=0.5
+#   - Contact-force cap (Eq. 7): w_force=0.05, F_max=150 N
+#   - Other reward terms inherit v7's tuned weights so the comparison
+#     isolates the gating + force-cap change (and the curriculum on the DR side).
+
+rewards:
+  set_reward: Anhar
+  set_reward_date: 20260528
+  only_positive_rewards: False
+  reward_scales:
+      # Tracking
+      tracking_lin_vel: 4.0
+      tracking_ang_vel: 1.0
+
+      # Stability
+      penalty_lin_vel_z: -2.0
+      penalty_ang_vel_xy: -1.0
+      penalty_orientation: -0.5
+
+      # Effort / smoothness
+      penalty_torques: -0.00001
+      penalty_dof_acc: -3.5e-8
+      penalty_action_rate: -0.01
+
+      # PAPER: Contact force penalty (Eq. 7) — hinge above F_max
+      penalty_feet_contact_forces: -0.05   # w_force from paper
+
+      # PAPER: Stance-gated slip (Eq. 6) — soft gate, see slip_gate block below
+      penalty_slippage: -0.5               # w_slip from paper
+
+      penalty_feet_ori: -2.0
+      limits_dof_pos: -10.0
+
+      # Gait shaping (kept from v7)
+      feet_air_time: 1.0
+      base_height: -5.0
+      penalty_feet_height: -1.0
+      gait_phase: 0.5
+      penalty_gait_asymmetry: -0.2
+
+  # PAPER: Smooth stance gate for slip penalty (Eq. 4).
+  #   μ_stance(F_n) = σ(β (F_n − F_th))
+  slip_gate:
+    kind: soft
+    F_th: 1.0     # Newtons — paper §III-E
+    beta: 4.0     # logistic slope; β→∞ recovers the hard indicator
+
+  reward_tracking_sigma:
+    lin_vel: 0.25
+    ang_vel: 0.25
+
+  reward_limit:
+    soft_dof_pos_limit: 0.9
+    soft_dof_vel_limit: 0.9
+    soft_torque_limit: 0.9
+
+  gait_period_s: 0.7
+  gait_duty: 0.6
+  gait_ramp: 0.1
+
+  feet_height_target: 0.02
+
+  # PAPER: F_max = 150 N (paper §III-E "we set F_max = 150 N")
+  locomotion_max_contact_force: 150.0
+  desired_feet_max_height_for_this_air: 0.06
+  desired_base_height: 0.6
+
+  reward_penalty_curriculum: False
+  reward_initial_penalty_scale: 1.0
+  reward_min_penalty_scale: 0.0
+  reward_max_penalty_scale: 1.0
+  reward_penalty_level_down_threshold: 400
+  reward_penalty_level_up_threshold: 700
+  reward_penalty_degree: 0.00001
+  num_compute_average_epl: 10000
+
+  reward_penalty_reward_names: [
+    "penalty_torques",
+    "penalty_dof_acc",
+    "penalty_dof_vel",
+    "penalty_action_rate",
+    "penalty_feet_contact_forces",
+    "penalty_stumble",
+    "penalty_slippage",
+    "penalty_feet_ori",
+    "penalty_in_the_air",
+    "limits_dof_pos",
+    "limits_dof_vel",
+    "limits_torque",
+    "termination",
+    "feet_air_time",
+    "feet_max_height_for_this_air"]

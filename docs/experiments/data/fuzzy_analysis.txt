@@ -1,0 +1,43 @@
+== Fuzzy difficulty index validation (Set A) — mu sweep, rigid contact ==
+   Convention: higher d = HARDER soil.
+
+               mu |              d |         regime |  slip_per_100m | falls_per_100m |   ep_len_steps |        vel_err
+             0.35 |          0.800 |           Hard |         389.99 |          62.16 |         433.97 |           0.35
+             0.45 |          0.800 |           Hard |         298.96 |          57.48 |         398.03 |           0.28
+             0.55 |          0.600 |       Moderate |         243.83 |          45.47 |         458.13 |           0.27
+             0.65 |          0.400 |       Moderate |         213.15 |          41.73 |         481.40 |           0.27
+             0.75 |          0.200 |           Easy |         175.78 |          33.73 |         561.93 |           0.26
+             0.85 |          0.200 |           Easy |         157.93 |          32.57 |         570.27 |           0.27
+
+   == Monotonicity vs d (Spearman; higher d = harder) ==
+             metric | Spearman rho | dir ok?
+        slip / 100m |        0.971 | YES (want up with d)
+       falls / 100m |        0.971 | YES (want up with d)
+     ep_len (steps) |       -0.971 | YES (want down with d)
+    vel error (m/s) |        0.955 | YES (want up with d)
+
+   == Fuzzy d vs raw mu (added-value / circularity check) ==
+   kn is physically inert here, so d is ~a monotone transform of mu;
+   similar |rho| for both means d adds ORDERING, not new information.
+             metric | |rho| vs d | |rho| vs mu | note
+        slip / 100m |      0.971 |       1.000 | d~=mu (no added info)
+       falls / 100m |      0.971 |       1.000 | d~=mu (no added info)
+     ep_len (steps) |      0.971 |       0.943 | d~=mu (no added info)
+    vel error (m/s) |      0.955 |       0.928 | d~=mu (no added info)
+
+   == Interpretable regime separation (mean performance per fuzzy label) ==
+       regime |  n |    slip / 100m |   falls / 100m | ep_len (steps) | vel error (m/s)
+         Easy |  2 |         166.86 |          33.15 |         566.10 |           0.27
+     Moderate |  2 |         228.49 |          43.60 |         469.76 |           0.27
+         Hard |  2 |         344.48 |          59.82 |         416.00 |           0.32
+   Easy->Hard: slip 167->344 (rises OK), ep_len 566->416 (falls OK)
+
+   VERDICT: 4/4 metrics monotone in d (|rho|>=0.6, correct sign).
+   HONEST SCOPE (per Codex): this validates d as an ORDINAL logging descriptor
+   for THIS friction sweep only. Because kn is physically inert in PhysX, d is
+   ~a monotone transform of mu, so a positive result mainly restates 'lower
+   friction = harder'. It does NOT validate the 2D fuzzy model, the stiffness
+   axis, or added value over raw mu (see the d-vs-mu table above).
+   => d tracks measured difficulty across the friction sweep (limited claim).
+
+   figure -> logs/FuzzySoilFurrows/fuzzy_validation.png

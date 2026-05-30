@@ -450,6 +450,29 @@ def main(override_config: OmegaConf):
     if cot_list:
         logger.info(f"CoT (J/kg·m): {cot_mean:.2f} ± {cot_ci:.2f}")
 
+    # Dump per-episode records so downstream analysis can regress slip on distance
+    # (defuses the "longer-surviving arm accumulates more slip per 100m" confound —
+    # see docs/experiments/fuzzy_soil_furrows_result.md). Best-effort; never fails eval.
+    try:
+        import csv as _csv
+        _out_dir = HydraConfig.get().runtime.output_dir
+        _per_ep_path = os.path.join(_out_dir, "per_episode.csv")
+        _fields = ["episode_idx", "distance", "slip_distance", "episode_length", "fell"]
+        with open(_per_ep_path, "w", newline="") as _f:
+            _w = _csv.writer(_f)
+            _w.writerow(_fields)
+            for _i, _info in enumerate(ep_infos):
+                _w.writerow([
+                    _i,
+                    _info.get("distance", 0.0),
+                    _info.get("slip_distance", 0.0),
+                    _info.get("episode_length", 0),
+                    int(bool(_info.get("fell"))),
+                ])
+        logger.info(f"Wrote {len(ep_infos)} per-episode records to {_per_ep_path}")
+    except Exception as _e:
+        logger.warning(f"Could not write per-episode CSV: {_e}")
+
     # Write TB scalars (analyze_regret.py averages the last points per tag).
     if tb_writer is not None:
         if ep_info_accum:

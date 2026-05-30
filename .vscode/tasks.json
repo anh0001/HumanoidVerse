@@ -102,6 +102,39 @@
       "presentation": {"echo": true, "reveal": "never", "focus": false, "panel": "shared"},
       "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
       "problemMatcher": []
+    },
+    {
+      "label": "FuzzySoil: Arm A v7 baseline (seed=${input:seed})",
+      "type": "shell",
+      "command": "mkdir -p logs/FuzzySoilFurrows/ArmA_v7_baseline_seed${input:seed} && SEED=${input:seed} nohup ${workspaceFolder}/scripts/paper_fuzzy_soil/train_armA_v7_baseline.sh > logs/FuzzySoilFurrows/ArmA_v7_baseline_seed${input:seed}/nohup.out 2>&1 & disown",
+      "presentation": {"echo": true, "reveal": "always", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
+      "label": "FuzzySoil: Arm B paper-recipe chain (seed=${input:seed})",
+      "type": "shell",
+      "command": "mkdir -p logs/FuzzySoilFurrows/ArmB_paper_seed${input:seed} && SEED=${input:seed} nohup ${workspaceFolder}/scripts/paper_fuzzy_soil/train_armB_paper_chain.sh > logs/FuzzySoilFurrows/ArmB_paper_seed${input:seed}/nohup.out 2>&1 & disown",
+      "presentation": {"echo": true, "reveal": "always", "focus": false, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    },
+    {
+      "label": "FuzzySoil: Eval both arms (all seeds)",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/paper_fuzzy_soil/eval_arms.sh 2>&1 | tee logs/FuzzySoilFurrows/eval_run.log",
+      "presentation": {"echo": true, "reveal": "always", "focus": true, "panel": "shared"},
+      "options": {"shell": {"executable": "/bin/bash", "args": ["-ic"]}},
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "seed",
+      "type": "pickString",
+      "description": "Seed (paper protocol excludes 0)",
+      "options": ["1", "2", "3"],
+      "default": "1"
     }
   ]
 }

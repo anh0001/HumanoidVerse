@@ -21,6 +21,13 @@ terrain:
   restitution: 0.02
   friction_combine_mode: multiply
 
+  # PhysX compliant normal contact (paper Fn = kn*δ + cn*δ̇). Defaults 0.0 = rigid
+  # (unchanged behavior). Override at runtime for the Stage-0 compliance probe:
+  #   ++terrain.compliant_contact_stiffness=50000 ++terrain.compliant_contact_damping=500
+  # Paper bands: kn ∈ [50,400] kN/m, cn ∈ [0.2,1.5] kN·s/m; S3 softest kn ∈ [50,150] kN/m.
+  compliant_contact_stiffness: 0.0   # N/m   (0 = default rigid PhysX contact)
+  compliant_contact_damping: 0.0     # N·s/m
+
   # Geometry generator — restore real furrow depth (probe with depth=0.001 also failed, so shape not the catapult)
   selected: True
   terrain_kwargs:

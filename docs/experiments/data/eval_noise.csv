@@ -1,0 +1,16 @@
+label,ckpt,rep,seed,episodes,ep_len_steps,distance_m,slip_per_100m
+B,logs/FuzzySoilFurrows/20260529_015641-armB_S3_seed1-locomotion-hunter/model_5000.pt,1,1,1000,437.50,1.850,303.060
+C,logs/FuzzySoilFurrows/20260529_131748-armC_S3_seed1-locomotion-hunter/model_5000.pt,1,1,1000,471.70,1.820,338.550
+B,logs/FuzzySoilFurrows/20260529_015641-armB_S3_seed1-locomotion-hunter/model_5000.pt,2,2,1000,387.10,1.760,278.850
+C,logs/FuzzySoilFurrows/20260529_131748-armC_S3_seed1-locomotion-hunter/model_5000.pt,2,2,1000,446.10,1.900,295.020
+B,logs/FuzzySoilFurrows/20260529_015641-armB_S3_seed1-locomotion-hunter/model_5000.pt,3,3,1000,433.60,1.920,291.330
+C,logs/FuzzySoilFurrows/20260529_131748-armC_S3_seed1-locomotion-hunter/model_5000.pt,3,3,1000,479.60,2.220,275.380
+B,logs/FuzzySoilFurrows/20260529_015641-armB_S3_seed1-locomotion-hunter/model_5000.pt,4,4,1000,352.70,1.650,270.180
+C,logs/FuzzySoilFurrows/20260529_131748-armC_S3_seed1-locomotion-hunter/model_5000.pt,4,4,1000,493.70,1.870,337.150
+B,logs/FuzzySoilFurrows/20260529_015641-armB_S3_seed1-locomotion-hunter/model_5000.pt,5,5,1000,434.70,2.060,277.100
+C,logs/FuzzySoilFurrows/20260529_131748-armC_S3_seed1-locomotion-hunter/model_5000.pt,5,5,1000,401.10,1.910,273.710
+D,logs/FuzzySoilFurrows/20260529_165729-armD_S3_seed1-locomotion-hunter/model_5000.pt,1,1,1000,403.20,1.850,275.800
+D,logs/FuzzySoilFurrows/20260529_165729-armD_S3_seed1-locomotion-hunter/model_5000.pt,2,2,1000,450.00,1.870,319.780
+D,logs/FuzzySoilFurrows/20260529_165729-armD_S3_seed1-locomotion-hunter/model_5000.pt,3,3,1000,489.80,1.860,336.440
+D,logs/FuzzySoilFurrows/20260529_165729-armD_S3_seed1-locomotion-hunter/model_5000.pt,4,4,1000,358.30,1.700,273.250
+D,logs/FuzzySoilFurrows/20260529_165729-armD_S3_seed1-locomotion-hunter/model_5000.pt,5,5,1000,357.10,1.640,285.480

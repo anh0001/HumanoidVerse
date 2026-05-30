@@ -1,0 +1,37 @@
+# @package _global_
+#
+# Paper Stage S2a — packed soil.
+#   μ ∈ [0.6, 0.8]    (paper Table I § III-D)
+#   No external pushes yet (S3 introduces them).
+#   k_n / c_n compliance: NOT randomized (IsaacLab 1.4.1 does not expose
+#   per-env material stiffness cleanly — see docs/experiments/fuzzy_soil_furrows_plan.md
+#   for the scope-reduction note).
+
+defaults:
+  - domain_rand_base
+
+domain_rand:
+  randomize_friction: True
+  friction_range: [0.6, 0.8]
+
+  # No pushes during S2a/S2b. Re-enabled in S3 with paper-spec force pushes.
+  push_robots: False
+  push_force_N: null
+
+  # Keep v7's other DR widths for comparability.
+  randomize_base_com: True
+  base_com_range:
+    x: [-0.03, 0.03]
+    y: [-0.03, 0.03]
+    z: [-0.03, 0.03]
+  randomize_link_mass: True
+  link_mass_range: [0.95, 1.05]
+  randomize_pd_gain: True
+  kp_range: [0.9, 1.1]
+  kd_range: [0.9, 1.1]
+  randomize_torque_rfi: True
+  rfi_lim: 0.03
+  randomize_rfi_lim: True
+  rfi_lim_range: [0.8, 1.2]
+  randomize_ctrl_delay: True
+  ctrl_delay_step_range: [0, 1]

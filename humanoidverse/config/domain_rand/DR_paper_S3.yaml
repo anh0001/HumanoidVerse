@@ -1,0 +1,40 @@
+# @package _global_
+#
+# Paper Stage S3 — fully tilled soil + lateral disturbances.
+#   μ ∈ [0.35, 0.55]   (paper Table I; this is S2c material setting)
+#   Lateral force pushes: 20–50 N (paper §III-D). We set push_force_N to the
+#   midpoint 35 N; episode-to-episode variation comes from push_duration_s_range
+#   and the random sign in _push_robots.
+#
+# Pair this DR with terrain_furrows_with_maize (or a deeper-furrow variant) to
+# match the paper's S3 environment.
+
+defaults:
+  - domain_rand_base
+
+domain_rand:
+  randomize_friction: True
+  friction_range: [0.35, 0.55]
+
+  # PAPER: force-based lateral pushes 20–50 N (paper §III-D).
+  push_robots: True
+  push_force_N: 35              # midpoint of [20, 50]
+  push_duration_s_range: [0.10, 0.20]
+  push_interval_s: [5, 10]
+
+  randomize_base_com: True
+  base_com_range:
+    x: [-0.03, 0.03]
+    y: [-0.03, 0.03]
+    z: [-0.03, 0.03]
+  randomize_link_mass: True
+  link_mass_range: [0.95, 1.05]
+  randomize_pd_gain: True
+  kp_range: [0.9, 1.1]
+  kd_range: [0.9, 1.1]
+  randomize_torque_rfi: True
+  rfi_lim: 0.03
+  randomize_rfi_lim: True
+  rfi_lim_range: [0.8, 1.2]
+  randomize_ctrl_delay: True
+  ctrl_delay_step_range: [0, 1]

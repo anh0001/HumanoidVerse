@@ -1,0 +1,32 @@
+# @package _global_
+#
+# Paper Stage S2b — moderately tilled soil.
+#   μ ∈ [0.45, 0.65]   (paper Table I § III-D)
+#   Still no external pushes.
+
+defaults:
+  - domain_rand_base
+
+domain_rand:
+  randomize_friction: True
+  friction_range: [0.45, 0.65]
+
+  push_robots: False
+  push_force_N: null
+
+  randomize_base_com: True
+  base_com_range:
+    x: [-0.03, 0.03]
+    y: [-0.03, 0.03]
+    z: [-0.03, 0.03]
+  randomize_link_mass: True
+  link_mass_range: [0.95, 1.05]
+  randomize_pd_gain: True
+  kp_range: [0.9, 1.1]
+  kd_range: [0.9, 1.1]
+  randomize_torque_rfi: True
+  rfi_lim: 0.03
+  randomize_rfi_lim: True
+  rfi_lim_range: [0.8, 1.2]
+  randomize_ctrl_delay: True
+  ctrl_delay_step_range: [0, 1]
