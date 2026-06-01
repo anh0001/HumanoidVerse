@@ -50,12 +50,71 @@ def main(override_config: OmegaConf):
             with open(config_path) as file:
                 train_config = OmegaConf.load(file)
 
+            # Capture training-time settings that eval_overrides would otherwise
+            # change in ways that INVALIDATE the trained policy (vs. merely making
+            # eval deployment-like). The soil eval_overrides (a) drop action_scale
+            # 0.7->0.5 and stiffness ~20% (cripples the action->torque map), (b)
+            # tighten termination (adds contact + low-height termination, stricter
+            # tilt) so a fine gait is flagged as a fall, and (c) enable heavy action
+            # smoothing the policy never trained with. Restore all three for a
+            # train-matched eval unless explicitly opted out (eval_match_train=False)
+            # for a deliberately deployment-like eval.
+            train_match = None
+            try:
+                train_match = {
+                    "action_scale": train_config.robot.control.action_scale,
+                    "stiffness": OmegaConf.to_container(
+                        train_config.robot.control.stiffness
+                    ),
+                    "damping": OmegaConf.to_container(
+                        train_config.robot.control.damping
+                    ),
+                    "termination": OmegaConf.to_container(
+                        train_config.env.config.termination
+                    ),
+                    "termination_scales": OmegaConf.to_container(
+                        train_config.env.config.termination_scales
+                    ),
+                    "max_episode_length_s": train_config.env.config.max_episode_length_s,
+                }
+            except Exception:
+                train_match = None
+
             if train_config.eval_overrides is not None:
                 train_config = OmegaConf.merge(
                     train_config, train_config.eval_overrides
                 )
 
             config = OmegaConf.merge(train_config, override_config)
+
+            match_train = bool(
+                OmegaConf.select(config, "eval_match_train", default=True)
+            )
+            if train_match is not None and match_train:
+                config.robot.control.action_scale = train_match["action_scale"]
+                config.robot.control.stiffness = train_match["stiffness"]
+                config.robot.control.damping = train_match["damping"]
+                config.env.config.termination = train_match["termination"]
+                config.env.config.termination_scales = train_match[
+                    "termination_scales"
+                ]
+                # Restore the training episode cap. eval_overrides sets this to
+                # ~infinite (100000s), so a robust policy never terminates and the
+                # eval hangs. The training cap (e.g. 20s) bounds the eval and makes
+                # ep_len directly comparable to train-side numbers (cap = survived).
+                config.env.config.max_episode_length_s = train_match[
+                    "max_episode_length_s"
+                ]
+                # Policy never saw eval-time action smoothing during training.
+                if "eval_action_smoothing" in config.env.config:
+                    config.env.config.eval_action_smoothing = False
+                logger.info(
+                    "eval_match_train=True: restored training actuators "
+                    f"(action_scale={train_match['action_scale']}), training "
+                    "termination, and disabled eval action smoothing over "
+                    "eval_overrides. Set eval_match_train=False for "
+                    "deployment-like eval."
+                )
         else:
             config = override_config
     else:
