@@ -13,8 +13,6 @@
 
 # Hunter Robot Locomotion Training
 
-> **Scope (locked):** This repository targets the **Hunter humanoid robot only** and the **NVIDIA IsaacSim / IsaacLab** simulator only. Other robot configs under `humanoidverse/config/robot/` (`g1`, `h1`, …) and other simulator backends (`isaacgym`, `genesis`) are legacy and not supported by this pipeline. Do not introduce or test against them.
-
 This repository provides a complete training pipeline for the Hunter humanoid robot using IsaacSim/IsaacLab. The framework implements a progressive 3-stage curriculum learning approach that enables robust locomotion policies across diverse terrains, from simple planes to challenging soil conditions.</div>
 
 ## Pretrained Models
