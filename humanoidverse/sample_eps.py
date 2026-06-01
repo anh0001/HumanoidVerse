@@ -307,8 +307,10 @@ def main(override_config: OmegaConf):
         obs_dict, rewards, dones, infos = env.step(actor_state)
 
         # Mirror ppo.py logging: collect infos['episode'] (rew_* means) and
-        # infos['to_log'] (env log_dict incl. dfh_*) for TB export.
-        if tb_writer is not None and isinstance(infos, dict):
+        # infos['to_log'] (env log_dict incl. dfh_*). Accumulate ALWAYS (not just
+        # when a TB writer exists) so the RESULTS block can print dfh_* means for
+        # stdout parsing (DFH descriptor sweep). TB export below stays opt-in.
+        if isinstance(infos, dict):
             ep_i = infos.get("episode")
             if ep_i:
                 row = {k: _scalarize(v) for k, v in ep_i.items()}
@@ -492,6 +494,18 @@ def main(override_config: OmegaConf):
     if cot_list:
         print(f"CoT (J/kg·m): {cot_mean:.2f} ± {cot_ci:.2f}")
     print("="*50)
+
+    # DFH terramechanics diagnostics (means over all eval steps). Printed with a
+    # parseable "DFH_METRIC <key>: <mean>" prefix for the descriptor-sweep harness.
+    # Only present when the DFH layer is attached (terrain.dfh_enabled).
+    _dfh_keys = sorted(k for k in env_log_accum if k.startswith("dfh_"))
+    if _dfh_keys:
+        print("---- DFH diagnostics (mean over eval steps) ----")
+        for k in _dfh_keys:
+            vals = env_log_accum.get(k, [])
+            if vals:
+                print(f"DFH_METRIC {k}: {sum(vals)/len(vals):.6f}")
+        print("="*50)
 
     # Also log results via loguru so they appear in Hydra eval.log and any redirected stdout
     logger.info("==== EVALUATION RESULTS ====")
