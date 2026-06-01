@@ -390,18 +390,6 @@ agricultural soil. The recommended deployment policy walks on mild DFH soil
 [Hugging Face model repo](https://huggingface.co/anhrisn/hunter-dfh-locomotion)
 for the released checkpoints.
 
-# References and Acknowledgements
-
-This Hunter robot training pipeline is built upon HumanoidVerse, a multi-simulator framework for humanoid robot learning. Key inspirations:
-
-- **[Legged Gym](https://github.com/leggedrobotics/legged_gym)**: Foundation for locomotion training and domain randomization
-- **[ProtoMotions](https://github.com/NVlabs/ProtoMotions)**: Hydra configuration management and codebase structure  
-- **[RSL RL](https://github.com/leggedrobotics/rsl_rl)**: PPO algorithm implementation reference
-
-**LeCAR Lab Contributors**: [Gao Jiawei](https://gao-jiawei.com/), [Tairan He](https://tairanhe.com/), [Wenli Xiao](https://wenlixiao-cs.github.io/), [Yuanhang Zhang](https://hang0610.github.io/), [Zi Wang](https://www.linkedin.com/in/zi-wang-b675aa236/), and the full [LeCAR Lab](https://lecar-lab.github.io/) team.
-
-Special thanks to [Guanya Shi](https://www.gshi.me/) for project guidance and support.
-
 # License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
