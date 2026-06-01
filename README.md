@@ -17,6 +17,35 @@
 
 This repository provides a complete training pipeline for the Hunter humanoid robot using IsaacSim/IsaacLab. The framework implements a progressive 3-stage curriculum learning approach that enables robust locomotion policies across diverse terrains, from simple planes to challenging soil conditions.</div>
 
+## Pretrained Models
+
+Trained Hunter locomotion checkpoints are released on the Hugging Face Hub:
+
+<div align="center">
+  <a href="https://huggingface.co/anhrisn/hunter-dfh-locomotion">
+    <img src="assets/hunter_agri_field.png" width="520px"/>
+  </a>
+  <br/>
+  <em>Hunter walking through a maize row-crop field in IsaacSim (DFH deformable, furrowed soil).</em>
+</div>
+
+**Model repo:** [`anhrisn/hunter-dfh-locomotion`](https://huggingface.co/anhrisn/hunter-dfh-locomotion) (public, MIT)
+
+The release covers locomotion on **deformable, furrowed agricultural terrain** modelled with the DFH (Deformable Furrowed Heightfield: Bekker terramechanics + anisotropic friction + sink-coupled lateral drag):
+
+| Group | What | Deploy? |
+|---|---|---|
+| `walkers/mildsoil_walker/model_5050.pt` | True forward walker on mild DFH soil (~0.12 BW drag) | **Recommended deployment target** |
+| `walkers/v7_baseline/model_4250.pt` | Flat-ground walker; warm-start root; used in the agri-field render above | Baseline |
+| `walkers/rigid_walker/model_5050.pt` | Walker on rigid furrows (no soil drag) | Reference |
+| `dfh_chain/` (12 stages) | Drag-survival curriculum (robust balancers, not walkers) | Research / warm-start only |
+
+Each checkpoint folder on the Hub ships its training-time `config.yaml`, so it loads directly:
+
+```bash
+python humanoidverse/eval_agent.py +checkpoint=<downloaded>/walkers/mildsoil_walker/model_5050.pt
+```
+
 ## Features
 - **3-Stage Curriculum Learning**: Progressive training from plane terrain → soft soil → full randomization
 - **Hunter Robot Support**: Optimized for Hunter humanoid robot with complete locomotion pipeline
