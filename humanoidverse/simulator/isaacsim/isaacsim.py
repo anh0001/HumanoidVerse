@@ -588,7 +588,7 @@ class IsaacSim(BaseSimulator):
         # light_config.func("/World/Light", light_config)
 
         light_config1 = sim_utils.DomeLightCfg(
-            intensity=1000.0,
+            intensity=2500.0,   # brighter for visual evals (rendering-only; no effect headless)
             color=(0.98, 0.95, 0.88),
         )
         light_config1.func("/World/DomeLight", light_config1, translation=(1, 0, 10))
@@ -955,9 +955,20 @@ class IsaacSim(BaseSimulator):
             pbr.CreateIdAttr("UsdPreviewSurface")
             pbr.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(0.9)
             pbr.CreateInput("metallic", Sdf.ValueTypeNames.Float).Set(0.0)
+            # UV reader: feed the mesh 'st' primvar into the texture sampler. Without
+            # this the UsdUVTexture has no UV coords and the diffuse samples to black
+            # (why the maize plants rendered as dark silhouettes).
+            st_reader = UsdShade.Shader.Define(stage, f"/{name}/material/st_reader")
+            st_reader.CreateIdAttr("UsdPrimvarReader_float2")
+            st_reader.CreateInput("varname", Sdf.ValueTypeNames.Token).Set("st")
+            st_reader.CreateOutput("result", Sdf.ValueTypeNames.Float2)
             tex = UsdShade.Shader.Define(stage, f"/{name}/material/diffuse_tex")
             tex.CreateIdAttr("UsdUVTexture")
             tex.CreateInput("file", Sdf.ValueTypeNames.Asset).Set(str(texture_path))
+            tex.CreateInput("sourceColorSpace", Sdf.ValueTypeNames.Token).Set("sRGB")
+            tex.CreateInput("st", Sdf.ValueTypeNames.Float2).ConnectToSource(
+                st_reader.ConnectableAPI(), "result"
+            )
             tex.CreateOutput("rgb", Sdf.ValueTypeNames.Float3)
             pbr.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f).ConnectToSource(
                 tex.ConnectableAPI(), "rgb"
