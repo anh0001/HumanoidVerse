@@ -44,6 +44,28 @@ Each checkpoint folder on the Hub ships its training-time `config.yaml`, so it l
 python humanoidverse/eval_agent.py +checkpoint=<downloaded>/walkers/mildsoil_walker/model_5050.pt
 ```
 
+## Fuzzy Soil-State Study (research finding)
+
+This repo also hosts a multi-part replication study of the `wcci2026_hunter` paper's
+**fuzzy Mamdani soil-difficulty index** (a 2-input score over traction = friction μ and
+support = contact stiffness). The question: *does the fuzzy index add value over the raw
+soil numbers?* Answer, across four settings:
+
+| Study | Sim | Fuzzy used as | Result |
+|---|---|---|---|
+| **A** | rigid PhysX | passive label | tracks difficulty (ρ≈0.97) but **adds nothing over raw μ** (support axis physically inert) |
+| **B** | rigid PhysX | curriculum controller | **fuzzy ≈ crisp ≈ fixed** (Welch t=0.45) |
+| **C** | **DFH deformable** | descriptor (both axes physical) | support adds CV-R² **+0.33** over μ; **fuzzy still +0.025** (perm p=0.001) |
+| ①/② | DFH | descriptor / decisions **under noisy sensing** | fuzzy is only **noise-stable, not better** — it camps at easy soil when used to decide |
+
+**Verdict:** the paper's fuzzy mapping confers no demonstrable accuracy/decision value —
+the failure is **structural** (its rule base discards the support ordering), not a
+simulator artifact (Set C proves it even where the support axis is physically active).
+Scope: *this paper's* mapping, not all 2-D/learned descriptors. Full write-up:
+[`docs/experiments/fuzzy_soil_UNIFIED_conclusion.md`](docs/experiments/fuzzy_soil_UNIFIED_conclusion.md)
+(per-study detail: `fuzzy_setA*`, `fuzzy_setB_result.md`, `fuzzy_setC_dfh_result.md`).
+Tooling: `scripts/paper_fuzzy_soil/`, `scripts/setB_fuzzy_curriculum/`, `scripts/dfh_fuzzy/`.
+
 ## Features
 - **3-Stage Curriculum Learning**: Progressive training from plane terrain → soft soil → full randomization
 - **Hunter Robot Support**: Optimized for Hunter humanoid robot with complete locomotion pipeline
