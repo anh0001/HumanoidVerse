@@ -1,0 +1,219 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\graphicspath{{figs/}}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}{\raggedright\insertcaption\par}
+\newcommand{\fig}[2]{\IfFileExists{figs/#1}{\includegraphics[width=#2]{#1}}{\fbox{\textit{[figure: #1]}}}}
+\newcommand{\good}[1]{\textcolor{green!55!black}{\textbf{#1}}}
+\newcommand{\bad}[1]{\textcolor{red!70!black}{\textbf{#1}}}
+
+\title[Fuzzy Soil Index — Replication]{Does a ``Fuzzy Soil Index'' Help a Robot Walk on Soft Ground?}
+\subtitle{A replication study of the \textit{wcci2026\_hunter} fuzzy soil model}
+\author{Hunter humanoid \,/\, IsaacSim \,/\, HumanoidVerse}
+\date{\today}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}{The problem (from the paper)}
+  \textbf{Goal:} make a humanoid robot walk on \textbf{agricultural soil} — furrowed,
+  deformable ground where the feet sink and slip.
+  \begin{itemize}
+    \item Real soil is \textbf{not uniform}: it changes from firm \& grippy to soft \& slippery.
+    \item Two things vary independently:
+      \begin{itemize}
+        \item \textbf{Traction} — how grippy the surface is (friction $\mu$).
+        \item \textbf{Support} — how firm it is / how much the foot sinks (stiffness).
+      \end{itemize}
+    \item The robot must \textbf{judge how hard the current soil is} to adapt and stay upright.
+  \end{itemize}
+  \vfill
+  \begin{block}{The paper's pitch}
+    Combine traction + support into one human-readable ``\textbf{soil difficulty score}''
+    using \textbf{fuzzy logic}, and use it to drive training / reduce foot slip ($>$95\% claimed).
+  \end{block}
+\end{frame}
+
+\begin{frame}{What the ``fuzzy soil index'' actually is}
+  A \textbf{fuzzy (Mamdani) controller}: two inputs $\to$ one difficulty score.
+  \begin{columns}
+    \begin{column}{0.55\textwidth}
+      \begin{itemize}
+        \item Inputs: \textbf{traction} $\mu$ and \textbf{support} (stiffness).
+        \item Each is graded \textit{Low / Med / High} with \textbf{smooth} (fuzzy) boundaries.
+        \item Rules $\to$ soil is \textit{Easy / Moderate / Hard}.
+        \item Output: one number $d\in[0.2,0.8]$ (higher = harder).
+      \end{itemize}
+      \textbf{Selling points:} interpretable bins, smooth interpolation, blends two factors.
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \centering
+      \fbox{\parbox{0.95\linewidth}{\centering
+        \textbf{Two soil ``dials''}\\[4pt]
+        traction $\mu$ \;\&\; support (firmness)\\[6pt]
+        $\downarrow$ fuzzy rules $\downarrow$\\[6pt]
+        \textbf{difficulty} = Easy / Mod / Hard}}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Our question}
+  \begin{block}{}
+    \centering \Large Does the fuzzy index \textbf{actually add value} over just using the
+    \textbf{raw soil numbers}?
+  \end{block}
+  \vfill
+  \begin{itemize}
+    \item A fuzzy score is only useful if it \textbf{beats the raw measurements} it is built from.
+    \item We replicate the recipe on the \textbf{Hunter} humanoid in \textbf{IsaacSim} (HumanoidVerse)
+          and test the index four ways.
+    \item We judge it as a \textbf{difficulty descriptor} and as a \textbf{control signal}.
+  \end{itemize}
+  \vfill
+  \footnotesize Honest-negative friendly: we want the right answer, not a flattering one.
+\end{frame}
+
+\begin{frame}{How we tested it — four settings}
+  \centering
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    \textbf{Study} & \textbf{Simulator} & \textbf{Fuzzy used as} & \textbf{Support axis} \\
+    \midrule
+    A   & rigid PhysX        & passive \textbf{label}       & physically \bad{inert} \\
+    B   & rigid PhysX        & \textbf{curriculum} controller & inert \\
+    C   & \textbf{DFH deformable} & \textbf{descriptor}      & physically \good{active} \\
+    \,\textcircled{1}\,\textcircled{2} & DFH (+ noisy sensing) & descriptor / decisions & active \\
+    \bottomrule
+  \end{tabular}
+  \vfill
+  \footnotesize Each study closes the previous one's loophole. ``Support axis'' = whether soil
+  \textit{firmness} actually does anything in that simulator.
+\end{frame}
+
+\begin{frame}{Sets A \& B (rigid simulator)}
+  \textbf{Set A — fuzzy as a label:} does $d$ track difficulty / beat raw $\mu$?
+  \begin{itemize}
+    \item $d$ orders soil correctly (Spearman $\rho\approx0.97$) \dots
+    \item \dots but adds \bad{nothing} over raw friction $\mu$.
+    \item \textbf{Why:} rigid PhysX has \textbf{no real ``firmness'' axis} — the foot can't sink,
+          so the 2-dial model collapses to 1 dial (friction).
+  \end{itemize}
+  \vspace{4pt}
+  \textbf{Set B — fuzzy drives the training curriculum:}
+  \begin{itemize}
+    \item fuzzy pacing $\approx$ crisp threshold $\approx$ fixed schedule (no significant difference).
+  \end{itemize}
+  \vfill
+  \begin{block}{Catch}
+    A 2-input fuzzy model can't shine when \textbf{one input does nothing}.
+    \textbf{We need a simulator where soil firmness is physically real.}
+  \end{block}
+\end{frame}
+
+\begin{frame}{The fix: DFH deformable soil}
+  \textbf{DFH} (Deformable Furrowed Heightfield) adds the missing physics:
+  feet \textbf{sink} (Bekker), generate \textbf{sideways drag}, and the soil \textbf{deforms}.
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \centering \fig{dfh_support_axis.png}{\linewidth}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \good{The support axis is now real:}
+      \begin{itemize}
+        \item Soft soil ($K{=}1$): feet sink $\sim$\textbf{49\,mm}.
+        \item Firm soil ($K{=}8$): sink $\sim$\textbf{16\,mm}; drag drops $33\to9$\,N.
+        \item Confirmed by a force-off control (no forces $\Rightarrow$ no effect).
+      \end{itemize}
+      \textit{Same robot, same gait — only the soil firmness changes. You can see it.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Set C: the key result}
+  Now \textbf{both} soil dials are physical. Does the fuzzy index finally add value?
+  \begin{columns}
+    \begin{column}{0.52\textwidth}
+      \centering \fig{dfh_fuzzy_vs_raw.png}{\linewidth}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \begin{itemize}
+        \item Raw soil numbers \good{strongly predict} difficulty (+0.33 to +0.42).
+        \item The paper's \textbf{fuzzy index} adds \bad{+0.025} — essentially nothing
+              (permutation $p{=}0.001$).
+      \end{itemize}
+      \begin{block}{Sharp finding}
+        Even where firmness \textbf{is} physically active, the fuzzy mapping \textbf{fails to use it}.
+        The problem is the \textbf{fuzzy model's structure}, \textbf{not} the simulator.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Giving fuzzy its best shot: noisy soil sensing}
+  Fuzzy logic's real strength is \textbf{tolerating imprecise inputs}. A real robot only
+  \textit{estimates} the soil. So we added sensing noise.
+  \begin{columns}
+    \begin{column}{0.55\textwidth}
+      \centering \fig{fuzzy_noise_analysis.png}{\linewidth}
+    \end{column}
+    \begin{column}{0.43\textwidth}
+      \begin{itemize}
+        \item Fuzzy \textbf{is} noise-stable (flat line) and overtakes raw \textit{only} at
+              extreme noise.
+        \item But it wins by being \bad{stable, not accurate} — raw still \textbf{orders soils better}.
+        \item \textbf{Decisions} (\textcircled{2}): a fuzzy-driven curriculum \bad{camps on easy soil}
+              and never advances.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vfill
+  \footnotesize Stability of an \textit{uninformative} signal — it doesn't swing because it barely says anything.
+\end{frame}
+
+\begin{frame}{Verdict}
+  \begin{block}{Bottom line}
+    Across rigid \textbf{and} deformable soil, the paper's fuzzy soil index shows
+    \textbf{no demonstrable value} over the raw soil numbers — as a label, a curriculum,
+    a descriptor, or under noisy sensing.
+  \end{block}
+  \begin{itemize}
+    \item \good{Replicates:} the friction-curriculum \textbf{survival} benefit; DFH genuinely
+          restores the firmness axis.
+    \item \bad{Does not add value:} the fuzzy mapping collapses two soil factors into a coarse
+          score and \textbf{discards the useful information}.
+    \item The failure is \textbf{structural}, not a simulator artifact (Set C proves it).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Scope \& what would change the answer}
+  \textbf{Honest scope:}
+  \begin{itemize}
+    \item This is about \textbf{this paper's specific fuzzy mapping} — \textit{not} all 2-D or
+          learned terrain descriptors.
+    \item DFH is an \textbf{uncalibrated} deformable-soil surrogate; one frozen walker.
+    \item Not a disproof of the paper on \textbf{real} soil — a non-replication \textit{in simulation}.
+  \end{itemize}
+  \textbf{What could make ``fuzzy matter'':}
+  \begin{itemize}
+    \item Redesign the fuzzy rules so they \textbf{actually use the firmness axis} (they ignore it
+          at mid-traction), or use a \textbf{learned} 2-D descriptor.
+    \item Train a soil-robust walker (removes the single-policy caveat).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+  \centering
+  \Large \textbf{A fuzzy score is only useful if it beats the numbers it's made from.}\\[10pt]
+  \normalsize Here, it doesn't.\\[16pt]
+  \footnotesize
+  Code \& full write-ups: \texttt{docs/experiments/fuzzy\_soil\_UNIFIED\_conclusion.md};
+  models on Hugging Face \texttt{anhrisn/hunter-dfh-locomotion}.
+\end{frame}
+
+\end{document}
