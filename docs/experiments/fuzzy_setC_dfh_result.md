@@ -126,6 +126,49 @@ predictions) is the open question Experiment ② tests (fuzzy vs raw as a contro
 signal under noisy soil estimates). Artifacts: `dfh_fuzzy/analyze_fuzzy_noise.py`,
 `logs/DFH_fuzzy/fuzzy_noise_analysis.{txt,png}`.
 
+## Addendum — Experiment ②: does fuzzy's noise-stability yield better DECISIONS? (proxy)
+
+Exp① showed fuzzy is *stable* under noisy soil sensing but loses *discrimination*. Does
+that stability buy better **decisions**? Per Codex, a cheap closed-loop **proxy** gates
+the (expensive) GPU version: a noisy difficulty-tracking curriculum over the measured DFH
+grid (transition model = `sweep_rigid.csv`). The scheduler knows the nominal soil ladder
+but decides when to advance from a NOISY estimate of current-soil difficulty; **raw and
+fuzzy arms differ only in the estimate mapping** (same ladder, target, noise, scheduler).
+Metrics: productive-band fraction (higher=better), curriculum reversals (lower=better),
+hardest soil reached (camping check); vs a clean-sensor `oracle`. 1500 rollouts/arm/σ.
+
+| σ | arm | productive | reversals | maxY (hardest reached) |
+|---|---|---|---|---|
+| 0.3 | oracle | 0.625 | 0.0 | 0.90 |
+| 0.3 | raw | 0.523 | 2.29 | 0.96 |
+| 0.3 | **fuzzy** | **0.092** | **0.43** | **−0.73** |
+| 0.4 | raw | 0.461 | 3.00 | 0.88 |
+| 0.4 | **fuzzy** | **0.150** | **0.99** | **−0.29** |
+
+**Result — fuzzy makes WORSE decisions, not better.** It has 67–81% fewer reversals
+(stable ✓) but reaches the productive difficulty band only 9–15% of the time vs raw's
+46–52%, because it **camps at easy soil and never advances** (maxY stays negative = easy
+end; raw and oracle reach the productive zone). This holds **even at σ=0**. Mechanism:
+Exp①'s compression bias — fuzzy estimates easy soil as "already moderately hard," so a
+controller acting on it never progresses. **Its stability is the stability of an
+uninformative signal.** GO/NO-GO gate (Δproductive≥+0.10, ≥30% fewer reversals, not
+camping, competitive with oracle): **FAILS at every σ** (Δproductive −0.31 to −0.43,
+camps=True). → **GPU Exp② not justified; not run.**
+
+**Terminal:** *fuzzy is noise-stable, but that stability does not translate into better
+curriculum decisions — it trades away resolution and camps at easy soil.* Artifacts:
+`dfh_fuzzy/proxy_curriculum.py`, `logs/DFH_fuzzy/proxy_curriculum.txt`.
+
+## Overall answer to "how to show fuzzy is important here"
+
+Across the fair-shot experiments (①descriptor-under-noise, ②decision-under-noise), the
+**one** regime where fuzzy beats raw is *prediction stability under extreme sensing
+noise* (Exp①, σ≈0.4) — and even that is "less wrong, not more right" (it loses ordering)
+and does **not** yield better decisions (Exp②). So the honest, defensible position is:
+the paper's fuzzy mapping does **not** add demonstrable value here for accuracy or
+control; its only edge is noise-stability bought by discarding resolution. (Scope: this
+paper's specific Mamdani mapping — not all 2-D or learned terrain descriptors.)
+
 ## Artifacts
 
 Code: `scripts/dfh_fuzzy/` (`run_dfh_fuzzy_sweep.py`, `analyze_dfh_fuzzy.py`,
