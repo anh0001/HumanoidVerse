@@ -1,0 +1,18 @@
+# @package _global_
+## ---------------------------------------------------------------------------
+#  DFH soil + decorative maize plants — the "agri-field" visual demo scene.
+#  Inherits the DFH Stage-1 deformable furrowed soil and adds the (no-physics)
+#  maize row-crop plants used in terrain_furrows_with_maize.
+## ---------------------------------------------------------------------------
+
+defaults:
+  - terrain_dfh_stage1_easy        # DFH deformable furrowed soil (Bekker + drag)
+
+terrain:
+  # Decorative maize plants (visual only; no collision/physics) — same as
+  # terrain_furrows_with_maize. Positions from data/assets/maize/maize_positions.json.
+  maize_plants:
+    enabled: True
+    max_count: 200
+    scale: 0.683
+    z_offset: 0.0
