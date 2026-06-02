@@ -90,6 +90,42 @@ structure, not the sim.
 - DFH Bekker params are uncalibrated defaults ("loose dry sand"); this is a deformable-
   soil *surrogate*, not calibrated real soil.
 
+## Addendum — Experiment ①: fuzzy under IMPRECISE soil sensing (where fuzzy could matter)
+
+The descriptor tests above feed predictors the EXACT (μ, K), so raw numbers trivially
+win (fuzzy only discards info). But fuzzy logic's actual design strength is graceful
+degradation under **imprecise/noisy inputs** — a real robot only *estimates* soil grip
+and firmness. So: fit each difficulty predictor on clean soil params, then at test time
+feed NOISY estimates (μ and log₂K perturbed by N(0, σ·range)), Monte-Carlo (400 reps/σ),
+and compare prediction error. Predictors: raw (μ, log₂K continuous), crisp (hard-bin
+rule base), fuzzy (smooth Mamdani). CPU-only; reuses `sweep_rigid.csv` (41 walking cells).
+
+| noise σ | RMSE raw | RMSE crisp | RMSE fuzzy | Spearman raw / fuzzy | best (RMSE) |
+|---|---|---|---|---|---|
+| 0.00 | 1.62 | 2.10 | 2.27 | 0.75 / 0.34 | raw |
+| 0.10 | 1.69 | 2.11 | 2.27 | 0.73 / 0.31 | raw |
+| 0.20 | 1.88 | 2.22 | 2.30 | 0.67 / 0.31 | raw |
+| 0.40 | 2.52 | 2.45 | **2.39** | 0.52 / 0.24 | **fuzzy** |
+
+**RMSE rise σ 0→0.4: raw +0.90 vs fuzzy +0.12** — fuzzy's smooth bins are nearly
+noise-invariant, so it overtakes raw once sensing is bad enough (~σ≥0.3–0.4).
+
+**Honest reading — a narrow, qualified win:**
+- Fuzzy only wins at **extreme** sensing noise (σ=40% of the soil range). At realistic
+  noise, raw is better.
+- It wins by being **stable, not accurate**: even at σ=0.4, raw still *orders* soils
+  better (Spearman 0.52 vs 0.24). Fuzzy's smoothing squashes predictions toward a safe
+  middle — "less wrong," not "more right" — so it loses discrimination.
+- The paper's "smooth beats crisp" claim also only materializes under heavy noise (at
+  low σ, crisp 2.10 beats fuzzy 2.27).
+
+**So the one defensible "fuzzy is important" claim is: *robust difficulty assessment
+under imprecise soil sensing*** — a noise-stability benefit traded against resolution.
+NOT an accuracy claim. Whether that stability yields better *decisions* (not just
+predictions) is the open question Experiment ② tests (fuzzy vs raw as a control/curriculum
+signal under noisy soil estimates). Artifacts: `dfh_fuzzy/analyze_fuzzy_noise.py`,
+`logs/DFH_fuzzy/fuzzy_noise_analysis.{txt,png}`.
+
 ## Artifacts
 
 Code: `scripts/dfh_fuzzy/` (`run_dfh_fuzzy_sweep.py`, `analyze_dfh_fuzzy.py`,
