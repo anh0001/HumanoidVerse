@@ -13,9 +13,36 @@
 
 # Hunter Robot Locomotion Training
 
-> **Scope (locked):** This repository targets the **Hunter humanoid robot only** and the **NVIDIA IsaacSim / IsaacLab** simulator only. Other robot configs under `humanoidverse/config/robot/` (`g1`, `h1`, …) and other simulator backends (`isaacgym`, `genesis`) are legacy and not supported by this pipeline. Do not introduce or test against them.
-
 This repository provides a complete training pipeline for the Hunter humanoid robot using IsaacSim/IsaacLab. The framework implements a progressive 3-stage curriculum learning approach that enables robust locomotion policies across diverse terrains, from simple planes to challenging soil conditions.</div>
+
+## Pretrained Models
+
+Trained Hunter locomotion checkpoints are released on the Hugging Face Hub:
+
+<div align="center">
+  <a href="https://huggingface.co/anhrisn/hunter-dfh-locomotion">
+    <img src="assets/hunter_agri_field.png" width="520px"/>
+  </a>
+  <br/>
+  <em>Hunter walking through a maize row-crop field in IsaacSim (DFH deformable, furrowed soil).</em>
+</div>
+
+**Model repo:** [`anhrisn/hunter-dfh-locomotion`](https://huggingface.co/anhrisn/hunter-dfh-locomotion) (public, MIT)
+
+The release covers locomotion on **deformable, furrowed agricultural terrain** modelled with the DFH (Deformable Furrowed Heightfield: Bekker terramechanics + anisotropic friction + sink-coupled lateral drag):
+
+| Group | What | Deploy? |
+|---|---|---|
+| `walkers/mildsoil_walker/model_5050.pt` | True forward walker on mild DFH soil (~0.12 BW drag) | **Recommended deployment target** |
+| `walkers/v7_baseline/model_4250.pt` | Flat-ground walker; warm-start root; used in the agri-field render above | Baseline |
+| `walkers/rigid_walker/model_5050.pt` | Walker on rigid furrows (no soil drag) | Reference |
+| `dfh_chain/` (12 stages) | Drag-survival curriculum (robust balancers, not walkers) | Research / warm-start only |
+
+Each checkpoint folder on the Hub ships its training-time `config.yaml`, so it loads directly:
+
+```bash
+python humanoidverse/eval_agent.py +checkpoint=<downloaded>/walkers/mildsoil_walker/model_5050.pt
+```
 
 ## Features
 - **3-Stage Curriculum Learning**: Progressive training from plane terrain → soft soil → full randomization
@@ -120,6 +147,107 @@ project_name=CurriculumStage2Continue \
 experiment_name=Hunter_Stage2_FromStage1 \
 headless=True
 ```
+
+# Furrowed & Deformable Soil (DFH) Training
+
+This is the core contribution: walking on **furrowed, deformable agricultural
+soil**. Two terrain families are used — geometric **furrows** (height field rows)
+and the **DFH** soil model (Deformable Furrowed Heightfield: Bekker
+terramechanics + anisotropic friction + sink-coupled lateral drag, where
+`drag = k · sinkage · normal_force`, clamped at `max_drag_force_n`).
+
+## Furrows curriculum (geometry only)
+
+Staged furrow terrain, warm-started stage to stage:
+
+```bash
+# Stage 1: easy furrows (shallow, aligned)
+python humanoidverse/train_agent.py \
++robot=hunter/hunter +simulator=isaacsim \
++exp=locomotion_soil +algo=ppo_soil \
++obs=loco/leggedloco_obs_singlestep_withlinvel \
++rewards=loco/reward_hunter_soil_locomotion \
++terrain=terrain_furrows_stage1_easy \
+num_envs=2048 headless=True \
+project_name=SoilFurrows experiment_name=Hunter_Furrows_S1_Easy
+
+# Stage 2 (medium) / Stage 3 (full): swap terrain + warm-start from previous stage
+#   +terrain=terrain_furrows_stage2_medium   (then terrain_furrows_stage3_full)
+#   +checkpoint=logs/SoilFurrows/<run>/model_<iter>.pt
+```
+
+## DFH soil — walker (recommended)
+
+Re-derives a forward **walker** on DFH soil using the flat-ground walking
+objective. This is the recipe behind `walkers/mildsoil_walker` on Hugging Face.
+A convenience wrapper exists at `extensions/dfh/scripts/walk_paired_control_arm.sh`
+(takes `TERRAIN`, `RUN_NAME`, `WARM_CKPT`, `DFH_OVERRIDES`, `ITERS`), or run it directly:
+
+```bash
+python humanoidverse/train_agent.py \
++simulator=isaacsim +exp=locomotion algo=ppo_roa \
++robot=hunter/hunter \
++obs=loco/leggedloco_obs_history_wolinvel \
++terrain=terrain_dfh_stage1_easy \
++rewards=loco/reward_hunter_locomotion \
+++rewards.reward_scales.tracking_lin_vel=4.0 \
++domain_rand=NO_domain_rand \
+checkpoint=logs/FixedStageFv7/<run>/model_4250_std055.pt auto_load_latest=False \
+num_envs=2048 headless=True \
+++env.config.locomotion_command_ranges.lin_vel_x=[0.25,0.45] \
+++env.config.locomotion_command_ranges.lin_vel_y=[0.0,0.0] \
+++env.config.locomotion_command_ranges.ang_vel_yaw=[0.0,0.0] \
+++terrain.dfh.force_coupling.sinkage_drag_k=8.0 \
+++terrain.dfh.force_coupling.max_drag_force_n=200.0 \
+++terrain.dfh.params.sinkage_floor_m=-0.05 \
+project_name=DFH_Hunter_ROA experiment_name=Hunter_DFH_Walker_S1
+```
+
+The DFH soil is activated by the `terrain_dfh_*` config (`dfh_enabled: True`), not
+by `+exp`. Advance the soil dose **one axis at a time** (sinkage depth *or* drag),
+scaling `max_drag_force_n` with `sinkage_drag_k` to keep the saturation ratio
+(~0.047) flat.
+
+## DFH soil — drag-survival curriculum (research)
+
+The staged dose-ladder that hardens the policy against heavy drag (produces
+robust *balancers*, archived as `dfh_chain/` on Hugging Face):
+
+```bash
+# Stage 1 (warm-started from the v7 walker); see scripts for S1.5→S3 chain
+bash extensions/dfh/scripts/train_dfh_s1_from_v7.sh          # full run
+SMOKE=1 bash extensions/dfh/scripts/train_dfh_s1_from_v7.sh  # 50-iter smoke test
+```
+
+# Testing on Furrow / DFH Soil
+
+## Qualitative rollout (visual, with maize field)
+
+```bash
+python humanoidverse/eval_agent.py \
++simulator=isaacsim \
++checkpoint=logs/FixedStageFv7/<run>/model_4250.pt \
++terrain=terrain_furrows_with_maize \
++eval_command=[0.3,0.0,0.0] \
+num_envs=1 headless=False
+```
+
+## Quantitative metrics (velocity tracking, episode length, falls)
+
+```bash
+# DFH soil (or swap +terrain=terrain_furrows_stage1_easy for furrows)
+python humanoidverse/sample_eps.py \
++simulator=isaacsim \
++checkpoint=<your_model>.pt \
++terrain=terrain_dfh_stage1_easy \
++eval_command=[0.3,0.0,0.0] \
+num_envs=64 +num_episodes=64 headless=True
+```
+
+> Evaluation is **train-matched** by default (`eval_match_train=True`): the harness
+> restores the training-time control gains, termination, and episode cap so a policy
+> is graded under the conditions it was trained in. Keep the eval command within the
+> trained range (`lin_vel_x ∈ [-0.3, 0.3]`) — higher commands are out-of-distribution.
 
 # Evaluation Scenarios
 
@@ -253,23 +381,12 @@ python humanoidverse/train_agent.py \
 
 # Training Results
 
-After completing the 3-stage curriculum (approximately 3000-5000 epochs total), the Hunter robot achieves robust locomotion across diverse terrains:
-
-<div align="center">
-  <img src="assets/isaacsim_isaacsim.gif" width="800px"/>
-</div>
-
-# References and Acknowledgements
-
-This Hunter robot training pipeline is built upon HumanoidVerse, a multi-simulator framework for humanoid robot learning. Key inspirations:
-
-- **[Legged Gym](https://github.com/leggedrobotics/legged_gym)**: Foundation for locomotion training and domain randomization
-- **[ProtoMotions](https://github.com/NVlabs/ProtoMotions)**: Hydra configuration management and codebase structure  
-- **[RSL RL](https://github.com/leggedrobotics/rsl_rl)**: PPO algorithm implementation reference
-
-**LeCAR Lab Contributors**: [Gao Jiawei](https://gao-jiawei.com/), [Tairan He](https://tairanhe.com/), [Wenli Xiao](https://wenlixiao-cs.github.io/), [Yuanhang Zhang](https://hang0610.github.io/), [Zi Wang](https://www.linkedin.com/in/zi-wang-b675aa236/), and the full [LeCAR Lab](https://lecar-lab.github.io/) team.
-
-Special thanks to [Guanya Shi](https://www.gshi.me/) for project guidance and support.
+The Hunter robot learns robust forward locomotion on furrowed, deformable
+agricultural soil. The recommended deployment policy walks on mild DFH soil
+(~0.12 BW lateral drag) while tracking forward velocity commands. See the
+[agri-field render](#pretrained-models) above for a qualitative rollout, and the
+[Hugging Face model repo](https://huggingface.co/anhrisn/hunter-dfh-locomotion)
+for the released checkpoints.
 
 # License
 
