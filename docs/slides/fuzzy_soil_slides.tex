@@ -62,6 +62,14 @@
   \end{columns}
 \end{frame}
 
+\begin{frame}{First impression: the fuzzy index looks convincing}
+  Sweep the soil from grippy to slippery, and plot the fuzzy score $d$ against the
+  \textbf{real measured difficulty}:
+  \begin{center}\fig{fuzzy_validation.png}{0.97\linewidth}\end{center}
+  \good{$d$ tracks difficulty almost perfectly} (slip, falls, episode length, velocity error;
+  Spearman $|\rho|\approx 0.97$). \textbf{This is the chart that makes the fuzzy index look good.}
+\end{frame}
+
 \begin{frame}{Our question}
   \begin{block}{}
     \centering \Large Does the fuzzy index \textbf{actually add value} over just using the
@@ -110,9 +118,28 @@
     \item fuzzy pacing $\approx$ crisp threshold $\approx$ fixed schedule (no significant difference).
   \end{itemize}
   \vfill
-  \begin{block}{Catch}
-    A 2-input fuzzy model can't shine when \textbf{one input does nothing}.
-    \textbf{We need a simulator where soil firmness is physically real.}
+  \footnotesize But the $\rho\approx0.97$ chart looked so good --- what's going on? $\to$
+\end{frame}
+
+\begin{frame}{Set A/B --- the full evidence (rigid simulator)}
+  \begin{center}\fig{experiments_summary.png}{0.80\linewidth}\end{center}
+  \scriptsize
+  \textbf{(1)} survival \good{replicates} --- paper recipe walks $8.8\times$ longer\quad
+  \textbf{(2)} slip \bad{does NOT} replicate (worse, not $<11$)\\
+  \textbf{(3)} reward gate \& contact compliance are \bad{inert} (overlap within noise)\quad
+  \textbf{(4)} fuzzy $d$ tracks friction ($\rho{=}0.97$) but \bad{adds nothing over raw $\mu$}
+\end{frame}
+
+\begin{frame}{The catch behind the pretty chart}
+  The $\rho\approx0.97$ looks great --- but it is \textbf{only the traction (friction) axis}.
+  \begin{itemize}
+    \item In rigid PhysX the \textbf{support/firmness axis does nothing} (feet can't sink).
+    \item So $d$ is really just a \textbf{re-labelling of friction} $\mu$ --- it carries
+          \bad{no information that $\mu$ doesn't already give}.
+    \item A 2-input fuzzy model can't earn its keep when \textbf{one input is dead}.
+  \end{itemize}
+  \begin{block}{So we need\dots}
+    a simulator where soil \textbf{firmness is physically real} --- next.
   \end{block}
 \end{frame}
 
