@@ -4,6 +4,7 @@
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{xcolor}
+\usepackage[normalem]{ulem}
 \graphicspath{{figs/}}
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{caption}{\raggedright\insertcaption\par}
@@ -86,9 +87,9 @@
   \footnotesize Honest-negative friendly: we want the right answer, not a flattering one.
 \end{frame}
 
-\begin{frame}{How we tested it — four settings}
+\begin{frame}{How we tested it — five settings}
   \centering
-  \renewcommand{\arraystretch}{1.25}
+  \renewcommand{\arraystretch}{1.2}
   \begin{tabular}{@{}llll@{}}
     \toprule
     \textbf{Study} & \textbf{Simulator} & \textbf{Fuzzy used as} & \textbf{Support axis} \\
@@ -97,11 +98,13 @@
     B   & rigid PhysX        & \textbf{curriculum} controller & inert \\
     C   & \textbf{DFH deformable} & \textbf{descriptor}      & physically \good{active} \\
     \,\textcircled{1}\,\textcircled{2} & DFH (+ noisy sensing) & descriptor / decisions & active \\
+    \textbf{D} & DFH & \textbf{redesigned} (fixed) index & active \\
     \bottomrule
   \end{tabular}
   \vfill
   \footnotesize Each study closes the previous one's loophole. ``Support axis'' = whether soil
-  \textit{firmness} actually does anything in that simulator.
+  \textit{firmness} actually does anything in that simulator. \textbf{D} = we \textit{fix} the
+  broken rules and re-test.
 \end{frame}
 
 \begin{frame}{Sets A \& B (rigid simulator)}
@@ -203,18 +206,68 @@
   \footnotesize Stability of an \textit{uninformative} signal — it doesn't swing because it barely says anything.
 \end{frame}
 
+\begin{frame}{Set D: can we \textit{fix} the broken fuzzy rules?}
+  Set C blamed the \textbf{rule structure} (it ignores firmness). So we redesigned it ---
+  \textbf{only} the rule table, so support now matters at \textit{every} traction level.
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \renewcommand{\arraystretch}{1.2}
+      \begin{tabular}{@{}lc@{}}
+        \toprule
+        \textbf{Descriptor} & \textbf{Captures firmness?} \\
+        \midrule
+        raw soil numbers       & \good{+0.334} (ceiling) \\
+        paper fuzzy index      & \bad{+0.025} (blind) \\
+        \textbf{redesigned fuzzy} & \good{+0.416} \\
+        \bottomrule
+      \end{tabular}\\[4pt]
+      \footnotesize LOO-CV $R^2$ gain over $\mu$ (higher = uses firmness more).
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \good{The fix works — as a descriptor:}
+      \begin{itemize}
+        \item Firmness signal jumps \textbf{0.025 $\to$ 0.416} ($\sim$16$\times$).
+        \item The original failure was \textbf{structural and fixable}, not the simulator.
+      \end{itemize}
+      \footnotesize \textit{Honest:} the fix is informed by the data's firm=easier trend —
+      a \textbf{corrected} descriptor, not a vindication of the paper's rules. Raw is still
+      the ceiling it \textit{matches}.
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Set D: but does the fix help the robot \textit{train}?}
+  The real prize: use the fixed index to \textbf{pace the training curriculum} (when to move
+  to harder soil). Cheap gated proxy, vetted with an independent model.
+  \begin{itemize}
+    \item As a single score: \bad{fails} — it trails the raw numbers and thrashes.
+    \item In its \textbf{best form} $[\mu,\text{fuzzy}]$: \good{fully fixes} the camping and
+          \textbf{matches} the raw numbers' accuracy\dots
+    \item \dots but only \textbf{ties} them --- it carries the \bad{same information} as raw
+          $[\mu,\log_2 K]$, never beats it (pre-registered \textbf{EQUIV}, not a win).
+  \end{itemize}
+  \begin{block}{Decision}
+    \textbf{GPU training run not justified} ($\sim$24\,h saved). A better \textit{description}
+    of the soil does \textbf{not} become a better \textit{training signal} than the raw numbers.
+  \end{block}
+\end{frame}
+
 \begin{frame}{Verdict}
   \begin{block}{Bottom line}
     Across rigid \textbf{and} deformable soil, the paper's fuzzy soil index shows
     \textbf{no demonstrable value} over the raw soil numbers — as a label, a curriculum,
-    a descriptor, or under noisy sensing.
+    a descriptor, or under noisy sensing. And when we \textbf{fix} it, it becomes a good
+    descriptor but \textbf{still only ties} raw for training.
   \end{block}
   \begin{itemize}
     \item \good{Replicates:} the friction-curriculum \textbf{survival} benefit; DFH genuinely
           restores the firmness axis.
-    \item \bad{Does not add value:} the fuzzy mapping collapses two soil factors into a coarse
+    \item \bad{Does not add value:} the paper's mapping collapses two soil factors into a coarse
           score and \textbf{discards the useful information}.
-    \item The failure is \textbf{structural}, not a simulator artifact (Set C proves it).
+    \item The failure is \textbf{structural} (Set C), and \textbf{fixable} (Set D) — but the fix
+          buys \textbf{interpretability, not performance}: raw is the ceiling fuzzy can reach,
+          not exceed.
   \end{itemize}
 \end{frame}
 
@@ -228,8 +281,11 @@
   \end{itemize}
   \textbf{What could make ``fuzzy matter'':}
   \begin{itemize}
-    \item Redesign the fuzzy rules so they \textbf{actually use the firmness axis} (they ignore it
-          at mid-traction), or use a \textbf{learned} 2-D descriptor.
+    \item \sout{Redesign the rules to use the firmness axis} — \good{done (Set D)}: it works as a
+          \textbf{descriptor} but still only \textbf{ties} raw for training.
+    \item A genuinely \textbf{new} claim with \textbf{noise-stability as the goal}, or a setting
+          where the raw soil numbers \textbf{aren't available} (e.g.\ a real robot with only a
+          coarse visual soil label, no precise sensors).
     \item Train a soil-robust walker (removes the single-policy caveat).
   \end{itemize}
 \end{frame}
@@ -237,7 +293,10 @@
 \begin{frame}{Summary}
   \centering
   \Large \textbf{A fuzzy score is only useful if it beats the numbers it's made from.}\\[10pt]
-  \normalsize Here, it doesn't.\\[16pt]
+  \normalsize Here it doesn't — even after we fixed it, the best it does is \textbf{tie}.\\[8pt]
+  \footnotesize \textit{Fuzzy soil difficulty is a strong, interpretable \textbf{description} of
+  terrain hardness, but it does not improve curriculum \textbf{performance} over the raw soil
+  parameters for Hunter locomotion.}\\[14pt]
   \footnotesize
   Code \& full write-ups: \texttt{docs/experiments/fuzzy\_soil\_UNIFIED\_conclusion.md};
   models on Hugging Face \texttt{anhrisn/hunter-dfh-locomotion}.

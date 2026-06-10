@@ -18,6 +18,13 @@ support information), not a simulator artifact. Scope: this is about *this paper
 specific Mamdani mapping*, **not** a claim that 2-D or learned terrain descriptors are
 useless.
 
+**Constructive coda (Set D):** we then *fixed* the structural failure — a rule-table
+redesign makes the index load-bearing as a **descriptor** (support-axis CV-R² gain
+0.025 → 0.416) — and asked whether that fix improves **training**. It does not: the fixed
+index carries the same information as the raw soil numbers, so as a curriculum signal it
+**ties raw and never beats it**. Net: fuzzy is a good interpretable *descriptor*, not a
+source of *performance*.
+
 ## The studies (each closes the previous one's loophole)
 
 | Study | Sim | Fuzzy used as | Support axis | Verdict |
@@ -27,6 +34,8 @@ useless.
 | **C** | **DFH deformable** | **descriptor** | physically **active & predictive** | support adds CV-R² **+0.33** over μ; **fuzzy still +0.025** (p=0.001) |
 | ① | DFH data | descriptor under **noisy sensing** | active | fuzzy **noise-stable** but "stable not accurate"; wins only at σ=0.4 |
 | ② | DFH data (proxy) | **decision** signal under noise | active | fuzzy stability does **not** help decisions — it **camps at easy soil** |
+| **D-desc** | DFH data | **REDESIGNED** load-bearing descriptor | active | rule-table fix lifts CV-R² gain **0.025 → 0.416** — failure was structural & **fixable** |
+| **D-curr** | DFH data (proxy) | redesigned index as **curriculum** signal | active | even fixed, `[μ,d_v2]` **ties raw, never beats** (EQUIV) → GPU **no-go** |
 
 ### Set A — fuzzy as a label (rigid)
 Recipe's **survival benefit replicates** (~8.85× episode length vs v7 baseline, driven by
@@ -66,6 +75,25 @@ shadow control + policy coverage screen.
   **camps at easy soil** (even at σ=0). Stability of an uninformative signal → GPU
   experiment not justified, not run.
 
+### Set D — fixing the structure, then re-testing for a training gain
+Set C pinned the failure on the rule base, so we **redesigned** it: a minimal,
+rule-table-only change (monotone 2-D anti-diagonal grid, 5-level consequents; same
+fuzzification/defuzzification) so support carries weight in *every* traction row.
+- **D-descriptor (load-bearing — it works):** support-axis LOO-CV R² gain jumps
+  **0.025 → 0.416** (≈ Set C's nonlinear measured-physics ceiling +0.42; raw K +0.33),
+  partial Spearman(Y,d|μ) −0.04 → **+0.72**. Confirms the negative was **structural and
+  fixable**, not the sim. *Honest scope:* the monotone polarity is informed by Set C's
+  observed trend → a corrected descriptor, **not** a vindication of the paper's mapping;
+  on clean inputs raw K is the ceiling, which v2 matches, not beats.
+  *(`fuzzy_v2_loadbearing_result.md`.)*
+- **D-curriculum (no training gain — Codex-gated):** does the fixed index make a better
+  curriculum? As a 1-scalar signal it **fails** the fair percentile-space proxy (trails
+  raw, loses its stability edge). In its strongest 2-input form `[μ, d_v2]` it **fully
+  fixes the camping and matches raw accuracy**, but only ~17% fewer reversals (under the
+  pre-registered 20% bar) → **EQUIV, not WIN**. `[μ, d_v2]` carries the **same
+  information** as raw `[μ, log₂K]`. **GPU no-go** (Codex-confirmed; ~24h saved).
+  *(`fuzzy_v2_curriculum_plan.md`.)*
+
 ## What this means
 
 1. **Replicates:** the friction-curriculum survival benefit (robust).
@@ -75,12 +103,20 @@ shadow control + policy coverage screen.
    (①/②). Its only edge is noise-stability, bought by discarding resolution.
 4. **Root cause is structural, not the sim.** Set C is the key: even where sinkage/
    stiffness genuinely move difficulty, the paper's Mamdani mapping fails to capture it.
+5. **Structural failure is fixable — but the fix buys interpretability, not performance
+   (Set D).** A redesigned rule base makes the index a *strong* descriptor (gain 0.416),
+   yet even then it only *matches* the raw soil numbers as a training/curriculum signal —
+   it never beats them. Raw `[μ, log₂K]` is the ceiling fuzzy can reach, not exceed.
 
-## What would change the verdict (not done)
+## What would change the verdict
 
-- A **fuzzy system redesigned to actually use the support axis** (the current rules ignore
-  firmness at mid-traction), or a **learned 2-D descriptor** — would test a *better*
-  descriptor, not vindicate this paper's.
+- ~~A **fuzzy system redesigned to actually use the support axis**~~ — **DONE (Set D):** the
+  redesign works as a descriptor (gain 0.416) but ties raw as a training signal. Confirms
+  the failure was structural & fixable, and that the fix adds interpretability, not
+  performance. The remaining honest flip would need a **new** pre-registered claim with
+  *noise-stability as the primary target*, or a setting where raw `[μ, log₂K]` is
+  unavailable/fails (e.g. a real robot with only a coarse soil label, no precise sensors)
+  — Codex's standing note.
 - A **domain-randomized DFH walker** (removes Set C's single-policy / OOD caveat) — judged
   not worth the GPU given the structural argument + permutation result.
 - DFH Bekker params are **uncalibrated** defaults; Set C is a deformable-soil *surrogate*,
@@ -96,4 +132,8 @@ shadow control + policy coverage screen.
 - **Set C + ①/②:** `feat/dfh-fuzzy-descriptor` — `fuzzy_setC_dfh_result.md`,
   `scripts/dfh_fuzzy/`, data under `docs/experiments/data/setC/`. DFH extension lives on
   `feat/isaacsim-agri-field`; models on HuggingFace `anhrisn/hunter-dfh-locomotion`.
+- **Set D (this branch):** `fuzzy_v2_loadbearing_result.md` (descriptor),
+  `fuzzy_v2_curriculum_plan.md` (curriculum no-go); scripts
+  `scripts/dfh_fuzzy/fuzzy_v2_loadbearing.py`, `proxy_curriculum_v2.py`,
+  `proxy_curriculum_2input.py`; outputs under `logs/DFH_fuzzy/`.
 - **This unified doc:** `feature/fuzzy-soil-unified-conclusion`.
