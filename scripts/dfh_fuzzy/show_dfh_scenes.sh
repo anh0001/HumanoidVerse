@@ -27,7 +27,7 @@ launch() {  # name  delay_s  terrain  extra_overrides...
     $PY humanoidverse/sample_eps.py +checkpoint=$CKPT +terrain=$terr \
       +eval_command='[0.3,0.0,0.0]' num_envs=1 ++simulator.config.scene.num_envs=1 \
       +num_episodes=1000 headless=False ++terrain.dfh.params.sinkage_floor_m=-0.05 \
-      ++terrain.dfh.writeback_enabled=True $* experiment_name=show_$name" \
+      ++terrain.dfh.writeback_enabled=True $* +experiment_name=show_$name" \
     > "logs/DFH_fuzzy/viz_$name.log" 2>&1 &
   echo "[show] $name scheduled (+${delay}s) on $DISP pid=$!"
 }
