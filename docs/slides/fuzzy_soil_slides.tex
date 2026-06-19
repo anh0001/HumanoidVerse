@@ -68,7 +68,9 @@
   \textbf{real measured difficulty}:
   \begin{center}\fig{fuzzy_validation.png}{0.97\linewidth}\end{center}
   \good{$d$ tracks difficulty almost perfectly} (slip, falls, episode length, velocity error;
-  Spearman $|\rho|\approx 0.97$). \textbf{This is the chart that makes the fuzzy index look good.}
+  Spearman rank correlation $|\rho|\approx 0.97$ --- same ordering of soils).
+  \textbf{This is the chart that makes the fuzzy index look good} --- but it only shows $d$ tracks
+  \textit{one} axis; whether that beats the raw numbers is the next question.
 \end{frame}
 
 \begin{frame}{Our question}
@@ -103,8 +105,8 @@
   \end{tabular}
   \vfill
   \footnotesize Each study closes the previous one's loophole. ``Support axis'' = whether soil
-  \textit{firmness} actually does anything in that simulator. \textbf{D} = we \textit{fix} the
-  broken rules and re-test.
+  \textit{firmness} actually does anything in that simulator. \textcircled{1}\textcircled{2} =
+  noisy-sensing probes on Set C's soil; \textbf{D} = we \textit{fix} the broken rules and re-test.
 \end{frame}
 
 \begin{frame}{Sets A \& B (rigid simulator)}
@@ -148,7 +150,8 @@
 
 \begin{frame}{The fix: DFH deformable soil}
   \textbf{DFH} (Deformable Furrowed Heightfield) adds the missing physics:
-  feet \textbf{sink} (Bekker), generate \textbf{sideways drag}, and the soil \textbf{deforms}.
+  feet \textbf{sink} (Bekker model: compaction under the foot), generate \textbf{sideways drag},
+  and the soil \textbf{deforms}.
   \begin{columns}
     \begin{column}{0.5\textwidth}
       \centering \fig{dfh_support_axis.png}{\linewidth}
@@ -157,7 +160,7 @@
       \good{The support axis is now real:}
       \begin{itemize}
         \item Soft soil ($K{=}1$): feet sink $\sim$\textbf{49\,mm}.
-        \item Firm soil ($K{=}8$): sink $\sim$\textbf{16\,mm}; drag drops $33\to9$\,N.
+        \item Firm soil ($K{=}8$): sink $\sim$\textbf{23\,mm}; drag drops $\sim$\textbf{45$\to$20}\,N.
         \item Confirmed by a force-off control (no forces $\Rightarrow$ no effect).
       \end{itemize}
       \textit{Same robot, same gait — only the soil firmness changes. You can see it.}
@@ -175,7 +178,7 @@
       \begin{itemize}
         \item Raw soil numbers \good{strongly predict} difficulty (+0.33 to +0.42).
         \item The paper's \textbf{fuzzy index} adds \bad{+0.025} — essentially nothing
-              (permutation $p{=}0.001$).
+              (statistically detectable, $p{=}0.001$, but practically zero).
       \end{itemize}
       \begin{block}{Sharp finding}
         Even where firmness \textbf{is} physically active, the fuzzy mapping \textbf{fails to use it}.
@@ -194,9 +197,10 @@
     \end{column}
     \begin{column}{0.43\textwidth}
       \begin{itemize}
-        \item Fuzzy \textbf{is} noise-stable (flat line) and overtakes raw \textit{only} at
-              extreme noise.
-        \item But it wins by being \bad{stable, not accurate} — raw still \textbf{orders soils better}.
+        \item Fuzzy \textbf{is} noise-stable (flat line) and edges raw on error-\emph{size}
+              \textit{only} at extreme noise.
+        \item But it ``wins'' by being \bad{stable, not accurate} — even there, raw still
+              \textbf{orders soils better}. Flatness $\ne$ usefulness.
         \item \textbf{Decisions} (\textcircled{2}): a fuzzy-driven curriculum \bad{camps on easy soil}
               and never advances.
       \end{itemize}
@@ -215,14 +219,15 @@
       \renewcommand{\arraystretch}{1.2}
       \begin{tabular}{@{}lc@{}}
         \toprule
-        \textbf{Descriptor} & \textbf{Captures firmness?} \\
+        \textbf{Descriptor} & \textbf{Uses firmness?} \\
         \midrule
-        raw soil numbers       & \good{+0.334} (ceiling) \\
-        paper fuzzy index      & \bad{+0.025} (blind) \\
-        \textbf{redesigned fuzzy} & \good{+0.416} \\
+        paper fuzzy index         & \bad{+0.025} (blind) \\
+        \textbf{redesigned fuzzy} & \good{+0.416} (sees it) \\
+        raw soil numbers          & +0.33 to +0.42 \\
         \bottomrule
       \end{tabular}\\[4pt]
-      \footnotesize LOO-CV $R^2$ gain over $\mu$ (higher = uses firmness more).
+      \footnotesize Cross-validated $R^2$ gain over friction alone (higher = uses firmness more).
+      The redesign lands \textbf{inside} the raw numbers' range --- it \textit{matches} them, not beats.
     \end{column}
     \begin{column}{0.48\textwidth}
       \good{The fix works — as a descriptor:}
@@ -231,26 +236,46 @@
         \item The original failure was \textbf{structural and fixable}, not the simulator.
       \end{itemize}
       \footnotesize \textit{Honest:} the fix is informed by the data's firm=easier trend —
-      a \textbf{corrected} descriptor, not a vindication of the paper's rules. Raw is still
-      the ceiling it \textit{matches}.
+      a \textbf{corrected} descriptor, not a vindication of the paper's rules. Raw soil
+      numbers stay the ceiling; the fix only \textbf{matches} them, never exceeds.
     \end{column}
   \end{columns}
 \end{frame}
 
+\begin{frame}{Does the redesigned fuzzy index actually work? (descriptor check)}
+  \centering
+  \fig{setD_fuzzy_predicts.png}{0.58\linewidth}\\[2pt]
+  \footnotesize Within the measured sweep, the redesigned fuzzy index \good{orders real difficulty}
+  and \good{separates firmness}: within each traction $\mu$, a higher fuzzy score $=$ harder soil
+  (partial Spearman $+0.71$).\\[1pt]
+  \scriptsize \textit{Descriptor validation only --- $d_{v2}$ was tuned on this regime; it aids
+  interpretation, not a claim that fuzzy beats raw for training.}
+\end{frame}
+
 \begin{frame}{Set D: but does the fix help the robot \textit{train}?}
-  The real prize: use the fixed index to \textbf{pace the training curriculum} (when to move
-  to harder soil). Cheap gated proxy, vetted with an independent model.
+  \textbf{The catch:} a better \textit{description} of soil is not the same as a better
+  \textit{training signal}. We pace the curriculum (when to move to harder soil) with the fixed
+  index --- cheap gated proxy, vetted with an independent model.
   \begin{itemize}
     \item As a single score: \bad{fails} — it trails the raw numbers and thrashes.
     \item In its \textbf{best form} $[\mu,\text{fuzzy}]$: \good{fully fixes} the camping and
           \textbf{matches} the raw numbers' accuracy\dots
     \item \dots but only \textbf{ties} them --- it carries the \bad{same information} as raw
-          $[\mu,\log_2 K]$, never beats it (pre-registered \textbf{EQUIV}, not a win).
+          $[\mu,\log_2 K]$, never beats it (a pre-registered \textbf{equivalence} result: a tie, not a win).
   \end{itemize}
   \begin{block}{Decision}
     \textbf{GPU training run not justified} ($\sim$24\,h saved). A better \textit{description}
     of the soil does \textbf{not} become a better \textit{training signal} than the raw numbers.
   \end{block}
+\end{frame}
+
+\begin{frame}{Set D in one picture: a descriptor win, not a training win}
+  \centering
+  \fig{setD_descriptor_vs_training.png}{0.96\linewidth}\\[3pt]
+  \footnotesize Fixing the fuzzy \textbf{rule table} makes the index physically meaningful as a
+  \good{descriptor} (left: $0.025\to0.416$, reaching the raw/physics ceiling) --- but as a
+  \textbf{training} signal it only \bad{ties} raw soil numbers (right: equivalent across noise).
+  \textbf{Raw stays the practical ceiling.}
 \end{frame}
 
 \begin{frame}{Verdict}
