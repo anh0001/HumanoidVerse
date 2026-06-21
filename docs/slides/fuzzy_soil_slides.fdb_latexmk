@@ -1,5 +1,5 @@
 # Fdb version 3
-["pdflatex"] 1781527085 "fuzzy_soil_slides.tex" "fuzzy_soil_slides.pdf" "fuzzy_soil_slides" 1781527088
+["pdflatex"] 1782010120 "fuzzy_soil_slides.tex" "fuzzy_soil_slides.pdf" "fuzzy_soil_slides" 1782010124
   "/etc/texmf/web2c/texmf.cnf" 1778228889 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tcss0900.tfm" 1136768653 1536 ba0169ee8bc017972775b933313cbbb0 ""
@@ -53,6 +53,7 @@
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb" 1248133631 32626 4f5c1b83753b1dd3a97d1b399a005b4b ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb" 1248133631 32442 c975af247b6702f7ca0c299af3616b80 ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb" 1248133631 29078 718ea4567ceff944262b0f5b0800e1d9 ""
+  "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex9.pfb" 1248133631 30212 b6aafa449db0097a6b9b890f66741063 ""
   "/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii" 1461363279 71627 94eb9990bed73c364d7f53f960cc8c5b ""
   "/usr/share/texlive/texmf-dist/tex/generic/atbegshi/atbegshi.sty" 1575674566 24708 5584a51a7101caf7e6bbf1fc27d8f7b1 ""
   "/usr/share/texlive/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty" 1576625341 40635 c40361e206be584d448876bba8a64a3b ""
@@ -233,6 +234,8 @@
   "figs//experiments_summary.png" 1780527060 165730 9d9c9acbde20cfe0903280075e2d1c19 ""
   "figs//fuzzy_noise_analysis.png" 1780397827 110376 3aee277316d5cd8c157936a144faa2bc ""
   "figs//fuzzy_validation.png" 1780527060 102674 f5fce5e1c946e9194e7891782cd4f445 ""
+  "figs//setB_auc_only.png" 1781967719 23807 5afa7f7ca1a7a75eb2f883bd421fb4fa ""
+  "figs//setB_robustness_curve.png" 1782010085 85339 515b483111f4100940cfac8218fffa4a ""
   "figs//setD_descriptor_vs_training.png" 1781518010 130484 bcaab117d2aeac0c0e9f0883c054a9e3 ""
   "figs//setD_fuzzy_predicts.png" 1781526963 113233 dd68e32a14e638ae69638964b1954f40 ""
   "figs/dfh_fuzzy_vs_raw.png" 1780397907 63050 556faac752c091e79c99ca0d4dabd64f ""
@@ -240,12 +243,14 @@
   "figs/experiments_summary.png" 1780527060 165730 9d9c9acbde20cfe0903280075e2d1c19 ""
   "figs/fuzzy_noise_analysis.png" 1780397827 110376 3aee277316d5cd8c157936a144faa2bc ""
   "figs/fuzzy_validation.png" 1780527060 102674 f5fce5e1c946e9194e7891782cd4f445 ""
+  "figs/setB_auc_only.png" 1781967719 23807 5afa7f7ca1a7a75eb2f883bd421fb4fa ""
+  "figs/setB_robustness_curve.png" 1782010085 85339 515b483111f4100940cfac8218fffa4a ""
   "figs/setD_descriptor_vs_training.png" 1781518010 130484 bcaab117d2aeac0c0e9f0883c054a9e3 ""
   "figs/setD_fuzzy_predicts.png" 1781526963 113233 dd68e32a14e638ae69638964b1954f40 ""
-  "fuzzy_soil_slides.aux" 1781527088 3407 fdb72fcd09dfc9eea34ecfcc88f23fa7 "pdflatex"
-  "fuzzy_soil_slides.nav" 1781527088 1946 cc1d57bc897673374b837eab8153475a "pdflatex"
-  "fuzzy_soil_slides.out" 1781527086 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "fuzzy_soil_slides.tex" 1781527076 16012 10bb5ea640968cb194c2663a3260e08a ""
+  "fuzzy_soil_slides.aux" 1782010123 4052 29fc84e0c5128159dcc982978a02e0b3 "pdflatex"
+  "fuzzy_soil_slides.nav" 1782010123 2411 8c6bbe43bf923ac88764b8cf06f7ccff "pdflatex"
+  "fuzzy_soil_slides.out" 1782010121 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "fuzzy_soil_slides.tex" 1782010106 22610 6f1d10957cae88ab80248be33cbdb487 ""
   (generated)
   "fuzzy_soil_slides.aux"
   "fuzzy_soil_slides.log"

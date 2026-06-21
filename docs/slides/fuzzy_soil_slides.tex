@@ -135,6 +135,94 @@
   \textbf{(4)} fuzzy $d$ tracks friction ($\rho{=}0.97$) but \bad{adds nothing over raw $\mu$}
 \end{frame}
 
+\begin{frame}{Set B: how the fuzzy \textit{curriculum} works}
+  \textbf{Curriculum =} train from \good{easy} soil (grippy, $\mu{=}0.80$) $\to$ \bad{hard}
+  (slippery, $\mu{=}0.35$). \textbf{The real question:} \textit{who decides when to move to harder soil?}
+  \vspace{3pt}
+  \begin{center}
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    \textbf{Pacing rule} & \textbf{Like\ldots} & \textbf{Move to harder soil when\ldots} \\
+    \midrule
+    \textbf{fixed} & a \textbf{timer}            & a set number of blocks passed \;(\textit{ignores skill}) \\
+    \textbf{crisp} & a \textbf{pass/fail exam}   & skill $\ge$ threshold \;(\textit{hard yes/no at 50\%}) \\
+    \textbf{fuzzy} & a \textbf{progress bar}     & graded scores (Hold/Maybe/Advance) \textbf{add up} to 1 \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \good{Same} ladder, \good{same} skill signal, \good{same} ``at most 1 step harder per block'' --- the
+  \textbf{only} thing that changes is the decision rule.
+  \begin{block}{The honest design choice}
+    ``Skill'' $=$ \textbf{how long the robot survives} (not the soil score). Fuzzy's real twist is
+    \textbf{accumulating a smooth score} --- otherwise it would just be ``crisp with a new name''.
+  \end{block}
+\end{frame}
+
+\begin{frame}{Set B: the result --- fuzzy \textit{ties} the simple rules}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \centering \fig{setB_auc_only.png}{0.9\linewidth}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \footnotesize
+      After training, re-test every policy across \textit{all} soils --- a fair \textit{held-out} sweep.\\[6pt]
+      \textbf{Robustness AUC} $=$ one summary score $=$ how well it survives across the board
+      (higher $=$ tougher everywhere):\\[5pt]
+      \centering fixed \textbf{0.64} \;\textbar\; crisp \textbf{0.68} \;\textbar\; fuzzy \textbf{0.72}\\[5pt]
+      \raggedright The gap is \bad{not significant} (Welch $t{=}0.45$, 3 seeds): fuzzy's higher
+      average comes from \textbf{just one lucky seed}.
+    \end{column}
+  \end{columns}
+  \begin{block}{Bottom line}
+    The curriculum \good{works}, but \textbf{fuzzy $\approx$ crisp $\approx$ fixed}: in the rigid sim the
+    \textbf{firmness axis is dead}, so fuzzy's blending has \bad{nothing extra to exploit}.
+  \end{block}
+\end{frame}
+
+\begin{frame}{Set B: what the robustness AUC \textit{measures}}
+  \begin{columns}
+    \begin{column}{0.6\textwidth}
+      \centering \fig{setB_robustness_curve.png}{\linewidth}
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \footnotesize
+      After training, re-test across \textit{all} soils $\to$ a \textbf{survival curve}
+      (episode length $\div$ cap, vs friction $\mu$).\\[6pt]
+      \textbf{Robustness AUC} $=$ \textbf{shaded area} $\div$ $\mu$-range $=$ \textbf{average survival}
+      across soils:
+      \[\text{AUC}=\frac{1}{\mu_{\max}-\mu_{\min}}\int \frac{\overline{\text{ep\_len}}(\mu)}{\text{cap}}\,d\mu\]
+      \scriptsize (cap $=1000$ steps). One number per arm $=$ the bar on the previous slide.\\[4pt]
+      \footnotesize Curves \textbf{overlap} $\Rightarrow$ AUCs tie: \textbf{.64\,/\,.68\,/\,.72}.
+    \end{column}
+  \end{columns}
+  \begin{block}{}
+    \centering A higher curve \textit{everywhere} $=$ tougher policy. Fuzzy's curve is
+    \bad{not consistently above} fixed/crisp --- so it only \textbf{ties}.
+  \end{block}
+\end{frame}
+
+\begin{frame}{Set B: the formula --- how fuzzy ``talks to'' the policy}
+  \textbf{Key point:} fuzzy is \textbf{not inside the policy}. The policy is plain PPO --- fuzzy only
+  \textbf{picks the next training soil}. One loop per training block:
+  \vspace{2pt}
+  \begin{enumerate}\footnotesize
+    \item \textbf{Train} the policy (PPO) on the current friction rung $\mu_{\text{rung}}$.
+    \item \textbf{Score skill:} \;$m=\dfrac{\overline{\text{ep\_len}}}{\text{cap}}\in[0,1]$ \quad(survives longer $\Rightarrow m\to1$).
+    \item \textbf{Fuzzy $\to$ advance score} $a\in[0,1]$ (smooth Hold\,/\,Maybe\,/\,Advance):
+      \[\;a=\frac{0\cdot\mu_{\text{Low}}+0.5\cdot\mu_{\text{Med}}+1\cdot\mu_{\text{High}}}
+              {\mu_{\text{Low}}+\mu_{\text{Med}}+\mu_{\text{High}}}\;\]
+      \vspace{-2pt}\scriptsize ($\mu_{\text{Low/Med/High}}=$ how much skill $m$ counts as low / medium / high).
+    \item \footnotesize \textbf{Accumulate \& advance:} progress $\mathrel{+}{=}\,a$; \;if progress $\ge 1$
+      $\Rightarrow$ move to \textbf{harder} soil, progress $\mathrel{-}{=}1$.
+  \end{enumerate}
+  \begin{block}{The 3 arms differ \textit{only} in steps 3--4}
+    \footnotesize \textbf{fixed:} advance on a timer (ignore $m$). \;\;
+    \textbf{crisp:} advance iff $m\ge0.5$ (hard yes/no). \;\;
+    \textbf{fuzzy:} accumulate the graded $a$ above.
+  \end{block}
+\end{frame}
+
 \begin{frame}{The catch behind the pretty chart}
   The $\rho\approx0.97$ looks great --- but it is \textbf{only the traction (friction) axis}.
   \begin{itemize}
@@ -240,6 +328,46 @@
       numbers stay the ceiling; the fix only \textbf{matches} them, never exceeds.
     \end{column}
   \end{columns}
+\end{frame}
+
+\begin{frame}{Set D: \emph{exactly} what we changed in the rules}
+  Same 2 inputs, same fuzzy membership shapes, same defuzzification --- we changed \textbf{only
+  the rule lookup} (grip, firmness)$\,\to\,$difficulty, plus the output detail (\textbf{3$\to$5} levels).
+  \footnotesize\textit{(rows $=$ grip/traction, columns $=$ firmness)}\normalsize
+  \vspace{3pt}
+  \begin{columns}[t]
+    \begin{column}{0.5\textwidth}
+      \centering
+      \bad{Paper rules} \;\scriptsize(Easy\,/\,Mod\,/\,Hard)\normalsize\\[3pt]
+      \renewcommand{\arraystretch}{1.3}\small
+      \begin{tabular}{@{}l|ccc@{}}
+         & Soft & Med & Firm \\ \midrule
+        Low  & \bad{Hard} & \bad{Hard} & \bad{Hard} \\
+        Mid  & \bad{Mod}  & \bad{Mod}  & \bad{Mod}  \\
+        High & Mod  & Easy & Easy \\
+      \end{tabular}\\[5pt]
+      \footnotesize \bad{Low \& Mid rows are flat}: firmness changes \textbf{nothing} $\Rightarrow$
+      the index is \textbf{blind} to how soft the soil is.
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \good{Redesigned rules (v2)} \;\scriptsize(VE\,$<$\,E\,$<$\,M\,$<$\,H\,$<$\,VH)\normalsize\\[3pt]
+      \renewcommand{\arraystretch}{1.3}\small
+      \begin{tabular}{@{}l|ccc@{}}
+         & Soft & Med & Firm \\ \midrule
+        Low  & \bad{VH} & H & M  \\
+        Mid  & H  & M & E  \\
+        High & M  & E & \good{VE} \\
+      \end{tabular}\\[5pt]
+      \footnotesize \good{Every row falls Soft$\to$Firm}: firmer soil $=$ easier, at
+      \textbf{every} grip level.
+    \end{column}
+  \end{columns}
+  \vspace{3pt}
+  \begin{block}{Payoff}
+    Firmness signal jumps \bad{+0.025} $\to$ \good{+0.416} ($\sim$16$\times$) --- \textbf{purely}
+    from a better rule table. The broken part was \textbf{structural}; the fix needs \textbf{no new physics}.
+  \end{block}
 \end{frame}
 
 \begin{frame}{Does the redesigned fuzzy index actually work? (descriptor check)}
